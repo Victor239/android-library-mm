@@ -25,26 +25,30 @@ public class StepAnimation extends Animation {
             long offset = cur - m.getStartTime() - left;
 
             if (animate) {
-                if (m.hasEnded()) {
-                    StepAnimation mm = c.create();
-                    if (mm.animationReady()) {
-                        mm.startAnimation(v);
-                    } else {
-                        // do nothing, already visible view
-                    }
-                } else {
+                if (m.hasStarted() && !m.hasEnded()) {
                     if (m.expand != expand) {
                         m.expand = expand;
                         m.setStartOffset(offset);
                     } else {
                         // keep rolling. do nothing
                     }
+                } else {
+                    if (!m.hasStarted())
+                        m.restore();
+                    StepAnimation mm = c.create();
+                    if (mm.animationReady()) {
+                        mm.startAnimation(v);
+                    } else {
+                        // do nothing, already visible view
+                    }
                 }
             } else {
-                if (!m.hasEnded()) {
+                if (m.hasStarted() && !m.hasEnded()) {
                     v.clearAnimation();
                     m.restore();
                 }
+                if (!m.hasStarted())
+                    m.restore();
                 StepAnimation mm = c.create();
                 mm.restore();
                 mm.end();
