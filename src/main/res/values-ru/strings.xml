@@ -10,4 +10,6 @@
     <string name="OpenFileDialogRenamedTo">Переименовано: \'%1$s\'</string>
     <string name="OpenFileDialogEmptyList">Пустой список</string>
     <string name="ShareAction">Поделиться</string>
+    <string name="readonly_directory">Папка только для чтения</string>
+    <string name="select_folder">Выберите папку</string>
 </resources>

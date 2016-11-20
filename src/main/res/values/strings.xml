@@ -10,4 +10,6 @@
     <string name="OpenFileDialogRenamedTo">Renamed to: \'%1$s\'</string>
     <string name="OpenFileDialogEmptyList">Empty List</string>
     <string name="ShareAction">Share</string>
+    <string name="readonly_directory">Read only dirrectory</string>
+    <string name="select_folder">Please select a folder</string>
 </resources>

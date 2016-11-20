@@ -2,6 +2,7 @@ package com.github.axet.androidlibrary.widgets;
 
 import android.content.Context;
 import android.content.DialogInterface;
+import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
@@ -12,6 +13,7 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.PopupMenu;
 import android.util.TypedValue;
 import android.view.Display;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -41,6 +43,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
 
     File currentPath;
     TextView title;
+    TextView message;
     ListView listView;
     FilenameFilter filenameFilter;
     int folderIcon;
@@ -52,8 +55,11 @@ public class OpenFileDialog extends AlertDialog.Builder {
     int paddingBottom;
     int paddingTop;
     int iconSize;
+    Runnable changeFolder;
 
+    // does not allow to delete / rename folders
     boolean readonly = false;
+    boolean files = true;
 
     static class SortFiles implements Comparator<File> {
         // for symlinks
@@ -249,7 +255,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
     }
 
     @Override
-    public AlertDialog show() {
+    public AlertDialog create() {
         title = (TextView) LayoutInflater.from(getContext()).inflate(android.R.layout.simple_list_item_1, null);
         title.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         title.setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom);
@@ -325,6 +331,12 @@ public class OpenFileDialog extends AlertDialog.Builder {
             }
 
             main.addView(toolbar);
+
+            message = new TextView(getContext());
+            message.setGravity(Gravity.CENTER);
+            message.setBackgroundColor(Color.rgb(255, 250, 227));
+            message.setVisibility(View.GONE);
+            main.addView(message);
         }
 
         // ADD FILES LIST
@@ -387,13 +399,17 @@ public class OpenFileDialog extends AlertDialog.Builder {
                     if (file.isDirectory()) {
                         RebuildFiles();
                     } else {
-                        if (index != adapter.selectedIndex) {
-                            adapter.selectedIndex = index;
+                        if (files) { // allowed select files
+                            if (index != adapter.selectedIndex) {
+                                adapter.selectedIndex = index;
+                            } else {
+                                adapter.selectedIndex = -1;
+                                currentPath = file.getParentFile();
+                            }
+                            adapter.notifyDataSetChanged();
                         } else {
-                            adapter.selectedIndex = -1;
-                            currentPath = file.getParentFile();
+                            Toast.makeText(getContext(), R.string.select_folder, Toast.LENGTH_SHORT).show();
                         }
-                        adapter.notifyDataSetChanged();
                     }
                 }
             });
@@ -412,20 +428,24 @@ public class OpenFileDialog extends AlertDialog.Builder {
         setNegativeButton(android.R.string.cancel, null);
 
         adapter = new FileAdapter(getContext());
-        adapter.scan(currentPath);
         listView.setAdapter(adapter);
 
-        title.setText(adapter.currentPath.getPath());
-
-        // scroll to selected item
-        listView.post(new Runnable() {
+        AlertDialog d = super.create();
+        d.setOnShowListener(new DialogInterface.OnShowListener() {
             @Override
-            public void run() {
-                listView.setSelection(adapter.selectedIndex);
+            public void onShow(DialogInterface dialogInterface) {
+                RebuildFiles();
+
+                // scroll to selected item
+                listView.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        listView.setSelection(adapter.selectedIndex);
+                    }
+                });
             }
         });
-
-        return super.show();
+        return d;
     }
 
     public OpenFileDialog setFilter(final String filter) {
@@ -448,6 +468,14 @@ public class OpenFileDialog extends AlertDialog.Builder {
 
     public void setReadonly(boolean b) {
         readonly = b;
+    }
+
+    public void setFiles(boolean b) {
+        files = b;
+    }
+
+    public void setChangeFolderListener(Runnable r) {
+        this.changeFolder = r;
     }
 
     public void setCurrentPath(File path) {
@@ -484,8 +512,19 @@ public class OpenFileDialog extends AlertDialog.Builder {
     }
 
     private void RebuildFiles() {
+        if (!readonly) {
+            if (!currentPath.canWrite()) {
+                message.setText(R.string.readonly_directory);
+                message.setVisibility(View.VISIBLE);
+            } else {
+                message.setVisibility(View.GONE);
+            }
+        }
         adapter.scan(currentPath);
         listView.setSelection(0);
         title.setText(adapter.currentPath.getPath());
+        if (changeFolder != null) {
+            changeFolder.run();
+        }
     }
 }
