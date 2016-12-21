@@ -16,6 +16,9 @@ public class StepAnimation extends Animation {
 
     public static void apply(LateCreator c, View v, boolean expand, boolean animate) {
         Animation old = v.getAnimation();
+        if (Build.VERSION.SDK_INT < 11) {
+            animate = false;
+        }
         if (old != null && old instanceof StepAnimation) {
             StepAnimation m = (StepAnimation) old;
 

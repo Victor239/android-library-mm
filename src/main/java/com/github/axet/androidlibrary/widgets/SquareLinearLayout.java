@@ -1,5 +1,6 @@
 package com.github.axet.androidlibrary.widgets;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.util.AttributeSet;
@@ -18,12 +19,17 @@ public class SquareLinearLayout extends LinearLayout {
     }
 
     public SquareLinearLayout(Context context, AttributeSet attrs) {
-        this(context, attrs, 0);
+        super(context, attrs);
+        create(context, attrs, 0);
     }
 
+    @TargetApi(11)
     public SquareLinearLayout(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+        create(context, attrs, defStyle);
+    }
 
+    void create(Context context, AttributeSet attrs, int defStyle) {
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.SquareLinearLayout, defStyle, 0);
         maxChild = a.getDimensionPixelSize(R.styleable.SquareLinearLayout_maxChild, -1);
         a.recycle();

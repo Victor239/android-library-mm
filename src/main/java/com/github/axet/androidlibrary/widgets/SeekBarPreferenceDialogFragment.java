@@ -1,13 +1,13 @@
 package com.github.axet.androidlibrary.widgets;
 
-import android.app.AlertDialog;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.v14.preference.PreferenceDialogFragment;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.preference.PreferenceDialogFragmentCompat;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.ViewGroup;
@@ -15,7 +15,7 @@ import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
-public class SeekBarPreferenceDialogFragment extends PreferenceDialogFragment {
+public class SeekBarPreferenceDialogFragment extends PreferenceDialogFragmentCompat {
     private boolean mPreferenceChanged;
 
     float value;
