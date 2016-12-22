@@ -1,5 +1,7 @@
 package com.github.axet.androidlibrary.crypto;
 
+import android.annotation.TargetApi;
+import android.support.annotation.RequiresApi;
 import android.util.Base64;
 
 import java.math.BigInteger;
@@ -127,9 +129,10 @@ public class Bitcoin {
         return sha256_HMAC.doFinal(data);
     }
 
+    @RequiresApi(11)
     public Bitcoin() {
         try {
-            f = KeyFactory.getInstance("EC", "BC");
+            f = KeyFactory.getInstance("EC", "BC"); // https://developer.android.com/reference/java/security/KeyFactory.html
             ecGenSpec = new ECGenParameterSpec("secp256k1");
             g = KeyPairGenerator.getInstance("EC", "BC");
             g.initialize(ecGenSpec, new SecureRandom());
