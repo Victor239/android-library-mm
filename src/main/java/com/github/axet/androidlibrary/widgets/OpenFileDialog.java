@@ -147,7 +147,13 @@ public class OpenFileDialog extends AlertDialog.Builder {
 
             ArrayList<File> list = new ArrayList<>(Arrays.asList(files));
 
-            addAll(list);
+            if (Build.VERSION.SDK_INT < 11) {
+                for (File f : list) {
+                    add(f);
+                }
+            } else {
+                addAll(list);
+            }
 
             sort(new SortFiles());
 
@@ -502,9 +508,14 @@ public class OpenFileDialog extends AlertDialog.Builder {
     }
 
     private static Point getScreenSize(Context context) {
-        Point screeSize = new Point();
-        getDefaultDisplay(context).getSize(screeSize);
-        return screeSize;
+        Display d = getDefaultDisplay(context);
+        if (Build.VERSION.SDK_INT < 13) {
+            return new Point(d.getWidth(), d.getHeight());
+        } else {
+            Point screeSize = new Point();
+            d.getSize(screeSize);
+            return screeSize;
+        }
     }
 
     private static int getLinearLayoutMinHeight(Context context) {
