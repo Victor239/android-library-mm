@@ -43,7 +43,7 @@ public class StoragePathPreference extends EditTextPreference {
     @Override
     protected void showDialog(Bundle state) {
         f = new OpenFileDialog(getContext());
-        f.setFiles(false);
+        f.setSelectFiles(false);
         f.setChangeFolderListener(new Runnable() {
             @Override
             public void run() {

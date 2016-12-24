@@ -2,7 +2,6 @@ package com.github.axet.androidlibrary.widgets;
 
 import android.content.Context;
 import android.content.DialogInterface;
-import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
@@ -57,9 +56,12 @@ public class OpenFileDialog extends AlertDialog.Builder {
     int iconSize;
     Runnable changeFolder;
 
-    // does not allow to delete / rename folders
+    // file / folder readonly dialog selection or output directory? also shows readonly folder tooltip.
     boolean readonly = false;
+    // allow select files, or just select directory
     boolean files = true;
+
+    Button positive; // enable / disable OK
 
     static class SortFiles implements Comparator<File> {
         // for symlinks
@@ -91,7 +93,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
                 colorSelected = getContext().getResources().getColor(android.R.color.holo_blue_dark, getContext().getTheme());
                 colorTransparent = getContext().getResources().getColor(android.R.color.transparent, getContext().getTheme());
             } else {
-                colorSelected = getContext().getResources().getColor(android.R.color.holo_blue_dark);
+                colorSelected = getContext().getResources().getColor(R.color.holo_blue_dark);
                 colorTransparent = getContext().getResources().getColor(android.R.color.transparent);
             }
         }
@@ -127,7 +129,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
         }
 
         public void scan(File dir) {
-            selectedIndex = -1;
+            updateSelected(-1);
             currentPath = dir;
 
             if (!dir.isDirectory()) {
@@ -158,7 +160,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
             sort(new SortFiles());
 
             if (!dir.isDirectory()) {
-                selectedIndex = getPosition(dir);
+                updateSelected(getPosition(dir));
             }
 
             notifyDataSetChanged();
@@ -307,7 +309,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
                 toolbar.addView(textView);
             }
 
-            if (!readonly) {
+            if (!readonly) { // show new folder button
                 Button textView = new Button(getContext());
                 textView.setPadding(paddingLeft, 0, paddingRight, 0);
                 textView.setText(R.string.OpenFileDialogNewFolder);
@@ -340,7 +342,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
 
             message = new TextView(getContext());
             message.setGravity(Gravity.CENTER);
-            message.setBackgroundColor(Color.rgb(255, 250, 227));
+            message.setBackgroundColor(0xfffffae3);
             message.setVisibility(View.GONE);
             main.addView(message);
         }
@@ -352,7 +354,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
                 @Override
                 public boolean onItemLongClick(AdapterView<?> parent, View view, final int position, long id) {
                     final PopupMenu p = new PopupMenu(getContext(), view);
-                    if (!readonly) {
+                    if (!readonly) { // show rename / delete
                         p.getMenu().add(getContext().getString(R.string.OpenFileDialogRename));
                         p.getMenu().add(getContext().getString(R.string.OpenFileDialogDelete));
                     }
@@ -407,10 +409,10 @@ public class OpenFileDialog extends AlertDialog.Builder {
                     } else {
                         if (files) { // allowed select files
                             if (index != adapter.selectedIndex) {
-                                adapter.selectedIndex = index;
+                                updateSelected(index);
                             } else {
-                                adapter.selectedIndex = -1;
                                 currentPath = file.getParentFile();
+                                updateSelected(-1);
                             }
                             adapter.notifyDataSetChanged();
                         } else {
@@ -436,12 +438,12 @@ public class OpenFileDialog extends AlertDialog.Builder {
         adapter = new FileAdapter(getContext());
         listView.setAdapter(adapter);
 
-        AlertDialog d = super.create();
+        final AlertDialog d = super.create();
         d.setOnShowListener(new DialogInterface.OnShowListener() {
             @Override
             public void onShow(DialogInterface dialogInterface) {
+                positive = d.getButton(DialogInterface.BUTTON_POSITIVE);
                 RebuildFiles();
-
                 // scroll to selected item
                 listView.post(new Runnable() {
                     @Override
@@ -452,6 +454,17 @@ public class OpenFileDialog extends AlertDialog.Builder {
             }
         });
         return d;
+    }
+
+    void updateSelected(int i) {
+        if (positive != null) {
+            if (files && i == -1) {
+                positive.setEnabled(false);
+            } else {
+                positive.setEnabled(true);
+            }
+        }
+        adapter.selectedIndex = i;
     }
 
     public OpenFileDialog setFilter(final String filter) {
@@ -472,11 +485,13 @@ public class OpenFileDialog extends AlertDialog.Builder {
         return this;
     }
 
+    // dialog to set output directory / file or readonly dialog?
     public void setReadonly(boolean b) {
         readonly = b;
     }
 
-    public void setFiles(boolean b) {
+    // file select dialog or directory select dialog?
+    public void setSelectFiles(boolean b) {
         files = b;
     }
 
@@ -523,7 +538,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
     }
 
     private void RebuildFiles() {
-        if (!readonly) {
+        if (!readonly) { // show readonly directory tooltip
             if (!currentPath.canWrite()) {
                 message.setText(R.string.readonly_directory);
                 message.setVisibility(View.VISIBLE);
