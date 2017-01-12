@@ -1,5 +1,8 @@
 package com.github.axet.androidlibrary.services;
 
+import android.content.ContentProvider;
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -9,17 +12,66 @@ import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.net.Uri;
 import android.os.CancellationSignal;
+import android.os.ParcelFileDescriptor;
 import android.provider.OpenableColumns;
 import android.support.annotation.Nullable;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class FileProvider extends android.support.v4.content.FileProvider {
+// <application>
+//   <provider
+//     android:name="com.github.axet.androidlibrary.services.FileProvider"
+//     android:authorities="com.github.axet.android-library"
+//     android:exported="false"
+//     android:grantUriPermissions="true">
+//   </provider>
+// </application>
+
+public class FileProvider extends ContentProvider {
     public static final String[] COLUMNS = {OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE};
+
+
+    public static String[] copyOf(String[] original, int newLength) {
+        final String[] result = new String[newLength];
+        System.arraycopy(original, 0, result, 0, newLength);
+        return result;
+    }
+
+    public static Object[] copyOf(Object[] original, int newLength) {
+        final Object[] result = new Object[newLength];
+        System.arraycopy(original, 0, result, 0, newLength);
+        return result;
+    }
+
+    public static int modeToMode(String mode) {
+        int modeBits;
+        if ("r".equals(mode)) {
+            modeBits = ParcelFileDescriptor.MODE_READ_ONLY;
+        } else if ("w".equals(mode) || "wt".equals(mode)) {
+            modeBits = ParcelFileDescriptor.MODE_WRITE_ONLY
+                    | ParcelFileDescriptor.MODE_CREATE
+                    | ParcelFileDescriptor.MODE_TRUNCATE;
+        } else if ("wa".equals(mode)) {
+            modeBits = ParcelFileDescriptor.MODE_WRITE_ONLY
+                    | ParcelFileDescriptor.MODE_CREATE
+                    | ParcelFileDescriptor.MODE_APPEND;
+        } else if ("rw".equals(mode)) {
+            modeBits = ParcelFileDescriptor.MODE_READ_WRITE
+                    | ParcelFileDescriptor.MODE_CREATE;
+        } else if ("rwt".equals(mode)) {
+            modeBits = ParcelFileDescriptor.MODE_READ_WRITE
+                    | ParcelFileDescriptor.MODE_CREATE
+                    | ParcelFileDescriptor.MODE_TRUNCATE;
+        } else {
+            throw new IllegalArgumentException("Invalid mode: " + mode);
+        }
+        return modeBits;
+    }
 
     static Map<Uri, String> types = new HashMap<>();
     static Map<Uri, String> names = new HashMap<>();
@@ -30,6 +82,24 @@ public class FileProvider extends android.support.v4.content.FileProvider {
     public void attachInfo(Context context, ProviderInfo info) {
         super.attachInfo(context, info);
         FileProvider.info = info;
+        // Sanity check our security
+        if (info.exported) {
+            throw new SecurityException("Provider must not be exported");
+        }
+        if (!info.grantUriPermissions) {
+            throw new SecurityException("Provider must grant uri permissions");
+        }
+    }
+
+    @Override
+    public boolean onCreate() {
+        return true;
+    }
+
+    @Nullable
+    @Override
+    public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+        return null;
     }
 
     @Nullable
@@ -65,8 +135,24 @@ public class FileProvider extends android.support.v4.content.FileProvider {
         return types.get(uri);
     }
 
+    @Nullable
+    @Override
+    public Uri insert(Uri uri, ContentValues values) {
+        return null;
+    }
+
+    @Override
+    public int delete(Uri uri, String selection, String[] selectionArgs) {
+        return 0;
+    }
+
+    @Override
+    public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
+        return 0;
+    }
+
     public static Uri getUriForFile(Context context, String type, String name, File file) {
-        Uri u = android.support.v4.content.FileProvider.getUriForFile(context, info.authority, file);
+        Uri u = new Uri.Builder().scheme(ContentResolver.SCHEME_CONTENT).authority(info.authority).path(name).build();
         types.put(u, type);
         names.put(u, name);
         files.put(u, file);
@@ -87,7 +173,6 @@ public class FileProvider extends android.support.v4.content.FileProvider {
         }
     }
 
-
     public static void grantPermissions(Context context, Intent intent, Uri u) {
         List<ResolveInfo> resInfoList = context.getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
         for (ResolveInfo resolveInfo : resInfoList) {
@@ -96,15 +181,11 @@ public class FileProvider extends android.support.v4.content.FileProvider {
         }
     }
 
-    public static String[] copyOf(String[] original, int newLength) {
-        final String[] result = new String[newLength];
-        System.arraycopy(original, 0, result, 0, newLength);
-        return result;
-    }
-
-    public static Object[] copyOf(Object[] original, int newLength) {
-        final Object[] result = new Object[newLength];
-        System.arraycopy(original, 0, result, 0, newLength);
-        return result;
+    @Nullable
+    @Override
+    public ParcelFileDescriptor openFile(Uri uri, String mode) throws FileNotFoundException {
+        File file = files.get(uri);
+        final int fileMode = modeToMode(mode);
+        return ParcelFileDescriptor.open(file, fileMode);
     }
 }

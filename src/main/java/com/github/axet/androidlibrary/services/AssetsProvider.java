@@ -20,6 +20,19 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+// manifest.xml
+// <application>
+//   <provider
+//     android:name="com.github.axet.androidlibrary.services.AssetsProvider"
+//     android:authorities="com.github.axet.android-library"
+//     android:exported="false"
+//     android:grantUriPermissions="true">
+//   </provider>
+// </application>
+//
+// url example:
+// content://com.github.axet.android-library/image.jpg
+
 public class AssetsProvider extends ContentProvider {
     static Map<Uri, String> types = new HashMap<>();
     static Map<Uri, String> names = new HashMap<>();
@@ -30,14 +43,22 @@ public class AssetsProvider extends ContentProvider {
     @Override
     public void attachInfo(Context context, ProviderInfo info) {
         super.attachInfo(context, info);
-        this.info = info;
-        AssetManager am = getContext().getAssets();
+        AssetsProvider.info = info;
+        AssetManager am = context.getAssets();
         try {
             String[] a = am.list("");
             for (String f : a) {
                 addFile(f, am.openFd(f));
             }
         } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        // Sanity check our security
+        if (info.exported) {
+            throw new SecurityException("Provider must not be exported");
+        }
+        if (!info.grantUriPermissions) {
+            throw new SecurityException("Provider must grant uri permissions");
         }
     }
 
@@ -52,17 +73,15 @@ public class AssetsProvider extends ContentProvider {
         String file_name = uri.getLastPathSegment();
         if (file_name == null)
             throw new FileNotFoundException();
-        AssetFileDescriptor afd = null;
         try {
-            afd = am.openFd(file_name);
+            return am.openFd(file_name);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        return afd;
     }
 
     public static Uri addFile(String name, AssetFileDescriptor file) {
-        Uri u = Uri.parse(ContentResolver.SCHEME_CONTENT + "://" + info.authority + "/" + name);
+        Uri u = new Uri.Builder().scheme(ContentResolver.SCHEME_CONTENT).authority(info.authority).path(name).build();
         String type = MimeTypeMap.getFileExtensionFromUrl(u.toString());
         type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(type);
         types.put(u, type);
