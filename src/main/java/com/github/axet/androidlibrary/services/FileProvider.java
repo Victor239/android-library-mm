@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 public class FileProvider extends android.support.v4.content.FileProvider {
-    static final String[] COLUMNS = {OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE};
+    public static final String[] COLUMNS = {OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE};
 
     static Map<Uri, String> types = new HashMap<>();
     static Map<Uri, String> names = new HashMap<>();
@@ -96,13 +96,13 @@ public class FileProvider extends android.support.v4.content.FileProvider {
         }
     }
 
-    private static String[] copyOf(String[] original, int newLength) {
+    public static String[] copyOf(String[] original, int newLength) {
         final String[] result = new String[newLength];
         System.arraycopy(original, 0, result, 0, newLength);
         return result;
     }
 
-    private static Object[] copyOf(Object[] original, int newLength) {
+    public static Object[] copyOf(Object[] original, int newLength) {
         final Object[] result = new Object[newLength];
         System.arraycopy(original, 0, result, 0, newLength);
         return result;
