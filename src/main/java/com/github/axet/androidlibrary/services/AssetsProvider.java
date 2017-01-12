@@ -48,7 +48,11 @@ public class AssetsProvider extends ContentProvider {
         try {
             String[] a = am.list("");
             for (String f : a) {
-                addFile(f, am.openFd(f));
+                try {
+                    addFile(f, am.openFd(f));
+                } catch (FileNotFoundException ignore) {
+                    // ignore folders
+                }
             }
         } catch (IOException e) {
             throw new RuntimeException(e);

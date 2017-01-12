@@ -1,9 +1,11 @@
 package com.github.axet.androidlibrary.widgets;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.support.v4.view.MenuItemCompat;
+import android.support.v4.widget.ListPopupWindowCompat;
 import android.support.v7.view.menu.ListMenuItemView;
 import android.support.v7.view.menu.MenuBuilder;
 import android.support.v7.view.menu.MenuItemImpl;
@@ -27,6 +29,7 @@ import com.github.axet.androidlibrary.R;
 /**
  * PopupMenu window for ShareActionProvider
  */
+@TargetApi(11)
 public class PopupShareActionProvider extends ListPopupWindow {
     PopupMenu popup;
     ShareActionProvider action;
