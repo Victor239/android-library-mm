@@ -6,7 +6,7 @@ import android.media.AudioManager;
 public class Sound {
     protected Context context;
 
-    protected int soundMode;
+    protected int soundMode = -1;
 
     public Sound(Context context) {
         this.context = context;
@@ -30,9 +30,8 @@ public class Sound {
     }
 
     public void unsilent() {
-        // keep unchanged
         if (soundMode == -1)
-            return;
+            return; // already unsilensed
 
         AudioManager am = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
         int soundMode = am.getRingerMode();
