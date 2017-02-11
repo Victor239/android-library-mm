@@ -12,4 +12,38 @@
     <string name="ShareAction">Поделиться</string>
     <string name="readonly_directory">Папка только для чтения</string>
     <string name="select_folder">Выберите папку</string>
+
+    <plurals name="days">
+        <item quantity="one">%d день</item>
+        <item quantity="few">%d дня </item>
+        <item quantity="many">%d дней</item>
+        <item quantity="other">%d дней</item>
+    </plurals>
+
+    <plurals name="hours">
+        <item quantity="one">%d час</item>
+        <item quantity="few">%d часа</item>
+        <item quantity="many">%d часов</item>
+        <item quantity="other">%d часов</item>
+    </plurals>
+
+    <plurals name="minutes">
+        <item quantity="one">%d минута</item>
+        <item quantity="few">%d минуты</item>
+        <item quantity="many">%d минут</item>
+        <item quantity="other">%d минут</item>
+    </plurals>
+
+    <plurals name="seconds">
+        <item quantity="one">%d секунда</item>
+        <item quantity="few">%d секунды</item>
+        <item quantity="many">%d секунд</item>
+        <item quantity="other">%d секунд</item>
+    </plurals>
+
+    <string name="days_symbol">д</string>
+
+    <string name="size_gb">%1$.1f ГБ</string>
+    <string name="size_mb">%1$.1f МБ</string>
+    <string name="size_kb">%1$.1f кб</string>
 </resources>
