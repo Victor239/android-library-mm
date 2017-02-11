@@ -13,6 +13,9 @@ public class Sound {
     }
 
     public void silent() {
+        if (soundMode != -1)
+            return; // already silensed
+
         AudioManager am = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
         soundMode = am.getRingerMode();
 
