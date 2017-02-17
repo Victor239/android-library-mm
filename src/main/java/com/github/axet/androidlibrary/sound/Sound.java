@@ -12,6 +12,12 @@ public class Sound {
         this.context = context;
     }
 
+    float log1(float v) {
+        float max = 2;
+        float log1 = (float) (Math.log(max - v) / Math.log(max));
+        return 1 - log1;
+    }
+
     public void silent() {
         if (soundMode != -1)
             return; // already silensed
