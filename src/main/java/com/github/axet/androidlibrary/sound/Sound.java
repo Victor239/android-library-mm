@@ -12,10 +12,13 @@ public class Sound {
         this.context = context;
     }
 
-    float log1(float v) {
-        float max = 2;
-        float log1 = (float) (Math.log(max - v) / Math.log(max));
+    public static float log1(float v, float m) {
+        float log1 = (float) (Math.log(m - v) / Math.log(m));
         return 1 - log1;
+    }
+
+    public static float log1(float v) {
+        return log1(v, 2);
     }
 
     public void silent() {

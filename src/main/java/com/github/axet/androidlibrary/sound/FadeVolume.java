@@ -23,9 +23,7 @@ public class FadeVolume implements Runnable {
     public void run() {
         handler.removeCallbacks(this);
 
-        float log1 = (float) (Math.log(steps - step) / Math.log(steps));
-        // volume 0..1
-        float vol = 1 - log1;
+        float vol = Sound.log1(step, steps);
 
         if (!step(vol))
             return;
