@@ -32,7 +32,7 @@ public class Sound {
         if (i < 0) {
             i = -i - 2;
         }
-        for (; i < RATES.length; i++) {
+        for (; i >= 0; i--) {
             int r = RATES[i];
             int bufferSize = AudioTrack.getMinBufferSize(r, AudioFormat.CHANNEL_OUT_DEFAULT, AudioFormat.ENCODING_PCM_16BIT);
             if (bufferSize > 0) {
