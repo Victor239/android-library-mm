@@ -3,16 +3,23 @@ package com.github.axet.androidlibrary.sound;
 import android.os.Handler;
 
 public class FadeVolume implements Runnable {
-    public Handler handler = new Handler();
+    public Handler handler;
 
+    public int dur;
     public int step = 0;
     public int steps = 50;
     public int delay = 100;
 
-    public FadeVolume(int sec) {
+    public FadeVolume(Handler handler, int sec) {
+        this.dur = sec;
+        this.handler = handler;
         steps = (sec / delay);
         if (steps < 1)
             steps = 1;
+    }
+
+    public FadeVolume(int sec) {
+        this(new Handler(), sec);
     }
 
     public void stop() {
