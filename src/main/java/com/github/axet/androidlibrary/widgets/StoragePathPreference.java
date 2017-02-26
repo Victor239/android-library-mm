@@ -37,7 +37,10 @@ public class StoragePathPreference extends EditTextPreference {
     }
 
     public String getDefault() {
-        return Environment.getExternalStorageDirectory().getPath();
+        File ext = Environment.getExternalStorageDirectory();
+        if (ext == null) // Android Studio pref editor
+            return "/sdcard";
+        return ext.getPath();
     }
 
     @Override
