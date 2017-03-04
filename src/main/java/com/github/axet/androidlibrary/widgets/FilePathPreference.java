@@ -32,7 +32,7 @@ public class FilePathPreference extends EditTextPreference {
     }
 
     public void showDialog(Activity activity) {
-        f = new OpenFileDialog(getContext(), OpenFileDialog.DIALOG_TYPE.FOLDER_FIALOG);
+        f = new OpenFileDialog(getContext(), OpenFileDialog.DIALOG_TYPE.BOOTH);
 
         String path = getText();
 
