@@ -75,6 +75,7 @@ public class CircleImageView extends AppCompatImageView {
     private float mBorderRadius;
 
     int mShadowSize;
+    int mShadowColor;
 
     private ColorFilter mColorFilter;
 
@@ -104,6 +105,7 @@ public class CircleImageView extends AppCompatImageView {
         mFillColor = a.getColor(R.styleable.CircleImageView_civ_fill_color, DEFAULT_FILL_COLOR);
         mShadowSize = a.getDimensionPixelSize(R.styleable.CircleImageView_shadow_size, 15);
         mShadowSize = Math.min(mShadowSize, 25); // throws 25 max size exception for shadow layer
+        mShadowColor = a.getColor(R.styleable.CircleImageView_shadow_color, Color.BLACK);
 
         a.recycle();
 
@@ -395,7 +397,7 @@ public class CircleImageView extends AppCompatImageView {
         mBorderPaint.setAntiAlias(true);
         mBorderPaint.setColor(mBorderColor);
         mBorderPaint.setStrokeWidth(mBorderWidth);
-        mBorderPaint.setShadowLayer(mShadowSize, 0, 0, Color.BLACK);
+        mBorderPaint.setShadowLayer(mShadowSize, 0, 0, mShadowColor);
 
         mFillPaint.setStyle(Paint.Style.FILL);
         mFillPaint.setAntiAlias(true);
@@ -451,4 +453,7 @@ public class CircleImageView extends AppCompatImageView {
         mBitmapShader.setLocalMatrix(mShaderMatrix);
     }
 
+    public void setShadowColor(int i) {
+        mShadowColor = i;
+    }
 }
