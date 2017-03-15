@@ -25,7 +25,13 @@ public class Storage {
     }
 
     public File getLocalStorage() {
-        return new File(context.getApplicationInfo().dataDir, "data");
+        File internal = context.getFilesDir();
+
+        File external = context.getExternalFilesDir("");
+        if (external == null) // some old phones <15API with disabled sdcard return null
+            return internal;
+
+        return external;
     }
 
     public File getStoragePath(File file) {
