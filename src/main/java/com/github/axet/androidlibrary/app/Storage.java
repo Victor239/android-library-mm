@@ -1,7 +1,12 @@
 package com.github.axet.androidlibrary.app;
 
+import android.app.Activity;
+import android.content.Context;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.StatFs;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -13,6 +18,26 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 public class Storage {
+    protected Context context;
+
+    public Storage(Context context) {
+        this.context = context;
+    }
+
+    public File getLocalStorage() {
+        return new File(context.getApplicationInfo().dataDir);
+    }
+
+    public File getStoragePath(File file) {
+        File parent = file.getParentFile();
+        while (!parent.exists())
+            parent = file.getParentFile();
+        if ((file.canWrite() || parent.canWrite())) {
+            return file;
+        } else {
+            return getLocalStorage();
+        }
+    }
 
     public static long getFree(File f) {
         while (!f.exists())
@@ -107,5 +132,28 @@ public class Storage {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static boolean permitted(Context context, String[] ss) {
+        if (Build.VERSION.SDK_INT < 16)
+            return true;
+        for (String s : ss) {
+            if (ContextCompat.checkSelfPermission(context, s) != PackageManager.PERMISSION_GRANTED) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static boolean permitted(Activity context, String[] ss, int code) {
+        if (Build.VERSION.SDK_INT < 16)
+            return true;
+        for (String s : ss) {
+            if (ContextCompat.checkSelfPermission(context, s) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(context, ss, code);
+                return false;
+            }
+        }
+        return true;
     }
 }

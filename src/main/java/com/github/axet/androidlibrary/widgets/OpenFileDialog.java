@@ -42,7 +42,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
 
     public enum DIALOG_TYPE {
         FILE_DIALOG,
-        FOLDER_FIALOG,
+        FOLDER_DIALOG,
         BOOTH
     }
 

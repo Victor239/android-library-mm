@@ -7,10 +7,13 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Parcelable;
 import android.preference.EditTextPreference;
+import android.support.annotation.StringRes;
 import android.support.v7.app.AlertDialog;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.Button;
+
+import com.github.axet.androidlibrary.app.Storage;
 
 import java.io.File;
 
@@ -45,7 +48,7 @@ public class StoragePathPreference extends EditTextPreference {
 
     @Override
     protected void showDialog(Bundle state) {
-        f = new OpenFileDialog(getContext(), OpenFileDialog.DIALOG_TYPE.FOLDER_FIALOG);
+        f = new OpenFileDialog(getContext(), OpenFileDialog.DIALOG_TYPE.FOLDER_DIALOG);
         f.setChangeFolderListener(new Runnable() {
             @Override
             public void run() {
@@ -62,14 +65,7 @@ public class StoragePathPreference extends EditTextPreference {
             }
         });
 
-        String path = getText();
-
-        File p = new File(path);
-
-        if (path == null || path.isEmpty() || !p.canRead()) {
-            path = getDefault();
-            p = new File(path);
-        }
+        File p = getPath();
 
         f.setCurrentPath(p);
         f.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
@@ -88,13 +84,44 @@ public class StoragePathPreference extends EditTextPreference {
         d.show();
     }
 
+    @Override
+    protected boolean callChangeListener(Object newValue) {
+        updatePath(new File((String) newValue));
+        return super.callChangeListener(newValue);
+    }
+
     // load default value for sharedpropertiesmanager, or set it using xml.
     //
     // can't set dynamic values like '/sdcard'? he-he. so that what it for.
     @Override
     protected Object onGetDefaultValue(TypedArray a, int index) {
         def = a.getString(index);
-        return new File(getDefault(), def).getPath();
+        File path = new File(getDefault(), def);
+        return path.getPath();
+    }
+
+    File getPath() {
+        String path = getText();
+
+        if (path == null || path.isEmpty()) {
+            path = getDefault();
+        }
+
+        File p = new File(path);
+
+        return p;
+    }
+
+    void updatePath(File path) {
+        Storage storage = new Storage(getContext());
+        File summ = storage.getStoragePath(path);
+        setSummary(summ.toString());
+    }
+
+    @Override
+    protected void onSetInitialValue(boolean restoreValue, Object defaultValue) {
+        super.onSetInitialValue(restoreValue, defaultValue);
+        updatePath(getPath());
     }
 
     @Override
