@@ -27,6 +27,7 @@ public class StoragePathPreference extends EditTextPreference {
     public String def;
     public OpenFileDialog f;
     AlertDialog d;
+    Storage storage = new Storage(getContext());
 
     public StoragePathPreference(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
@@ -143,7 +144,6 @@ public class StoragePathPreference extends EditTextPreference {
     }
 
     void updatePath(File path) {
-        Storage storage = new Storage(getContext());
         File summ = storage.getStoragePath(path);
         setSummary(summ.toString());
     }
