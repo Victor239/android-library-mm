@@ -53,7 +53,6 @@ public class OpenFileDialog extends AlertDialog.Builder {
         BOOTH
     }
 
-    StorageAdapter storage = new StorageAdapter();
     File currentPath;
     TextView free;
     TextView title;
@@ -112,47 +111,12 @@ public class OpenFileDialog extends AlertDialog.Builder {
                     }
                 }
             }
-            try {
-                File mountFile = new File("/proc/mounts");
-                if (mountFile.exists()) {
-                    Scanner scanner = new Scanner(mountFile);
-                    while (scanner.hasNext()) {
-                        String line = scanner.nextLine();
-                        if (line.startsWith("/dev/block/vold/")) {
-                            String[] lineElements = line.split(" ");
-                            String element = lineElements[1];
-                            add(new File(element));
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            try {
-                File voldFile = new File("/system/etc/vold.fstab");
-                if (voldFile.exists()) {
-                    Scanner scanner = new Scanner(voldFile);
-                    while (scanner.hasNext()) {
-                        String line = scanner.nextLine();
-                        if (line.startsWith("dev_mount")) {
-                            String[] lineElements = line.split(" ");
-                            String element = lineElements[2];
-                            if (element.contains(":"))
-                                element = element.substring(0, element.indexOf(":"));
-                            add(new File(element));
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
         }
 
         void add(File f) {
             if (f == null)
                 return;
-            if (!f.canWrite())
+            if (!readonly && !f.canWrite())
                 return;
             for (int i = 0; i < list.size(); i++) {
                 if (list.get(i).getAbsolutePath().equals(f.getAbsolutePath()))
@@ -478,6 +442,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
         titlebar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                final StorageAdapter storage = new StorageAdapter();
                 AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
                 builder.setSingleChoiceItems(storage, storage.find(currentPath), new DialogInterface.OnClickListener() {
                     @Override
