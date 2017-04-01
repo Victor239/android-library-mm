@@ -12,8 +12,6 @@ import android.os.StatFs;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.PopupMenu;
-import android.system.Os;
-import android.system.StructStatVfs;
 import android.util.TypedValue;
 import android.view.Display;
 import android.view.Gravity;
@@ -39,12 +37,20 @@ import com.github.axet.androidlibrary.R;
 import com.github.axet.androidlibrary.app.MainLibrary;
 import com.github.axet.androidlibrary.app.Storage;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 public class OpenFileDialog extends AlertDialog.Builder {
     public static final String UP = "[..]";
@@ -54,6 +60,79 @@ public class OpenFileDialog extends AlertDialog.Builder {
         FILE_DIALOG,
         FOLDER_DIALOG,
         BOOTH
+    }
+
+    // cache folders, keep folder visible, when android shows none
+    static Map<File, Set<File>> cache = new TreeMap<>();
+
+    static void cache(Context context) {
+        cache(context.getExternalCacheDir());
+        if (Build.VERSION.SDK_INT >= 19) {
+            File[] ff = context.getExternalCacheDirs();
+            for (File f : ff) {
+                cache(f);
+            }
+        }
+    }
+
+    static void cache(File path) {
+        while (path != null && path.isFile()) // skip file links, go up folder
+            path = path.getParentFile();
+        if (path == null)
+            return;
+        File old = path;
+        path = path.getParentFile();
+        while (path != null) {
+            TreeSet<File> list = new TreeSet<>();
+            list.add(old);
+            Set<File> tmp = cache.put(path, list);
+            if (tmp != null) {
+                for (File f : tmp) {
+                    list.add(f);
+                }
+            }
+            old = path;
+            path = path.getParentFile();
+        }
+    }
+
+    static List<File> cache(File path, FilenameFilter filter) {
+        Set<File> list = null;
+        File[] ff = path.listFiles();
+        if (ff != null) {
+            list = new TreeSet<>(Arrays.asList(ff));
+        }
+        if (list == null)
+            list = new TreeSet<>();
+        Set<File> old = cache.get(path);
+        if (old != null) {
+            for (File f : old) {
+                if (f.exists()) { // purge cache from non existen files
+                    list.add(f);
+                }
+            }
+        }
+        cache.put(path, list);
+
+        ArrayList<File> files = new ArrayList<>();
+        for (File f : list) {
+            String s = f.getName();
+            if ((filter == null) || filter.accept(path, s))
+                files.add(f);
+        }
+        return files;
+    }
+
+    public static boolean isFile(File f) {
+        return !isDirectory(f);
+    }
+
+    public static boolean isDirectory(File f) {
+        if (f.isDirectory())
+            return true;
+        if (cache.get(f) != null)
+            return true;
+        return false;
     }
 
     File currentPath;
@@ -81,16 +160,11 @@ public class OpenFileDialog extends AlertDialog.Builder {
     Button positive; // enable / disable OK
 
     static class SortFiles implements Comparator<File> {
-        // for symlinks
-        public static boolean isFile(File f) {
-            return !f.isDirectory();
-        }
-
         @Override
         public int compare(File f1, File f2) {
-            if (f1.isDirectory() && isFile(f2))
+            if (isDirectory(f1) && isFile(f2))
                 return -1;
-            else if (isFile(f1) && f2.isDirectory())
+            else if (isFile(f1) && isDirectory(f2))
                 return 1;
             else
                 return f1.getPath().compareTo(f2.getPath());
@@ -102,6 +176,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
 
         public StorageAdapter() {
             File ext = Environment.getExternalStorageDirectory();
+            cache(ext);
             if (ext == null || (!readonly && !ext.canWrite()))
                 ext = getContext().getFilesDir();
             add(ext);
@@ -109,6 +184,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
                 File[] ff = getContext().getExternalFilesDirs("");
                 if (ff != null) {
                     for (File f : ff) {
+                        cache(f);
                         if (!f.getAbsolutePath().startsWith(ext.getAbsolutePath())) { // skip default /storage/.../files
                             File a = f;
 
@@ -268,7 +344,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
             File file = getItem(position);
             if (view != null) {
                 view.setText(file.getName());
-                if (file.isDirectory()) {
+                if (isDirectory(file)) {
                     setDrawable(view, getDrawable(folderIcon));
                 } else {
                     setDrawable(view, getDrawable(fileIcon));
@@ -293,10 +369,11 @@ public class OpenFileDialog extends AlertDialog.Builder {
         }
 
         public void scan(File dir) {
+            cache(dir);
             updateSelected(-1);
             currentPath = dir;
 
-            if (dir.exists() && !dir.isDirectory()) { // file or symlink
+            if (dir.exists() && !isDirectory(dir)) { // file or symlink
                 currentPath = currentPath.getParentFile();
             }
 
@@ -306,24 +383,22 @@ public class OpenFileDialog extends AlertDialog.Builder {
 
             clear();
 
-            File[] files = currentPath.listFiles(filenameFilter);
+            List<File> files = cache(currentPath, filenameFilter);
 
             if (files == null)
                 return;
 
-            ArrayList<File> list = new ArrayList<>(Arrays.asList(files));
-
             if (Build.VERSION.SDK_INT < 11) {
-                for (File f : list) {
+                for (File f : files) {
                     add(f);
                 }
             } else {
-                addAll(list);
+                addAll(files);
             }
 
             sort(new SortFiles());
 
-            if (dir.exists() && !dir.isDirectory()) { // file or symlink
+            if (dir.exists() && !isDirectory(dir)) { // file or symlink
                 updateSelected(getPosition(dir));
             }
 
@@ -417,6 +492,8 @@ public class OpenFileDialog extends AlertDialog.Builder {
 
         folderIcon = R.drawable.ic_folder;
         fileIcon = R.drawable.ic_file;
+
+        cache(context);
     }
 
     public int dp2px(int dp) {
@@ -501,7 +578,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
                     @Override
                     public void onClick(View view) {
                         File parentDirectory = currentPath;
-                        if (parentDirectory.isDirectory() || !parentDirectory.exists()) { // allow virtual up
+                        if (isDirectory(parentDirectory) || !parentDirectory.exists()) { // allow virtual up
                             parentDirectory = parentDirectory.getParentFile();
                         } else {
                             parentDirectory = parentDirectory.getParentFile();
@@ -616,7 +693,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
 
                     currentPath = file;
 
-                    if (file.isDirectory()) {
+                    if (isDirectory(file)) {
                         rebuildFiles();
                     } else {
                         switch (type) {
@@ -689,7 +766,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
             @Override
             public boolean accept(File file, String fileName) {
                 File tempFile = new File(file.getPath(), fileName);
-                if (tempFile.isFile())
+                if (isFile(tempFile))
                     return tempFile.getName().matches(filter);
                 return true;
             }
