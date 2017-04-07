@@ -14,28 +14,28 @@ import android.util.AttributeSet;
 /**
  * Add users permission to app manifest:
  *
- *     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+ *     &lt;uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" /&gt;
  */
-public class OptimizationPreference extends SwitchPreferenceCompat {
+public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
 
     @TargetApi(21)
-    public OptimizationPreference(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+    public OptimizationPreferenceCompat(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
         create();
     }
 
     @TargetApi(21)
-    public OptimizationPreference(Context context, AttributeSet attrs, int defStyleAttr) {
+    public OptimizationPreferenceCompat(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         create();
     }
 
-    public OptimizationPreference(Context context, AttributeSet attrs) {
+    public OptimizationPreferenceCompat(Context context, AttributeSet attrs) {
         super(context, attrs);
         create();
     }
 
-    public OptimizationPreference(Context context) {
+    public OptimizationPreferenceCompat(Context context) {
         super(context);
         create();
     }
