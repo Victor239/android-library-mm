@@ -162,12 +162,13 @@ public class WebViewCustom extends WebView {
         create();
     }
 
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    @TargetApi(21)
     public WebViewCustom(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
         create();
     }
 
+    @TargetApi(11)
     public WebViewCustom(Context context, AttributeSet attrs, int defStyleAttr, boolean privateBrowsing) {
         super(context, attrs, defStyleAttr, privateBrowsing);
         create();
@@ -186,7 +187,8 @@ public class WebViewCustom extends WebView {
         getSettings().setLoadWithOverviewMode(true);
         getSettings().setUseWideViewPort(true);
         getSettings().setBuiltInZoomControls(true);
-        getSettings().setDisplayZoomControls(true);
+        if (Build.VERSION.SDK_INT >= 11)
+            getSettings().setDisplayZoomControls(true);
 
         setWebChromeClient(new WebChromeClient() {
             @Override
