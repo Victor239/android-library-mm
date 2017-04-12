@@ -111,8 +111,8 @@ public class StoragePathPreference extends EditTextPreference {
                     if (!ff.isDirectory())
                         ff = ff.getParentFile();
                     String fileName = ff.getPath();
-                    if (callChangeListener(f, fileName)) {
-                        setText(f, fileName);
+                    if (callChangeListener(pref, fileName)) {
+                        setText(pref, fileName);
                     }
                 }
             });
