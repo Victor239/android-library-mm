@@ -41,6 +41,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
     }
 
     void create() {
+        onResume();
     }
 
     public void onResume() {

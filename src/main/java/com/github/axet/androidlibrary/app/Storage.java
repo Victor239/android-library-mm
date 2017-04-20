@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.StatFs;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 
 import java.io.BufferedInputStream;
@@ -171,12 +172,24 @@ public class Storage {
         return true;
     }
 
-    public static boolean permitted(Activity context, String[] ss, int code) {
+    public static boolean permitted(Activity a, String[] ss, int code) {
         if (Build.VERSION.SDK_INT < 16)
             return true;
         for (String s : ss) {
-            if (ContextCompat.checkSelfPermission(context, s) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(context, ss, code);
+            if (ContextCompat.checkSelfPermission(a, s) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(a, ss, code);
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static boolean permitted(Fragment f, String[] ss, int code) {
+        if (Build.VERSION.SDK_INT < 16)
+            return true;
+        for (String s : ss) {
+            if (ContextCompat.checkSelfPermission(f.getContext(), s) != PackageManager.PERMISSION_GRANTED) {
+                f.requestPermissions(ss, code);
                 return false;
             }
         }
