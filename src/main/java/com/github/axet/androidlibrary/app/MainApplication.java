@@ -1,10 +1,24 @@
 package com.github.axet.androidlibrary.app;
 
+import android.app.Application;
 import android.content.Context;
 
 import com.github.axet.androidlibrary.R;
 
-public class MainLibrary {
+import java.lang.reflect.Method;
+
+public class MainApplication extends Application {
+
+    @Override
+    protected void attachBaseContext(Context base) {
+        super.attachBaseContext(base);
+        try { // MultiDex.install(this);
+            Class<?> klass = Class.forName("android.support.multidex.MultiDex");
+            Method m = klass.getMethod("install", Context.class);
+            m.invoke(null, this);
+        } catch (Exception ignore) {
+        }
+    }
 
     public static String formatTime(int tt) {
         return String.format("%02d", tt);

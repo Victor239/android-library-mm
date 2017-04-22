@@ -34,20 +34,16 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.github.axet.androidlibrary.R;
-import com.github.axet.androidlibrary.app.MainLibrary;
+import com.github.axet.androidlibrary.app.MainApplication;
 import com.github.axet.androidlibrary.app.Storage;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FilenameFilter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -299,7 +295,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
             TextView title = (TextView) convertView.findViewWithTag("text");
             title.setText(f.getAbsolutePath());
             TextView free = (TextView) convertView.findViewWithTag("free");
-            free.setText(MainLibrary.formatSize(getContext(), Storage.getFree(f)));
+            free.setText(MainApplication.formatSize(getContext(), Storage.getFree(f)));
 
             return convertView;
         }
@@ -846,7 +842,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
         adapter.scan(currentPath);
         listView.setSelection(0);
         title.setText(adapter.currentPath.getPath());
-        free.setText(MainLibrary.formatSize(getContext(), Storage.getFree(adapter.currentPath)));
+        free.setText(MainApplication.formatSize(getContext(), Storage.getFree(adapter.currentPath)));
         if (changeFolder != null) {
             changeFolder.run();
         }
