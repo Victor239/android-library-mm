@@ -167,7 +167,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
                     setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
                         @Override
                         public boolean onPreferenceChange(Preference preference, Object newValue) {
-                            showWarning(getContext());
+                            showWarning(getContext()); // show commons
                             return false;
                         }
                     });
@@ -181,7 +181,8 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
                 @Override
                 @TargetApi(23)
                 public boolean onPreferenceChange(Preference preference, Object o) {
-                    showWarning(getContext());
+                    AlertDialog.Builder builder = buildWarning(getContext(), false);  // hide commons
+                    showWarning(getContext(), builder);
                     return false;
                 }
             });
