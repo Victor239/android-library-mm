@@ -38,4 +38,6 @@
     <string name="size_gb">%1$.1f GB</string>
     <string name="size_mb">%1$.1f MB</string>
     <string name="size_kb">%1$.1f kb</string>
+    <string name="optimization_dialog">Optimization Settings</string>
+    <string name="optimization_message">Consider adding application to white list to let it be exact on time.</string>
 </resources>
