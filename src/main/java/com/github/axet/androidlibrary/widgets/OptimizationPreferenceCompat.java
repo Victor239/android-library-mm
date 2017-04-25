@@ -181,7 +181,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
                 @Override
                 @TargetApi(23)
                 public boolean onPreferenceChange(Preference preference, Object o) {
-                    AlertDialog.Builder builder = buildWarning(getContext(), false);  // hide commons
+                    AlertDialog.Builder builder = buildWarning(getContext(), !pm.isIgnoringBatteryOptimizations(n));  // hide commons
                     showWarning(getContext(), builder);
                     return false;
                 }
