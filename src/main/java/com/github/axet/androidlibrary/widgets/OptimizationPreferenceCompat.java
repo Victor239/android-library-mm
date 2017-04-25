@@ -237,12 +237,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         }
     }
 
-    public static void showWarning(final Context context) {
-        final SharedPreferences shared = PreferenceManager.getDefaultSharedPreferences(context);
-        SharedPreferences.Editor edit = shared.edit();
-        edit.putBoolean(PREFERENCE_OPTIMIZATION_WARNING, false);
-        edit.commit();
-
+    public static AlertDialog.Builder buildWarning(final Context context) {
         if (isHuawei(context)) {
             AlertDialog.Builder builder = huaweiWarning(context);
             setPositive(builder, new DialogInterface.OnClickListener() {
@@ -251,8 +246,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
                     huaweiProtectedApps(context);
                 }
             });
-            builder.show();
-            return;
+            return builder;
         } else if (isSamsung(context)) {
             AlertDialog.Builder builder = samsungWarninig(context);
             setPositive(builder, new DialogInterface.OnClickListener() {
@@ -261,8 +255,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
                     context.startActivity(samsung);
                 }
             });
-            builder.show();
-            return;
+            return builder;
         } else {
             for (Intent intent : COMMON) {
                 if (isCallable(context, intent)) {
@@ -274,10 +267,33 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
                             context.startActivity(i);
                         }
                     });
-                    builder.show();
-                    return;
+                    return builder;
                 }
             }
+        }
+        return null;
+    }
+
+    public static void showWarning(Context context) {
+        AlertDialog.Builder builder = buildWarning(context);
+        showWarning(context, builder);
+    }
+
+    public static void showWarning(Context context, AlertDialog.Builder builder) {
+        if (builder != null)
+            showWarning(context, builder.create());
+        else
+            showWarning(context, (AlertDialog) null);
+    }
+
+    public static void showWarning(Context context, AlertDialog d) {
+        final SharedPreferences shared = PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences.Editor edit = shared.edit();
+        edit.putBoolean(PREFERENCE_OPTIMIZATION_WARNING, false);
+        edit.commit();
+        if (d != null) {
+            d.show();
+            return;
         }
         if (Build.VERSION.SDK_INT >= 23) {
             showOptimization(context);
