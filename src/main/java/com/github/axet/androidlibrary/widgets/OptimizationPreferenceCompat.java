@@ -237,7 +237,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         }
     }
 
-    public static AlertDialog.Builder buildWarning(final Context context) {
+    public static AlertDialog.Builder buildWarning(final Context context, boolean showCommons) {
         if (isHuawei(context)) {
             AlertDialog.Builder builder = huaweiWarning(context);
             setPositive(builder, new DialogInterface.OnClickListener() {
@@ -271,11 +271,17 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
                 }
             }
         }
-        return null;
+        if (showCommons) {
+            AlertDialog.Builder builder = commonWarning(context);
+            setPositive(builder, null);
+            return builder;
+        } else {
+            return null;
+        }
     }
 
     public static void showWarning(Context context) {
-        AlertDialog.Builder builder = buildWarning(context);
+        AlertDialog.Builder builder = buildWarning(context, true);
         showWarning(context, builder);
     }
 
