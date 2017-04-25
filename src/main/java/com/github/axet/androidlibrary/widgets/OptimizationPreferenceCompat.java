@@ -280,15 +280,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
             }
         }
         if (Build.VERSION.SDK_INT >= 23) {
-            final PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
-            final String n = context.getPackageName();
-            if (pm.isIgnoringBatteryOptimizations(n)) {
-                showOptimization(context);
-            } else {
-                AlertDialog.Builder builder = commonWarning(context);
-                setPositive(builder, null);
-                builder.show();
-            }
+            showOptimization(context);
         }
     }
 }
