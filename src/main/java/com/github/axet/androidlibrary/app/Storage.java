@@ -102,6 +102,16 @@ public class Storage {
         return "";
     }
 
+    // "test (1)" --> "test"
+    public static String filterDups(String fileName) {
+        Pattern p = Pattern.compile("(.*)\\s\\(\\d+\\)");
+        Matcher m = p.matcher(fileName);
+        if (m.matches()) {
+            fileName = m.group(1);
+        }
+        return fileName;
+    }
+
     public static File getNextFile(File f) {
         File parent = f.getParentFile();
         String fileName = f.getName();
@@ -114,12 +124,7 @@ public class Storage {
             fileName = fileName.substring(0, i);
         }
 
-        // "test (1)" --> "test"
-        Pattern p = Pattern.compile("(.*)\\s\\(\\d+\\)");
-        Matcher m = p.matcher(fileName);
-        if (m.matches()) {
-            fileName = m.group(1);
-        }
+        fileName = filterDups(fileName);
 
         return getNextFile(parent, fileName, extension);
     }
