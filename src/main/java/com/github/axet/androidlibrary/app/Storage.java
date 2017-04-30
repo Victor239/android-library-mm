@@ -21,6 +21,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Storage {
     protected Context context;
@@ -100,7 +102,8 @@ public class Storage {
         return "";
     }
 
-    public static File getNextFile(File parent, File f) {
+    public static File getNextFile(File f) {
+        File parent = f.getParentFile();
         String fileName = f.getName();
 
         String extension = "";
@@ -109,6 +112,13 @@ public class Storage {
         if (i > 0) {
             extension = fileName.substring(i + 1);
             fileName = fileName.substring(0, i);
+        }
+
+        // "test (1)" --> "test"
+        Pattern p = Pattern.compile("(.*)\\s\\(\\d+\\)");
+        Matcher m = p.matcher(fileName);
+        if (m.matches()) {
+            fileName = m.group(1);
         }
 
         return getNextFile(parent, fileName, extension);
@@ -146,7 +156,17 @@ public class Storage {
         f.delete();
     }
 
+    public static boolean isSame(File f, File t) {
+        try {
+            return f.getCanonicalPath().equals(t.getCanonicalPath());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static void move(File f, File to) {
+        if (f.renameTo(to))
+            return;
         try {
             InputStream in = new BufferedInputStream(new FileInputStream(f));
             OutputStream out = new BufferedOutputStream(new FileOutputStream(to));
