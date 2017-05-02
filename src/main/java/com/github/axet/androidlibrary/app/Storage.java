@@ -108,6 +108,7 @@ public class Storage {
         Matcher m = p.matcher(fileName);
         if (m.matches()) {
             fileName = m.group(1);
+            return filterDups(fileName);
         }
         return fileName;
     }

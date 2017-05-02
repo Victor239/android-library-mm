@@ -25,8 +25,8 @@ android {
     defaultConfig {
         minSdkVersion 9
         targetSdkVersion 25
-        versionCode 132
-        versionName "1.11.18"
+        versionCode 133
+        versionName "1.11.19"
     }
     buildTypes {
         release {
