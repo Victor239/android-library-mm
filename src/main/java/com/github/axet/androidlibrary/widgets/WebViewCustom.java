@@ -407,6 +407,8 @@ public class WebViewCustom extends WebView {
     @Override
     public String getOriginalUrl() {
         String url = super.getOriginalUrl();
+        if (url == null)
+            return null;
         if (url.startsWith("data:")) { // bug, it suppose to be normal url
             return getUrl();
         }
