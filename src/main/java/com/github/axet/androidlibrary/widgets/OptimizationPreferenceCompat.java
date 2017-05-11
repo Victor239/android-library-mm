@@ -127,6 +127,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
             unregister();
         }
 
+        // return true if app need to be started
         public boolean onStartCommand(Intent intent, int flags, int startId) {
             register();
             if (intent == null)
