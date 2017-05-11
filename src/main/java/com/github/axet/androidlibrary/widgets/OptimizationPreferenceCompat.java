@@ -120,6 +120,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
 
         public void close() {
             context.unregisterReceiver(this);
+            unregister();
         }
 
         public boolean onStartCommand(Intent intent, int flags, int startId) {
