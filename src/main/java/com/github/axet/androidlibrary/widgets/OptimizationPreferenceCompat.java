@@ -1,16 +1,18 @@
 package com.github.axet.androidlibrary.widgets;
 
 import android.annotation.TargetApi;
-import android.content.ActivityNotFoundException;
-import android.content.ComponentName;
+import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Handler;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
@@ -20,6 +22,7 @@ import android.support.v7.preference.SwitchPreferenceCompat;
 import android.util.AttributeSet;
 
 import com.github.axet.androidlibrary.R;
+import com.github.axet.androidlibrary.app.MainApplication;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -45,7 +48,119 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
     static Intent[] ALL = new Intent[]{huawei, samsung, miui, vivo, oppo};
     static Intent[] COMMON = new Intent[]{miui, vivo, oppo};
 
-    public static final String PREFERENCE_OPTIMIZATION_WARNING = OptimizationPreferenceCompat.class.getCanonicalName() + "_WARNING";
+    // checkbox for old phones, which fires 15 minutes event
+    public static final String PREFERENCE_OPTIMIZATION_SERVICE = OptimizationPreferenceCompat.class.getCanonicalName() + ".SERVICE";
+    public static final String PREFERENCE_OPTIMIZATION_WARNING = OptimizationPreferenceCompat.class.getCanonicalName() + ".WARNING";
+    public static final String PING = OptimizationPreferenceCompat.class.getCanonicalName() + ".PING";
+    public static final String PONG = OptimizationPreferenceCompat.class.getCanonicalName() + ".PONG";
+    public static final String SERVICE_CHECK = OptimizationPreferenceCompat.class.getCanonicalName() + ".SERVICE_CHECK";
+    public static final String SERVICE_RESTART = OptimizationPreferenceCompat.class.getCanonicalName() + ".SERVICE_RESTART";
+
+    public static void enable(Context context, long next, Class<? extends Service> service) {
+        Intent intent = new Intent(context, service);
+        intent.setAction(SERVICE_CHECK);
+        MainApplication.setExact(context, next, intent);
+    }
+
+    public static void disable(Context context, Class<? extends Service> service) {
+        Intent intent = new Intent(context, service);
+        intent.setAction(SERVICE_CHECK);
+        MainApplication.cancel(context, intent);
+    }
+
+    // all service related code, for old phones, where AlarmManager will be used to keep app running
+    Class<? extends Service> service;
+
+    public static class ApplicationReceiver extends BroadcastReceiver {
+        Context context;
+
+        public ApplicationReceiver(Context context) {
+            this.context = context;
+            IntentFilter ff = new IntentFilter();
+            ff.addAction(PING);
+            context.registerReceiver(this, ff);
+        }
+
+        public void close() {
+            context.unregisterReceiver(this);
+        }
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String a = intent.getAction();
+            if (a.equals(PING)) {
+                Intent pong = new Intent(PONG);
+                context.sendBroadcast(pong);
+            }
+        }
+    }
+
+    public static class ServiceReceiver extends BroadcastReceiver {
+        Context context;
+        Handler handler = new Handler();
+        Class<? extends Service> service;
+        Runnable check = new Runnable() {
+            @Override
+            public void run() {
+                Intent intent = new Intent(context, service);
+                intent.setAction(SERVICE_RESTART);
+                context.sendBroadcast(intent);
+            }
+        };
+        long next;
+
+        public ServiceReceiver(final Context context, final Class<? extends Service> service) {
+            this.context = context;
+            this.service = service;
+            IntentFilter ff = new IntentFilter();
+            ff.addAction(PONG);
+            context.registerReceiver(this, ff);
+            register();
+        }
+
+        public void close() {
+            context.unregisterReceiver(this);
+        }
+
+        public void check(Intent intent) {
+            register();
+            if (intent == null)
+                return;
+            String a = intent.getAction();
+            if (a == null)
+                return;
+            if (a.equals(SERVICE_CHECK)) {
+                Intent i = new Intent(PING);
+                context.sendBroadcast(i);
+                handler.postDelayed(check, 5 * 1000);
+            }
+        }
+
+        void register() {
+            final SharedPreferences shared = PreferenceManager.getDefaultSharedPreferences(context);
+            boolean b = shared.getBoolean(PREFERENCE_OPTIMIZATION_SERVICE, false);
+            if (!b) {
+                unregister();
+                return;
+            }
+            long cur = System.currentTimeMillis();
+            if (next < cur)
+                next = cur + 15 * 60 * 1000;
+            enable(context, next, service);
+        }
+
+        void unregister() {
+            disable(context, service);
+        }
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String a = intent.getAction();
+            if (a.equals(PONG)) {
+                handler.removeCallbacks(check);
+            }
+        }
+    }
 
     public static Intent IntentClassName(String p, String n) {
         Intent intent = new Intent();
@@ -158,6 +273,11 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         return builder;
     }
 
+    public void enable(Class<? extends Service> service) {
+        this.service = service;
+        onResume();
+    }
+
     public void onResume() {
         final PowerManager pm = (PowerManager) getContext().getSystemService(Context.POWER_SERVICE);
         final String n = getContext().getPackageName();
@@ -171,8 +291,45 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
                             return false;
                         }
                     });
+                    setVisible(true);
                     return;
                 }
+            }
+            if (service != null) {
+                final SharedPreferences shared = PreferenceManager.getDefaultSharedPreferences(getContext());
+                boolean b = shared.getBoolean(PREFERENCE_OPTIMIZATION_SERVICE, false);
+                setChecked(b);
+                setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+                    @Override
+                    public boolean onPreferenceChange(Preference preference, Object newValue) {
+                        boolean b = (boolean) newValue;
+                        if (b) {
+                            AlertDialog.Builder builder = buildWarning(getContext(), true);
+                            builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    enable(getContext(), System.currentTimeMillis(), service);
+                                    final SharedPreferences shared = PreferenceManager.getDefaultSharedPreferences(getContext());
+                                    SharedPreferences.Editor edit = shared.edit();
+                                    edit.putBoolean(PREFERENCE_OPTIMIZATION_SERVICE, true);
+                                    edit.commit();
+                                    setChecked(true);
+                                }
+                            });
+                            showWarning(getContext(), builder); // show commons
+                        } else {
+                            disable(getContext(), service);
+                            final SharedPreferences shared = PreferenceManager.getDefaultSharedPreferences(getContext());
+                            SharedPreferences.Editor edit = shared.edit();
+                            edit.putBoolean(PREFERENCE_OPTIMIZATION_SERVICE, false);
+                            edit.commit();
+                            setChecked(false);
+                        }
+                        return false;
+                    }
+                });
+                setVisible(true);
+                return;
             }
             setVisible(false);
         } else {
