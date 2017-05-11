@@ -147,11 +147,18 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         }
 
         void register() {
-            final SharedPreferences shared = PreferenceManager.getDefaultSharedPreferences(context);
-            boolean b = shared.getBoolean(PREFERENCE_OPTIMIZATION_SERVICE, false);
-            if (!b) {
-                unregister();
-                return;
+            if (Build.VERSION.SDK_INT >= 23) {
+                if (!isIgnoringBatteryOptimizations(context)) {
+                    unregister();
+                    return;
+                }
+            } else {
+                final SharedPreferences shared = PreferenceManager.getDefaultSharedPreferences(context);
+                boolean b = shared.getBoolean(PREFERENCE_OPTIMIZATION_SERVICE, false);
+                if (!b) {
+                    unregister();
+                    return;
+                }
             }
             long cur = System.currentTimeMillis();
             if (next < cur)
@@ -288,9 +295,14 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         onResume();
     }
 
+    @TargetApi(23)
+    public static boolean isIgnoringBatteryOptimizations(Context context) {
+        final PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+        final String n = context.getPackageName();
+        return pm.isIgnoringBatteryOptimizations(n);
+    }
+
     public void onResume() {
-        final PowerManager pm = (PowerManager) getContext().getSystemService(Context.POWER_SERVICE);
-        final String n = getContext().getPackageName();
         if (Build.VERSION.SDK_INT < 23) {
             for (Intent intent : ALL) {
                 if (isCallable(getContext(), intent)) {
@@ -343,12 +355,20 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
             }
             setVisible(false);
         } else {
-            setChecked(pm.isIgnoringBatteryOptimizations(n));
+            boolean b = isIgnoringBatteryOptimizations(getContext());
+            if (service != null) {
+                if (b) {
+                    enable(getContext(), System.currentTimeMillis(), service);
+                } else {
+                    disable(getContext(), service);
+                }
+            }
+            setChecked(b);
             setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                 @Override
                 @TargetApi(23)
                 public boolean onPreferenceChange(Preference preference, Object o) {
-                    AlertDialog.Builder builder = buildWarning(getContext(), !pm.isIgnoringBatteryOptimizations(n));  // hide commons
+                    AlertDialog.Builder builder = buildWarning(getContext(), !isIgnoringBatteryOptimizations(getContext()));  // hide commons
                     showWarning(getContext(), builder);
                     return false;
                 }
@@ -358,9 +378,8 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
 
     @TargetApi(23)
     static void showOptimization(Context context) {
-        final PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
         final String n = context.getPackageName();
-        if (pm.isIgnoringBatteryOptimizations(n)) {
+        if (isIgnoringBatteryOptimizations(context)) {
             Intent intent = new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
             context.startActivity(intent);
         } else {
@@ -381,7 +400,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
             if (Build.VERSION.SDK_INT >= 23) {
                 final PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
                 final String n = context.getPackageName();
-                if (!pm.isIgnoringBatteryOptimizations(n)) {
+                if (!isIgnoringBatteryOptimizations(context)) {
                     return true;
                 }
             }
