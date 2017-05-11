@@ -1,8 +1,9 @@
 package com.github.axet.androidlibrary.app;
 
-import android.app.AlarmManager;
+import android.app.Activity;
 import android.app.Application;
 import android.app.PendingIntent;
+import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
@@ -12,14 +13,11 @@ import android.util.Log;
 import com.github.axet.androidlibrary.R;
 
 import java.lang.reflect.Method;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeMap;
 
 public class MainApplication extends Application {
     public static final String TAG = MainApplication.class.getSimpleName();
-
-    Handler handler = new Handler();
-    Map<String, Runnable> alarms = new TreeMap<>();
 
     @Override
     protected void attachBaseContext(Context base) {
@@ -112,47 +110,4 @@ public class MainApplication extends Application {
         return str.trim();
     }
 
-    static String intentId(int requestCode, Intent intent) {
-        return requestCode + "_" + intent.getClass().getCanonicalName() + "_" + intent.getAction();
-    }
-
-    public static void setExact(final Context context, long time, final Intent intent) {
-        final PendingIntent pe = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_ONE_SHOT);
-        AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        if (Build.VERSION.SDK_INT >= 23) {
-            am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, time, pe);
-        } else if (Build.VERSION.SDK_INT >= 19) {
-            am.setExact(AlarmManager.RTC_WAKEUP, time, pe);
-        } else {
-            am.set(AlarmManager.RTC_WAKEUP, time, pe);
-        }
-        long delay = time - System.currentTimeMillis();
-        if (delay < 0)
-            delay = 0;
-        Runnable r = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    pe.send();
-                } catch (PendingIntent.CanceledException e) {
-                    Log.d(TAG, "pending exec failed", e);
-                }
-            }
-        };
-        MainApplication app = (MainApplication) context.getApplicationContext();
-        String id = intentId(0, intent);
-        Runnable old = app.alarms.put(id, r);
-        app.handler.removeCallbacks(old);
-        app.handler.postDelayed(r, delay);
-    }
-
-    public static void cancel(Context context, Intent intent) {
-        PendingIntent pe = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_ONE_SHOT);
-        AlarmManager alarm = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        alarm.cancel(pe);
-        MainApplication app = (MainApplication) context.getApplicationContext();
-        String id = intentId(0, intent);
-        Runnable r = app.alarms.remove(id);
-        app.handler.removeCallbacks(r);
-    }
 }

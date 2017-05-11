@@ -22,6 +22,7 @@ import android.support.v7.preference.SwitchPreferenceCompat;
 import android.util.AttributeSet;
 
 import com.github.axet.androidlibrary.R;
+import com.github.axet.androidlibrary.app.AlarmManager;
 import com.github.axet.androidlibrary.app.MainApplication;
 
 import java.io.IOException;
@@ -62,13 +63,13 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
     public static void enable(Context context, long next, Class<? extends Service> service) {
         Intent intent = new Intent(context, service);
         intent.setAction(SERVICE_CHECK);
-        MainApplication.setExact(context, next, intent);
+        AlarmManager.setExact(context, next, intent);
     }
 
     public static void disable(Context context, Class<? extends Service> service) {
         Intent intent = new Intent(context, service);
         intent.setAction(SERVICE_CHECK);
-        MainApplication.cancel(context, intent);
+        AlarmManager.cancel(context, intent);
     }
 
     // all service related code, for old phones, where AlarmManager will be used to keep app running
