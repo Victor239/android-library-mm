@@ -106,8 +106,9 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         Runnable check = new Runnable() {
             @Override
             public void run() {
-                Intent intent = new Intent(SERVICE_RESTART);
-                context.sendBroadcast(intent);
+                Intent intent = new Intent(context, service);
+                intent.setAction(SERVICE_RESTART);
+                context.startService(intent);
             }
         };
         long next;
