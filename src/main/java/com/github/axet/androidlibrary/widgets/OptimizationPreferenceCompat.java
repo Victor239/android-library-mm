@@ -48,6 +48,9 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
     static Intent[] ALL = new Intent[]{huawei, samsung, miui, vivo, oppo};
     static Intent[] COMMON = new Intent[]{miui, vivo, oppo};
 
+    public static int REFRESH = 15 * 60 * 1000;
+    public static int CHECK_DELAY = 5 * 1000;
+
     // checkbox for old phones, which fires 15 minutes event
     public static final String PREFERENCE_OPTIMIZATION_SERVICE = OptimizationPreferenceCompat.class.getCanonicalName() + ".SERVICE";
     public static final String PREFERENCE_OPTIMIZATION_WARNING = OptimizationPreferenceCompat.class.getCanonicalName() + ".WARNING";
@@ -131,7 +134,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
             if (a == null)
                 return false;
             if (a.equals(SERVICE_CHECK)) {
-                handler.postDelayed(check, 5 * 1000);
+                handler.postDelayed(check, CHECK_DELAY);
                 Intent i = new Intent(PING);
                 context.sendBroadcast(i);
             }
@@ -150,7 +153,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
             }
             long cur = System.currentTimeMillis();
             if (next < cur)
-                next = cur + 15 * 60 * 1000;
+                next = cur + REFRESH;
             enable(context, next, service);
         }
 
