@@ -146,6 +146,10 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
             return false;
         }
 
+        public void onTaskRemoved(Intent intent) {
+            register();
+        }
+
         void register() {
             if (Build.VERSION.SDK_INT >= 23) {
                 if (!isIgnoringBatteryOptimizations(context)) {
