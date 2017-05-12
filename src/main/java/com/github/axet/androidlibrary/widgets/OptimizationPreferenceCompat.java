@@ -77,11 +77,13 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
 
     public static class ApplicationReceiver extends BroadcastReceiver {
         Context context;
+        Class<? extends Service> service;
 
-        public ApplicationReceiver(Context context) {
+        public ApplicationReceiver(Context context, Class<? extends Service> klass) {
             this.context = context;
+            this.service = klass;
             IntentFilter ff = new IntentFilter();
-            ff.addAction(PING);
+            ff.addAction(service.getCanonicalName() + PING);
             context.registerReceiver(this, ff);
         }
 
@@ -92,8 +94,8 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         @Override
         public void onReceive(Context context, Intent intent) {
             String a = intent.getAction();
-            if (a.equals(PING)) {
-                Intent pong = new Intent(PONG);
+            if (a.equals(service.getCanonicalName() + PING)) {
+                Intent pong = new Intent(service.getCanonicalName() + PONG);
                 context.sendBroadcast(pong);
             }
         }
@@ -103,6 +105,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         Context context;
         Handler handler = new Handler();
         Class<? extends Service> service;
+        long next;
         Runnable check = new Runnable() {
             @Override
             public void run() {
@@ -111,13 +114,12 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
                 context.startService(intent);
             }
         };
-        long next;
 
         public ServiceReceiver(final Context context, final Class<? extends Service> service) {
             this.context = context;
             this.service = service;
             IntentFilter ff = new IntentFilter();
-            ff.addAction(PONG);
+            ff.addAction(service.getCanonicalName() + PONG);
             context.registerReceiver(this, ff);
             register();
         }
@@ -137,7 +139,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
                 return false;
             if (a.equals(SERVICE_CHECK)) {
                 handler.postDelayed(check, CHECK_DELAY);
-                Intent i = new Intent(PING);
+                Intent i = new Intent(service.getCanonicalName() + PING);
                 context.sendBroadcast(i);
             }
             if (a.equals(SERVICE_RESTART)) {
@@ -177,7 +179,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         @Override
         public void onReceive(Context context, Intent intent) {
             String a = intent.getAction();
-            if (a.equals(PONG)) {
+            if (a.equals(service.getCanonicalName() + PONG)) {
                 handler.removeCallbacks(check);
             }
         }
