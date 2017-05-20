@@ -1,0 +1,44 @@
+<resources>
+    <!--OpenFileDialog-->
+    <string name="OpenFileDialogRename">名前を変更</string>
+    <string name="OpenFileDialogDelete">削除</string>
+    <string name="OpenFileDialogNewFolder">新しいフォルダー</string>
+    <string name="OpenFileDialogFolderName">フォルダー名</string>
+    <string name="OpenFileDialogUnableCreate">フォルダーを作成できません: \'%1$s\'</string>
+    <string name="OpenFileDialogFolderCreated">フォルダー \'%1$s\' を作成しました</string>
+    <string name="OpenFileDialogFolderDeleted">削除しました: \'%1$s\'</string>
+    <string name="OpenFileDialogRenamedTo">名前を変更しました: \'%1$s\'</string>
+    <string name="OpenFileDialogEmptyList">空のリスト</string>
+    <string name="ShareAction">共有</string>
+    <string name="readonly_directory">読み取り専用ディレクトリー</string>
+    <string name="select_folder">フォルダーを選択してください</string>
+
+    <plurals name="days">
+        <item quantity="one">%d 日</item>
+        <item quantity="other">%d 日</item>
+    </plurals>
+
+    <plurals name="hours">
+        <item quantity="one">%d 時間</item>
+        <item quantity="other">%d 時間</item>
+    </plurals>
+
+    <plurals name="minutes">
+        <item quantity="one">%d 分</item>
+        <item quantity="other">%d 分</item>
+    </plurals>
+
+    <plurals name="seconds">
+        <item quantity="one">%d 秒</item>
+        <item quantity="other">%d 秒</item>
+    </plurals>
+
+    <string name="days_symbol">"d"</string>
+
+    <string name="size_gb">%1$.1f GB</string>
+    <string name="size_mb">%1$.1f MB</string>
+    <string name="size_kb">%1$.1f kb</string>
+    <string name="optimization_dialog">最適化設定</string>
+    <string name="optimization_message">アプリケーションがメモリから削除されないように、電話のバッテリー管理ホワイトリストにアプリケーションを追加することを検討してください。</string>
+    <string name="settings">設定</string>
+</resources>
