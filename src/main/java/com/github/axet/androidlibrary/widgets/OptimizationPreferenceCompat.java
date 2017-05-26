@@ -74,7 +74,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         AlarmManager.cancel(context, intent);
     }
 
-    public static void dontKill(Context context, Class<?> klass) {
+    public static void disableKill(Context context, Class<?> klass) {
         ComponentName name = new ComponentName(context, klass);
         PackageManager pm = context.getPackageManager();
         pm.setComponentEnabledSetting(name, PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP);
@@ -126,7 +126,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         public ServiceReceiver(final Context context, final Class<? extends Service> service) {
             this.context = context;
             this.service = service;
-            dontKill(context, service);
+            disableKill(context, service);
             IntentFilter ff = new IntentFilter();
             ff.addAction(service.getCanonicalName() + PONG);
             context.registerReceiver(this, ff);
@@ -231,6 +231,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         onResume();
     }
 
+    @TargetApi(19)
     public static String getUserSerial(Context context) {
         Object userManager = context.getSystemService(Context.USER_SERVICE);
         if (null == userManager)
@@ -270,7 +271,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         return isCallable(context, huawei);
     }
 
-    static AlertDialog.Builder commonWarning(Context context) {
+    public static AlertDialog.Builder commonWarning(Context context) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setTitle(R.string.optimization_dialog);
         builder.setMessage(R.string.optimization_message);
