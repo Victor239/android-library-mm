@@ -1,0 +1,44 @@
+<resources>
+    <!--OpenFileDialog-->
+    <string name="OpenFileDialogRename">Umbenennen</string>
+    <string name="OpenFileDialogDelete">Löschen</string>
+    <string name="OpenFileDialogNewFolder">Neuer Ordner</string>
+    <string name="OpenFileDialogFolderName">Ordner Name</string>
+    <string name="OpenFileDialogUnableCreate">Ordner kann nicht erstellt werden: \'%1$s\'</string>
+    <string name="OpenFileDialogFolderCreated">Ordner \'%1$s\' erstellt</string>
+    <string name="OpenFileDialogFolderDeleted">Gelöscht: \'%1$s\'</string>
+    <string name="OpenFileDialogRenamedTo">Umbenannt zu: \'%1$s\'</string>
+    <string name="OpenFileDialogEmptyList">Leere Liste</string>
+    <string name="ShareAction">Teilen</string>
+    <string name="readonly_directory">Nur-lesen-Verzeichnis</string>
+    <string name="select_folder">Bitte wähle einen Ordner</string>
+
+    <plurals name="days">
+        <item quantity="one">%d Tag</item>
+        <item quantity="other">%d Tage</item>
+    </plurals>
+
+    <plurals name="hours">
+        <item quantity="one">%d Stunde</item>
+        <item quantity="other">%d Stunden</item>
+    </plurals>
+
+    <plurals name="minutes">
+        <item quantity="one">%d Minute</item>
+        <item quantity="other">%d Minuten</item>
+    </plurals>
+
+    <plurals name="seconds">
+        <item quantity="one">%d Sekunde</item>
+        <item quantity="other">%d Sekunden</item>
+    </plurals>
+
+    <string name="days_symbol">"d"</string>
+
+    <string name="size_gb">%1$.1f GB</string><!-- consider using GB (base 10) etc. for transfer and GiB (base 2) for storage! -->
+    <string name="size_mb">%1$.1f MB</string>
+    <string name="size_kb">%1$.1f kB</string>
+    <string name="optimization_dialog">Optimierungs-Einstellungen</string>
+    <string name="optimization_message">Ziehe in Betracht diese App zur Whitelist für den Batterie-Manager hinzuzufügen um das Entfernen aus dem Speicher zu vermeiden.</string>
+    <string name="settings">Einstellungen</string>
+</resources>
