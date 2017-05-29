@@ -1,21 +1,78 @@
 package com.github.axet.androidlibrary.sound;
 
+import android.media.AudioFormat;
 import android.os.Handler;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.ShortBuffer;
+
 public class AudioTrack extends android.media.AudioTrack {
+    public static int SHORT_SIZE = Short.SIZE / 8;
+
     int markerInFrames = -1;
     int periodInFrames = 1000;
     public long playStart = 0;
     Handler playbackHandler = new Handler();
     Runnable playbackUpdate;
     OnPlaybackPositionUpdateListener playbackListener;
+    int len; // len in frames (stereo frames = len * 2)
+    int frames; // frames written to audiotrack (including zeros, stereo frames = frames)
+
+    public static class AudioBuffer {
+        public int sampleRate;
+        public int channelConfig; // AudioFormat.CHANNEL_OUT_MONO or AudioFormat.CHANNEL_OUT_STEREO
+        public int audioFormat;
+        public short[] buffer; // buffer including zeros (to fill minimum size)
+        public int len; // buffer length
+
+        public AudioBuffer(int sampleRate, int c, int audioFormat, short[] buf, int len) {
+            this.sampleRate = sampleRate;
+            this.channelConfig = c;
+            this.audioFormat = audioFormat;
+            this.len = len;
+            this.buffer = buf;
+        }
+
+        public AudioBuffer(int sampleRate, int c, int audioFormat, int len) {
+            this.sampleRate = sampleRate;
+            this.channelConfig = c;
+            this.audioFormat = audioFormat;
+            this.len = len;
+
+            int b = len * SHORT_SIZE;
+            b = getMinSize(sampleRate, c, audioFormat, b);
+            int blen = b / SHORT_SIZE;
+            buffer = new short[blen];
+        }
+
+        public void write(short[] buf, int pos, int len) {
+            System.arraycopy(buf, pos, buffer, 0, len);
+        }
+
+        public int getChannels() {
+            switch (channelConfig) {
+                case AudioFormat.CHANNEL_OUT_MONO:
+                    return 1;
+                case AudioFormat.CHANNEL_OUT_STEREO:
+                    return 2;
+                default:
+                    throw new RuntimeException("unknown mode");
+            }
+        }
+    }
 
     // old phones bug.
     // http://stackoverflow.com/questions/27602492
     //
     // with MODE_STATIC setNotificationMarkerPosition not called
     public AudioTrack(int streamType, int sampleRateInHz, int channelConfig, int audioFormat, int bufferSizeInBytes) throws IllegalArgumentException {
-        super(streamType, sampleRateInHz, channelConfig, audioFormat, getMinSize(sampleRateInHz, channelConfig, audioFormat, bufferSizeInBytes), MODE_STREAM);
+        super(streamType, sampleRateInHz, channelConfig, audioFormat, bufferSizeInBytes, MODE_STREAM);
+    }
+
+    public AudioTrack(int streamType, AudioBuffer buffer) throws IllegalArgumentException {
+        super(streamType, buffer.sampleRate, buffer.channelConfig, buffer.audioFormat, buffer.buffer.length * SHORT_SIZE, MODE_STREAM);
+        write(buffer);
     }
 
     // AudioTrack unable to play shorter then 'min' size of data, fill it with zeros
@@ -115,4 +172,9 @@ public class AudioTrack extends android.media.AudioTrack {
         playbackListenerUpdate();
     }
 
+    public void write(AudioBuffer buffer) {
+        write(buffer.buffer, 0, buffer.buffer.length);
+        this.len += buffer.len / buffer.getChannels();
+        this.frames += buffer.buffer.length;
+    }
 }
