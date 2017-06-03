@@ -31,6 +31,9 @@ import java.util.Map;
 //     android:grantUriPermissions="true">
 //   </provider>
 // </application>
+//
+// url example:
+// content://com.github.axet.android-library/image.jpg
 
 public class FileProvider extends ContentProvider {
     public static final String[] COLUMNS = {OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE};
