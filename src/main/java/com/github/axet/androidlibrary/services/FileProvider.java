@@ -31,10 +31,47 @@ import java.util.Map;
 //     android:grantUriPermissions="true">
 //   </provider>
 // </application>
+//
+// url example:
+// content://com.github.axet.android-library/image.jpg
 
 public class FileProvider extends ContentProvider {
     public static final String[] COLUMNS = {OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE};
 
+    protected static Map<Uri, String> types = new HashMap<>();
+    protected static Map<Uri, String> names = new HashMap<>();
+    protected static Map<Uri, File> files = new HashMap<>();
+    protected static ProviderInfo info;
+
+    public static Uri getUriForFile(Context context, String type, String name, File file) {
+        Uri u = new Uri.Builder().scheme(ContentResolver.SCHEME_CONTENT).authority(info.authority).path(name).build();
+        types.put(u, type);
+        names.put(u, name);
+        files.put(u, file);
+        return u;
+    }
+
+    public static void grantPermissions(Context context, Intent intent) {
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+        Object uri = intent.getExtras().get(Intent.EXTRA_STREAM);
+
+        if (uri instanceof Uri) {
+            grantPermissions(context, intent, (Uri) uri);
+        }
+        if (uri instanceof ArrayList) {
+            for (Uri u : (ArrayList<Uri>) uri)
+                grantPermissions(context, intent, u);
+        }
+    }
+
+    public static void grantPermissions(Context context, Intent intent, Uri u) {
+        List<ResolveInfo> resInfoList = context.getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
+        for (ResolveInfo resolveInfo : resInfoList) {
+            String packageName = resolveInfo.activityInfo.packageName;
+            context.grantUriPermission(packageName, u, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        }
+    }
 
     public static String[] copyOf(String[] original, int newLength) {
         final String[] result = new String[newLength];
@@ -72,11 +109,6 @@ public class FileProvider extends ContentProvider {
         }
         return modeBits;
     }
-
-    static Map<Uri, String> types = new HashMap<>();
-    static Map<Uri, String> names = new HashMap<>();
-    static Map<Uri, File> files = new HashMap<>();
-    static ProviderInfo info;
 
     @Override
     public void attachInfo(Context context, ProviderInfo info) {
@@ -149,36 +181,6 @@ public class FileProvider extends ContentProvider {
     @Override
     public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
         return 0;
-    }
-
-    public static Uri getUriForFile(Context context, String type, String name, File file) {
-        Uri u = new Uri.Builder().scheme(ContentResolver.SCHEME_CONTENT).authority(info.authority).path(name).build();
-        types.put(u, type);
-        names.put(u, name);
-        files.put(u, file);
-        return u;
-    }
-
-    public static void grantPermissions(Context context, Intent intent) {
-        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-
-        Object uri = intent.getExtras().get(Intent.EXTRA_STREAM);
-
-        if (uri instanceof Uri) {
-            grantPermissions(context, intent, (Uri) uri);
-        }
-        if (uri instanceof ArrayList) {
-            for (Uri u : (ArrayList<Uri>) uri)
-                grantPermissions(context, intent, u);
-        }
-    }
-
-    public static void grantPermissions(Context context, Intent intent, Uri u) {
-        List<ResolveInfo> resInfoList = context.getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
-        for (ResolveInfo resolveInfo : resInfoList) {
-            String packageName = resolveInfo.activityInfo.packageName;
-            context.grantUriPermission(packageName, u, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        }
     }
 
     @Nullable

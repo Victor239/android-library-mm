@@ -74,6 +74,7 @@ public class WebViewCustom extends WebView {
     protected DownloadListener listener;
     protected ArrayList<String> injects = new ArrayList<>();
     protected String html;
+    protected ArrayList<WebViewCustom> popups = new ArrayList<>();
 
     public static void logIO(String url, Throwable e) {
         while (e.getCause() != null) {
@@ -200,7 +201,7 @@ public class WebViewCustom extends WebView {
 
             @Override
             public boolean onCreateWindow(WebView view, boolean isDialog, boolean isUserGesture, Message resultMsg) {
-                return true;
+                return WebViewCustom.this.onCreateWindow(view, isDialog, isUserGesture, resultMsg);
             }
 
             @Override
@@ -525,7 +526,7 @@ public class WebViewCustom extends WebView {
         }
         this.html = data;
 
-        if(destroyed)
+        if (destroyed)
             return; // old api crash
 
         super.loadDataWithBaseURL(baseUrl, data, mimeType, encoding, historyUrl);
@@ -631,6 +632,23 @@ public class WebViewCustom extends WebView {
     }
 
     public void onProgressChanged(WebView view, int newProgress) {
+    }
+
+    public boolean onCreateWindow(WebView view, boolean isDialog, boolean isUserGesture, Message resultMsg) {
+        Log.d(TAG, "onCreateWindow()");
+        WebViewCustom newWebView = new WebViewCustom(getContext()) {
+            @Override
+            public void loadUrl(String url) {
+                WebViewCustom.this.loadUrl(url);
+            }
+        };
+        newWebView.setHttpClient(http);
+        newWebView.setDownloadListener(listener);
+        popups.add(newWebView);
+        WebView.WebViewTransport transport = (WebView.WebViewTransport) resultMsg.obj;
+        transport.setWebView(newWebView);
+        resultMsg.sendToTarget();
+        return true;
     }
 
     public boolean onConsoleMessage(String msg, int lineNumber, String sourceID) {
@@ -906,5 +924,9 @@ public class WebViewCustom extends WebView {
     public void destroy() {
         super.destroy();
         destroyed = true;
+        for (WebViewCustom w : popups) {
+            w.destroy();
+        }
+        popups.clear();
     }
 }

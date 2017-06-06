@@ -72,6 +72,8 @@ public class AudioTrack extends android.media.AudioTrack {
 
     public AudioTrack(int streamType, AudioBuffer buffer) throws IllegalArgumentException {
         super(streamType, buffer.sampleRate, buffer.channelConfig, buffer.audioFormat, buffer.buffer.length * SHORT_SIZE, MODE_STREAM);
+        if (getState() != STATE_INITIALIZED)
+            throw new RuntimeException("Unable initialize AudioTrack");
         write(buffer);
     }
 

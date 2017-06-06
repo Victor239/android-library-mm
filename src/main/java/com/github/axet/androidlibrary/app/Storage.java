@@ -13,6 +13,8 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 
+import org.apache.commons.io.IOUtils;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -176,12 +178,7 @@ public class Storage {
         try {
             InputStream in = new BufferedInputStream(new FileInputStream(f));
             OutputStream out = new BufferedOutputStream(new FileOutputStream(to));
-
-            byte[] buf = new byte[1024 * 1024];
-            int len;
-            while ((len = in.read(buf)) > 0) {
-                out.write(buf, 0, len);
-            }
+            IOUtils.copy(in, out);
             in.close();
             out.close();
             f.delete();

@@ -201,8 +201,8 @@ public class AlarmManager {
         long delay = time - cur;
         if (delay < 0) // instant?
             delay = 0;
-        if (delay < MIN15) {
-            if (OptimizationPreferenceCompat.isHuawei(context)) {
+        if (OptimizationPreferenceCompat.isHuawei(context)) {
+            if (delay < MIN15) {
                 c.wakeLock();
             }
         }

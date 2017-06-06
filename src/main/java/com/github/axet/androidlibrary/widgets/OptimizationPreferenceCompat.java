@@ -263,8 +263,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
     }
 
     public static boolean isCallable(Context context, Intent intent) {
-        List<ResolveInfo> list = context.getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
-        return list.size() > 0;
+        return intent.resolveActivity(context.getPackageManager()) != null;
     }
 
     public static boolean isHuawei(Context context) {
