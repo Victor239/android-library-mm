@@ -599,8 +599,10 @@ public class HttpClient {
     }
 
     public void abort() {
-        request.abort();
-        request = null;
+        if (request != null) {
+            request.abort();
+            request = null;
+        }
     }
 
     public CloseableHttpResponse execute(String base, HttpRequestBase request) {

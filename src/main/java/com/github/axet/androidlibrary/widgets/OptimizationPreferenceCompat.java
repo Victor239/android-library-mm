@@ -420,9 +420,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
             intent.setData(Uri.parse("package:" + n));
             if (!startActivity(context, intent)) { // some samsung phones does not have this
                 intent = new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
-                if (!startActivity(context, intent)) {
-                    Toast.makeText(context, "Optimization Settings not found", Toast.LENGTH_SHORT).show();
-                }
+                startActivity(context, intent);
             }
         }
     }
