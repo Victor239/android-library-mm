@@ -42,6 +42,8 @@ public class AudioTrack extends android.media.AudioTrack {
 
             int b = len * SHORT_SIZE;
             b = getMinSize(sampleRate, c, audioFormat, b);
+            if (b <= 0)
+                throw new RuntimeException("unable to get min size");
             int blen = b / SHORT_SIZE;
             buffer = new short[blen];
         }

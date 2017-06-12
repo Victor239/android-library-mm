@@ -386,12 +386,12 @@ public class WebViewCustom extends WebView {
             if (thread != null) {
                 thread.interrupt();
             }
-            thread = new Thread(new Runnable() {
+            thread = new Thread(new Runnable() { // netowkr on main thread
                 @Override
                 public void run() {
                     http.abort();
                 }
-            });
+            }, "WebViewCustom Abort Thread");
             thread.start();
         }
     }
