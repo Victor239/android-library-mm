@@ -10,7 +10,8 @@ import java.util.Arrays;
 
 public class Sound {
 
-    public static int DEFAULT_AUDIOFORMAT = AudioFormat.ENCODING_PCM_16BIT;
+    public static final int DEFAULT_AUDIOFORMAT = AudioFormat.ENCODING_PCM_16BIT;
+    public static final int DEFAULT_RATE = 16000;
 
     public static int[] RATES = new int[]{8000, 11025, 16000, 22050, 44100};
 
@@ -26,7 +27,7 @@ public class Sound {
                 return r;
             }
         }
-        return 16000;
+        return -1;
     }
 
     public static int getValidAudioRate(int out, int rate) {
@@ -41,7 +42,7 @@ public class Sound {
                 return r;
             }
         }
-        return 16000;
+        return -1;
     }
 
     protected Context context;
