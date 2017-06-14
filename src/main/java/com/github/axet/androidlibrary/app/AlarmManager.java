@@ -21,13 +21,16 @@ import java.util.Map;
 public class AlarmManager {
     public static final String TAG = AlarmManager.class.getSimpleName();
 
-    public static final long SEC1 = 1 * 1000;
-    public static final long SEC3 = 3 * 1000;
-    public static final long SEC10 = 10 * 1000;
-    public static final long MIN1 = 1 * 60 * 1000;
-    public static final long MIN2 = 2 * 60 * 1000;
-    public static final long MIN5 = 5 * 60 * 1000;
-    public static final long MIN15 = 15 * 60 * 1000;
+    public static final long SEC1 = 1000;
+    public static final long SEC3 = 3 * SEC1;
+    public static final long SEC10 = 10 * SEC1;
+    public static final long MIN1 = 60 * SEC1;
+    public static final long MIN2 = 2 * MIN1;
+    public static final long MIN5 = 5 * MIN1;
+    public static final long MIN15 = 15 * MIN1;
+    public static final long HOUR1 = 60 * MIN1;
+    public static final long HOUR12 = 12 * HOUR1;
+    public static final long DAY1 = 24 * HOUR1;
 
     public static String formatTime(long time) {
         SimpleDateFormat s = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");

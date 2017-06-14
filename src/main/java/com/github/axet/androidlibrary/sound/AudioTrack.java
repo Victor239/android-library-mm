@@ -19,6 +19,14 @@ public class AudioTrack extends android.media.AudioTrack {
     int len; // len in frames (stereo frames = len * 2)
     int frames; // frames written to audiotrack (including zeros, stereo frames = frames)
 
+    // AudioTrack unable to play shorter then 'min' size of data, fill it with zeros
+    public static int getMinSize(int sampleRate, int c, int audioFormat, int b) {
+        int min = android.media.AudioTrack.getMinBufferSize(sampleRate, c, audioFormat);
+        if (b < min)
+            b = min;
+        return b;
+    }
+
     public static class AudioBuffer {
         public int sampleRate;
         public int channelConfig; // AudioFormat.CHANNEL_OUT_MONO or AudioFormat.CHANNEL_OUT_STEREO
@@ -77,14 +85,6 @@ public class AudioTrack extends android.media.AudioTrack {
         if (getState() != STATE_INITIALIZED)
             throw new RuntimeException("Unable initialize AudioTrack");
         write(buffer);
-    }
-
-    // AudioTrack unable to play shorter then 'min' size of data, fill it with zeros
-    public static int getMinSize(int sampleRate, int c, int audioFormat, int b) {
-        int min = android.media.AudioTrack.getMinBufferSize(sampleRate, c, audioFormat);
-        if (b < min)
-            b = min;
-        return b;
     }
 
     void playbackListenerUpdate() {
