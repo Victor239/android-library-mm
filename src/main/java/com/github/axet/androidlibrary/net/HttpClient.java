@@ -98,7 +98,7 @@ public class HttpClient {
     public static String USER_AGENT = "Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5 Build/MOB30Y) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.81 Mobile Safari/537.36";
     public static final String CONTENTTYPE_HTML = "text/html";
 
-    public static long CONNECTION_TIMEOUT = AlarmManager.SEC10;
+    public static int CONNECTION_TIMEOUT = AlarmManager.SEC10;
 
     protected CloseableHttpClient httpclient;
     protected HttpClientContext httpClientContext = HttpClientContext.create();
@@ -472,8 +472,8 @@ public class HttpClient {
     }
 
     public RequestConfig build(RequestConfig.Builder builder) {
-        builder.setConnectTimeout((int) CONNECTION_TIMEOUT); // time in ms == long
-        builder.setConnectionRequestTimeout((int) CONNECTION_TIMEOUT); // time in ms == long
+        builder.setConnectTimeout(CONNECTION_TIMEOUT);
+        builder.setConnectionRequestTimeout(CONNECTION_TIMEOUT);
         builder.setProxy(proxy);
         return builder.build();
     }
