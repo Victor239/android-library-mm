@@ -38,14 +38,18 @@ public class AudioTrack extends android.media.AudioTrack {
     // usage AudioAttributes#USAGE_MEDIA
     // ct AudioAttributes#CONTENT_TYPE_MUSIC
     public static AudioTrack create(int streamType, int usage, int ct, AudioBuffer buffer) {
+        return create(streamType, usage, ct, buffer, buffer.getBytesMin());
+    }
+
+    public static AudioTrack create(int streamType, int usage, int ct, AudioBuffer buffer, int len) {
         if (Build.VERSION.SDK_INT >= 21) {
             AudioAttributes a = new AudioAttributes.Builder()
                     .setUsage(usage)
                     .setContentType(ct)
                     .build();
-            return new AudioTrack(a, buffer);
+            return new AudioTrack(a, buffer, len);
         } else {
-            return new AudioTrack(streamType, buffer);
+            return new AudioTrack(streamType, buffer, len);
         }
     }
 
@@ -104,6 +108,14 @@ public class AudioTrack extends android.media.AudioTrack {
             builder.setSampleRate(sampleRate);
             return builder.build();
         }
+
+        public int getBytesLen() {
+            return buffer.length * SHORT_SIZE;
+        }
+
+        public int getBytesMin() {
+            return getMinSize(sampleRate, channelConfig, audioFormat, getBytesLen());
+        }
     }
 
     // old phones bug.
@@ -112,18 +124,33 @@ public class AudioTrack extends android.media.AudioTrack {
     // with MODE_STATIC setNotificationMarkerPosition not called
     public AudioTrack(int streamType, int sampleRateInHz, int channelConfig, int audioFormat, int bufferSizeInBytes) throws IllegalArgumentException {
         super(streamType, sampleRateInHz, channelConfig, audioFormat, bufferSizeInBytes, MODE_STREAM);
+        this.sampleRate = sampleRateInHz;
+        this.audioFormat = audioFormat;
+        this.channelConfig = channelConfig;
     }
 
     public AudioTrack(int streamType, AudioBuffer buffer) throws IllegalArgumentException {
-        super(streamType, buffer.sampleRate, buffer.channelConfig, buffer.audioFormat, buffer.buffer.length * SHORT_SIZE, MODE_STREAM, AudioManager.AUDIO_SESSION_ID_GENERATE);
+        this(streamType, buffer, buffer.getBytesMin());
+    }
+
+    public AudioTrack(int streamType, AudioBuffer buffer, int len) throws IllegalArgumentException {
+        super(streamType, buffer.sampleRate, buffer.channelConfig, buffer.audioFormat, len, MODE_STREAM, AudioManager.AUDIO_SESSION_ID_GENERATE);
         if (getState() != STATE_INITIALIZED)
             throw new RuntimeException("Unable initialize AudioTrack");
         write(buffer);
+        this.sampleRate = buffer.sampleRate;
+        this.audioFormat = buffer.audioFormat;
+        this.channelConfig = buffer.channelConfig;
     }
 
     @TargetApi(21)
     public AudioTrack(AudioAttributes a, AudioBuffer buffer) throws IllegalArgumentException {
-        super(a, buffer.getAudioFormat(), buffer.buffer.length * SHORT_SIZE, MODE_STREAM, AudioManager.AUDIO_SESSION_ID_GENERATE);
+        this(a, buffer, buffer.getBytesMin());
+    }
+
+    @TargetApi(21)
+    public AudioTrack(AudioAttributes a, AudioBuffer buffer, int len) throws IllegalArgumentException {
+        super(a, buffer.getAudioFormat(), len, MODE_STREAM, AudioManager.AUDIO_SESSION_ID_GENERATE);
         if (getState() != STATE_INITIALIZED)
             throw new RuntimeException("Unable initialize AudioTrack");
         write(buffer);
@@ -237,9 +264,14 @@ public class AudioTrack extends android.media.AudioTrack {
         playbackListenerUpdate();
     }
 
-    public void write(AudioBuffer buffer) {
-        write(buffer.buffer, 0, buffer.buffer.length);
+    public int write(AudioBuffer buffer) {
+        return write(buffer, 0, buffer.buffer.length);
+    }
+
+    public int write(AudioBuffer buffer, int pos, int len) {
+        int out = write(buffer.buffer, pos, len);
         this.len += buffer.len / buffer.getChannels();
         this.frames += buffer.buffer.length;
+        return out;
     }
 }
