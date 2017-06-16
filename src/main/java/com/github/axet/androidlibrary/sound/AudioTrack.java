@@ -264,14 +264,19 @@ public class AudioTrack extends android.media.AudioTrack {
         playbackListenerUpdate();
     }
 
+    @Override
+    public int write(short[] audioData, int offsetInShorts, int sizeInShorts) {
+        int out = super.write(audioData, offsetInShorts, sizeInShorts);
+        this.len += out / getChannelCount();
+        this.frames += out;
+        return out;
+    }
+
     public int write(AudioBuffer buffer) {
         return write(buffer, 0, buffer.buffer.length);
     }
 
     public int write(AudioBuffer buffer, int pos, int len) {
-        int out = write(buffer.buffer, pos, len);
-        this.len += buffer.len / buffer.getChannels();
-        this.frames += buffer.buffer.length;
-        return out;
+        return write(buffer.buffer, pos, len);
     }
 }
