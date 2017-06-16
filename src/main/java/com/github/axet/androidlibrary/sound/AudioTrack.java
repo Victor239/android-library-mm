@@ -275,7 +275,9 @@ public class AudioTrack extends android.media.AudioTrack {
 
     public int write(AudioBuffer buffer) {
         int out = write(buffer, buffer.pos, buffer.len - buffer.pos);
-        buffer.pos = out;
+        if (out < 0)
+            return out;
+        buffer.pos += out;
         return out;
     }
 
