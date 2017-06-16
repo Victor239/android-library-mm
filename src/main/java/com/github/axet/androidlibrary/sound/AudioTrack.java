@@ -22,9 +22,6 @@ public class AudioTrack extends android.media.AudioTrack {
     OnPlaybackPositionUpdateListener playbackListener;
     int len; // len in frames (stereo frames = len * 2)
     int frames; // frames written to audiotrack (including zeros, stereo frames = frames)
-    int sampleRate;
-    int audioFormat;
-    int channelConfig;
 
     // AudioTrack unable to play shorter then 'min' size of data, fill it with zeros
     public static int getMinSize(int sampleRate, int c, int audioFormat, int b) {
@@ -54,33 +51,40 @@ public class AudioTrack extends android.media.AudioTrack {
     }
 
     public static class AudioBuffer {
-        public int sampleRate;
-        public int channelConfig; // AudioFormat.CHANNEL_OUT_MONO or AudioFormat.CHANNEL_OUT_STEREO
-        public int audioFormat;
+        public int hz;
+        public int c; // AudioFormat.CHANNEL_OUT_MONO or AudioFormat.CHANNEL_OUT_STEREO
+        public int a;
         public short[] buffer; // buffer including zeros (to fill minimum size)
         public int len; // buffer length
         public int pos; // write AudioTrack pos
 
-        public AudioBuffer(int sampleRate, int c, int audioFormat, short[] buf, int len) {
-            this.sampleRate = sampleRate;
-            this.channelConfig = c;
-            this.audioFormat = audioFormat;
-            this.len = len;
+        public AudioBuffer(int sampleRate, int channelConfig, int audioFormat, short[] buf, int len) {
+            this.hz = sampleRate;
+            this.c = channelConfig;
+            this.a = audioFormat;
             this.buffer = buf;
-        }
-
-        public AudioBuffer(int sampleRate, int c, int audioFormat, int len) {
-            this.sampleRate = sampleRate;
-            this.channelConfig = c;
-            this.audioFormat = audioFormat;
             this.len = len;
-            this.buffer = new short[len];
         }
 
-        public AudioBuffer(int sampleRate, int c, int audioFormat) {
-            this.sampleRate = sampleRate;
-            this.channelConfig = c;
-            this.audioFormat = audioFormat;
+        public AudioBuffer(int sampleRate, int channelConfig, int audioFormat, int len) {
+            this.hz = sampleRate;
+            this.c = channelConfig;
+            this.a = audioFormat;
+
+            int b = len * SHORT_SIZE;
+            b = getMinSize(sampleRate, channelConfig, audioFormat, b);
+            if (b <= 0)
+                throw new RuntimeException("unable to get min size");
+            int blen = b / SHORT_SIZE;
+
+            this.len = len;
+            this.buffer = new short[blen];
+        }
+
+        public AudioBuffer(int sampleRate, int channelConfig, int audioFormat) {
+            this.hz = sampleRate;
+            this.c = channelConfig;
+            this.a = audioFormat;
             this.len = getMinSize(sampleRate, c, audioFormat, 0);
             if (len <= 0)
                 throw new RuntimeException("unable to initialize audio");
@@ -91,8 +95,17 @@ public class AudioTrack extends android.media.AudioTrack {
             System.arraycopy(buf, pos, buffer, 0, len);
         }
 
+        public void write(int pos, short s) {
+            buffer[pos] = s;
+        }
+
+        public void write(int pos, short s1, short s2) {
+            buffer[pos] = s1;
+            buffer[pos + 1] = s2;
+        }
+
         public int getChannels() {
-            switch (channelConfig) {
+            switch (c) {
                 case AudioFormat.CHANNEL_OUT_MONO:
                     return 1;
                 case AudioFormat.CHANNEL_OUT_STEREO:
@@ -102,11 +115,15 @@ public class AudioTrack extends android.media.AudioTrack {
             }
         }
 
+        public void reset() {
+            pos = 0;
+        }
+
         @TargetApi(21)
         public AudioFormat getAudioFormat() {
             AudioFormat.Builder builder = new AudioFormat.Builder();
             builder.setEncoding(Sound.DEFAULT_AUDIOFORMAT);
-            builder.setSampleRate(sampleRate);
+            builder.setSampleRate(hz);
             return builder.build();
         }
 
@@ -115,7 +132,7 @@ public class AudioTrack extends android.media.AudioTrack {
         }
 
         public int getBytesMin() {
-            return getMinSize(sampleRate, channelConfig, audioFormat, getBytesLen());
+            return getMinSize(hz, c, a, getBytesLen());
         }
     }
 
@@ -125,9 +142,6 @@ public class AudioTrack extends android.media.AudioTrack {
     // with MODE_STATIC setNotificationMarkerPosition not called
     public AudioTrack(int streamType, int sampleRateInHz, int channelConfig, int audioFormat, int bufferSizeInBytes) throws IllegalArgumentException {
         super(streamType, sampleRateInHz, channelConfig, audioFormat, bufferSizeInBytes, MODE_STREAM);
-        this.sampleRate = sampleRateInHz;
-        this.audioFormat = audioFormat;
-        this.channelConfig = channelConfig;
     }
 
     public AudioTrack(int streamType, AudioBuffer buffer) throws IllegalArgumentException {
@@ -135,13 +149,10 @@ public class AudioTrack extends android.media.AudioTrack {
     }
 
     public AudioTrack(int streamType, AudioBuffer buffer, int len) throws IllegalArgumentException {
-        super(streamType, buffer.sampleRate, buffer.channelConfig, buffer.audioFormat, len, MODE_STREAM, AudioManager.AUDIO_SESSION_ID_GENERATE);
+        super(streamType, buffer.hz, buffer.c, buffer.a, len, MODE_STREAM, AudioManager.AUDIO_SESSION_ID_GENERATE);
         if (getState() != STATE_INITIALIZED)
             throw new RuntimeException("Unable initialize AudioTrack");
         write(buffer);
-        this.sampleRate = buffer.sampleRate;
-        this.audioFormat = buffer.audioFormat;
-        this.channelConfig = buffer.channelConfig;
     }
 
     @TargetApi(21)
@@ -155,9 +166,6 @@ public class AudioTrack extends android.media.AudioTrack {
         if (getState() != STATE_INITIALIZED)
             throw new RuntimeException("Unable initialize AudioTrack");
         write(buffer);
-        this.sampleRate = buffer.sampleRate;
-        this.audioFormat = buffer.audioFormat;
-        this.channelConfig = buffer.channelConfig;
     }
 
     void playbackListenerUpdate() {
@@ -212,24 +220,8 @@ public class AudioTrack extends android.media.AudioTrack {
         }
     }
 
-    void fillZeros() {
-        int b = len * SHORT_SIZE;
-        b = getMinSize(sampleRate, channelConfig, audioFormat, b);
-        if (b <= 0)
-            throw new RuntimeException("unable to get min size");
-        int blen = b / SHORT_SIZE;
-        int diff = blen - len;
-        if (diff > 0) {
-            short[] buf = new short[diff];
-            write(buf, 0, buf.length);
-            len += diff / getChannelCount();
-            frames += diff;
-        }
-    }
-
     @Override
     public void play() throws IllegalStateException {
-        fillZeros();
         super.play();
         playStart = System.currentTimeMillis();
         playbackListenerUpdate();
@@ -273,11 +265,11 @@ public class AudioTrack extends android.media.AudioTrack {
         return out;
     }
 
-    public int write(AudioBuffer buffer) {
-        int out = write(buffer, buffer.pos, buffer.len - buffer.pos);
+    public int write(AudioBuffer buf) {
+        int out = write(buf, buf.pos, buf.buffer.length - buf.pos); // use 'buffer.length' instead of 'len'
         if (out < 0)
             return out;
-        buffer.pos += out;
+        buf.pos += out;
         return out;
     }
 
