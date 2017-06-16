@@ -59,6 +59,7 @@ public class AudioTrack extends android.media.AudioTrack {
         public int audioFormat;
         public short[] buffer; // buffer including zeros (to fill minimum size)
         public int len; // buffer length
+        public int pos; // write AudioTrack pos
 
         public AudioBuffer(int sampleRate, int c, int audioFormat, short[] buf, int len) {
             this.sampleRate = sampleRate;
@@ -273,7 +274,9 @@ public class AudioTrack extends android.media.AudioTrack {
     }
 
     public int write(AudioBuffer buffer) {
-        return write(buffer, 0, buffer.buffer.length);
+        int out = write(buffer, buffer.pos, buffer.len - buffer.pos);
+        buffer.pos = out;
+        return out;
     }
 
     public int write(AudioBuffer buffer, int pos, int len) {
