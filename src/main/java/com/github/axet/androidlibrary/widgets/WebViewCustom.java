@@ -326,7 +326,7 @@ public class WebViewCustom extends WebView {
             request(new Runnable() {
                 @Override
                 public void run() {
-                    load(url, get(url));
+                    load(url, getBase(url));
                 }
             });
         } else {
@@ -356,7 +356,7 @@ public class WebViewCustom extends WebView {
     }
 
     // if first load url call, get base html page
-    HttpClient.DownloadResponse getBase(String url) {
+    public HttpClient.DownloadResponse getBase(String url) {
         if (url.startsWith("data")) {
             return null;
         }
@@ -391,13 +391,13 @@ public class WebViewCustom extends WebView {
                 public void run() {
                     http.abort();
                 }
-            }, "WebViewCustom Abort Thread");
+            }, "WebViewCustom abort thread");
             thread.start();
         }
     }
 
-    void request(Runnable run) {
-        thread = new Thread(run, "WebViewCustom");
+    void request(Runnable run) { // network on main thread preventer
+        thread = new Thread(run, "WebViewCustom request");
         thread.start();
     }
 

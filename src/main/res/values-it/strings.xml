@@ -1,0 +1,44 @@
+<resources>
+    <!--OpenFileDialog-->
+    <string name="OpenFileDialogRename">Rinomina</string>
+    <string name="OpenFileDialogDelete">Elimina</string>
+    <string name="OpenFileDialogNewFolder">Nuova Cartella</string>
+    <string name="OpenFileDialogFolderName">Nome della Cartella</string>
+    <string name="OpenFileDialogUnableCreate">Impossibile create cartella: \'%1$s\'</string>
+    <string name="OpenFileDialogFolderCreated">Creata cartella \'%1$s\'</string>
+    <string name="OpenFileDialogFolderDeleted">Elimita: \'%1$s\'</string>
+    <string name="OpenFileDialogRenamedTo">Rinominata come: \'%1$s\'</string>
+    <string name="OpenFileDialogEmptyList">Lista vuota</string>
+    <string name="ShareAction">Condividi</string>
+    <string name="readonly_directory">Cartella accessibile in sola lettura</string>
+    <string name="select_folder">Per favore, seleziona una cartella</string>
+
+    <plurals name="days">
+        <item quantity="one">%d giorno</item>
+        <item quantity="other">%d giorni</item>
+    </plurals>
+
+    <plurals name="hours">
+        <item quantity="one">%d ora</item>
+        <item quantity="other">%d ore</item>
+    </plurals>
+
+    <plurals name="minutes">
+        <item quantity="one">%d minuto</item>
+        <item quantity="other">%d minuti</item>
+    </plurals>
+
+    <plurals name="seconds">
+        <item quantity="one">%d secondo</item>
+        <item quantity="other">%d secondi</item>
+    </plurals>
+
+    <string name="days_symbol">"d"</string>
+
+    <string name="size_gb">%1$.1f GB</string>
+    <string name="size_mb">%1$.1f MB</string>
+    <string name="size_kb">%1$.1f kb</string>
+    <string name="optimization_dialog">Impostazioni di ottimizzazione della batteria</string>
+    <string name="optimization_message">Valuta di aggiungere questa applicazione alle eccezioni tra le  impostazioni di gestione della batteria del telefono al fine di evitare che l\'applicazione sia rimossa dalla memoria volatile.</string>
+    <string name="settings">Impostazioni</string>
+</resources>
