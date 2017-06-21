@@ -98,7 +98,7 @@ public class Storage {
         String fileName = f.getName();
 
         int i = fileName.lastIndexOf('.');
-        if (i > 0) {
+        if (i >= 0) {
             return fileName.substring(i + 1);
         }
         return "";
@@ -122,7 +122,7 @@ public class Storage {
         String extension = "";
 
         int i = fileName.lastIndexOf('.');
-        if (i > 0) {
+        if (i >= 0) {
             extension = fileName.substring(i + 1);
             fileName = fileName.substring(0, i);
         }
@@ -147,6 +147,7 @@ public class Storage {
                 fileName = String.format("%s (%d)", name, i);
             else
                 fileName = String.format("%s (%d).%s", name, i, ext);
+            fileName = fileName.trim(); // if filename is empty
             file = new File(parent, fileName);
             i++;
         }
