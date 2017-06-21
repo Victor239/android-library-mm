@@ -119,7 +119,7 @@ public class AlarmManager {
         public void wakeLock() {
             if (wlCpu != null)
                 return;
-            Log.d(TAG, "Wake CPU lock " + time);
+            Log.d(TAG, "wakeLock() " + formatTime(time));
             PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
             wlCpu = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, AlarmManager.class.getCanonicalName() + "_" + time + "_cpulock");
             wlCpu.acquire();
@@ -128,10 +128,22 @@ public class AlarmManager {
         public void wakeClose() {
             if (wlCpu == null)
                 return;
-            Log.d(TAG, "Wake CPU lock close " + time);
+            Log.d(TAG, "wakeClose() " + formatTime(time));
             if (wlCpu.isHeld())
                 wlCpu.release();
             wlCpu = null;
+        }
+
+        public void wakeTake(Check c) {
+            wakeClose();
+            wlCpu = c.wlCpu;
+            c.wlCpu = null;
+        }
+
+        public boolean isLocked() {
+            if (wlCpu == null)
+                return false;
+            return wlCpu.isHeld();
         }
 
         public String toString() {
@@ -201,19 +213,15 @@ public class AlarmManager {
         Check c = new Check(time, r, intent, pe);
         Check old = check.put(id, c);
         if (old != null) {
+            c.wakeTake(old);
             old.close();
         }
         long cur = System.currentTimeMillis();
         long delay = time - cur;
         if (delay < 0) // instant?
             delay = 0;
-        if (OptimizationPreferenceCompat.isHuawei(context)) {
-            if (delay < MIN15) {
-                c.wakeLock();
-            }
-        }
-        int diffMilliseconds = (int) (cur % 1000);
-        int diffSeconds = (int) (cur / 1000 % 60);
+        long diffMilliseconds = cur % 1000;
+        long diffSeconds = (cur / 1000 % 60) * 1000;
         if (delay < SEC1) {
             ; // nothing
         } else if (delay < SEC10) {
@@ -221,12 +229,21 @@ public class AlarmManager {
             delay = step - diffMilliseconds;
         } else if (delay < MIN1) {
             long step = SEC10;
+            if (delay - step < step) // if 0:11, make step 00:01
+                step = delay - step;
             delay = step - diffMilliseconds;
-        } else if (delay < MIN15) {
+        } else if (delay < MIN5) {
             long step = MIN1;
-            delay = step - diffSeconds * 1000 - diffMilliseconds;
+            if (delay - step < step) // if 1:30, make step 00:30
+                step = delay - step;
+            delay = step - diffSeconds - diffMilliseconds;
+        } else if (delay < MIN15) {
+            long step = MIN5;
+            if (delay - step < step) // if 5:30, make step 00:30
+                step = delay - step;
+            delay = step - diffMilliseconds;
         }
-        Log.d(TAG, "delaying d:" + MainApplication.formatDuration(context, delay) + ", t:" + formatTime(time));
+        Log.d(TAG, "delaying " + MainApplication.formatDuration(context, delay) + ", " + formatTime(time));
         handler.postDelayed(r, delay);
     }
 
@@ -236,5 +253,12 @@ public class AlarmManager {
         if (old != null) {
             old.close();
         }
+    }
+
+    public void lock(Intent intent) {
+        String id = checkId(0, intent);
+        Check old = check.get(id);
+        if (old != null)
+            old.wakeLock();
     }
 }
