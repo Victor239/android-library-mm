@@ -31,6 +31,10 @@ public class AlarmManager {
     public static final int HOUR12 = 12 * HOUR1;
     public static final int DAY1 = 24 * HOUR1;
 
+    Context context;
+    Handler handler = new Handler();
+    Map<String, Check> check = new HashMap<>();
+
     public static String formatTime(long time) {
         return MainApplication.SIMPLE.format(new Date(time));
     }
@@ -109,6 +113,7 @@ public class AlarmManager {
 
         public void close() {
             wakeClose();
+            handler.removeCallbacks(r);
         }
 
         public void wakeLock() {
@@ -128,11 +133,11 @@ public class AlarmManager {
                 wlCpu.release();
             wlCpu = null;
         }
-    }
 
-    Context context;
-    Handler handler = new Handler();
-    Map<String, Check> check = new HashMap<>();
+        public String toString() {
+            return AlarmManager.formatTime(time);
+        }
+    }
 
     public AlarmManager(Context context) {
         this.context = context;
@@ -221,7 +226,7 @@ public class AlarmManager {
             long step = MIN1;
             delay = step - diffSeconds * 1000 - diffMilliseconds;
         }
-        Log.d(TAG, "delaying " + MainApplication.formatDuration(context, delay) + " " + formatTime(cur) + " " + formatTime(time));
+        Log.d(TAG, "delaying d:" + MainApplication.formatDuration(context, delay) + ", t:" + formatTime(time));
         handler.postDelayed(r, delay);
     }
 
