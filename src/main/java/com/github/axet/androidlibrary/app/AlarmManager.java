@@ -10,8 +10,6 @@ import android.os.Handler;
 import android.os.PowerManager;
 import android.util.Log;
 
-import com.github.axet.androidlibrary.widgets.OptimizationPreferenceCompat;
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -33,7 +31,7 @@ public class AlarmManager {
 
     Context context;
     Handler handler = new Handler();
-    Map<String, Check> check = new HashMap<>();
+    Map<String, Alarm> check = new HashMap<>();
 
     public static String formatTime(long time) {
         return MainApplication.SIMPLE.format(new Date(time));
@@ -97,14 +95,14 @@ public class AlarmManager {
         return requestCode + "_" + intent.getClass().getCanonicalName() + "_" + intent.getAction();
     }
 
-    public class Check {
+    public class Alarm {
         public long time;
         public Runnable r;
         public Intent intent;
         public PendingIntent pe;
-        PowerManager.WakeLock wlCpu;
+        public PowerManager.WakeLock wlCpu;
 
-        public Check(long time, Runnable r, Intent intent, PendingIntent pe) {
+        public Alarm(long time, Runnable r, Intent intent, PendingIntent pe) {
             this.time = time;
             this.r = r;
             this.intent = intent;
@@ -134,7 +132,7 @@ public class AlarmManager {
             wlCpu = null;
         }
 
-        public void wakeTake(Check c) {
+        public void wakeTake(Alarm c) {
             wakeClose();
             wlCpu = c.wlCpu;
             c.wlCpu = null;
@@ -157,25 +155,25 @@ public class AlarmManager {
 
     public void close() {
         for (String s : check.keySet()) {
-            Check old = check.get(s);
+            Alarm old = check.get(s);
             old.close();
         }
         check.clear();
     }
 
-    public void set(long time, Intent intent) {
+    public Alarm set(long time, Intent intent) {
         PendingIntent pe = set(context, time, intent);
-        checkPost(time, intent, pe);
+        return checkPost(time, intent, pe);
     }
 
-    public void setExact(long time, Intent intent) {
+    public Alarm setExact(long time, Intent intent) {
         PendingIntent pe = setExact(context, time, intent);
-        checkPost(time, intent, pe);
+        return checkPost(time, intent, pe);
     }
 
-    public void setAlarm(long time, Intent intent) {
+    public Alarm setAlarm(long time, Intent intent) {
         PendingIntent pe = setAlarm(context, time, intent);
-        checkPost(time, intent, pe);
+        return checkPost(time, intent, pe);
     }
 
     public void cancel(Intent intent) {
@@ -184,13 +182,13 @@ public class AlarmManager {
     }
 
     public void update() {
-        ArrayList<Check> cc = new ArrayList<>(check.values());
-        for (Check c : cc) {
+        ArrayList<Alarm> cc = new ArrayList<>(check.values());
+        for (Alarm c : cc) {
             checkPost(c.time, c.intent, c.pe);
         }
     }
 
-    public void checkPost(final long time, final Intent intent, final PendingIntent pe) {
+    public Alarm checkPost(final long time, final Intent intent, final PendingIntent pe) {
         final String id = checkId(0, intent);
         Runnable r = new Runnable() {
             @Override
@@ -199,7 +197,7 @@ public class AlarmManager {
                 if (cur < time) {
                     checkPost(time, intent, pe);
                 } else {
-                    Check c = check.remove(id);
+                    Alarm c = check.remove(id);
                     if (c != null)
                         c.close();
                     try {
@@ -210,8 +208,8 @@ public class AlarmManager {
                 }
             }
         };
-        Check c = new Check(time, r, intent, pe);
-        Check old = check.put(id, c);
+        Alarm c = new Alarm(time, r, intent, pe);
+        Alarm old = check.put(id, c);
         if (old != null) {
             c.wakeTake(old);
             old.close();
@@ -245,20 +243,14 @@ public class AlarmManager {
         }
         Log.d(TAG, "delaying " + MainApplication.formatDuration(context, delay) + ", " + formatTime(time));
         handler.postDelayed(r, delay);
+        return c;
     }
 
     public void checkCancel(Intent intent) {
         String id = checkId(0, intent);
-        Check old = check.remove(id);
+        Alarm old = check.remove(id);
         if (old != null) {
             old.close();
         }
-    }
-
-    public void lock(Intent intent) {
-        String id = checkId(0, intent);
-        Check old = check.get(id);
-        if (old != null)
-            old.wakeLock();
     }
 }
