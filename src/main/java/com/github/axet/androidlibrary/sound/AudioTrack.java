@@ -35,10 +35,12 @@ public class AudioTrack extends android.media.AudioTrack {
     // usage AudioAttributes#USAGE_MEDIA
     // ct AudioAttributes#CONTENT_TYPE_MUSIC
     public static AudioTrack create(int streamType, int usage, int ct, AudioBuffer buffer) {
-        return create(streamType, usage, ct, buffer, buffer.getBytesMin());
+        AudioTrack t = create(streamType, usage, ct, buffer, buffer.getBytesMin());
+        t.write(buffer);
+        return t;
     }
 
-    public static AudioTrack create(int streamType, int usage, int ct, AudioBuffer buffer, int len) {
+    public static AudioTrack create(int streamType, int usage, int ct, AudioParams buffer, int len) {
         if (Build.VERSION.SDK_INT >= 21) {
             AudioAttributes a = new AudioAttributes.Builder()
                     .setUsage(usage)
@@ -50,10 +52,32 @@ public class AudioTrack extends android.media.AudioTrack {
         }
     }
 
-    public static class AudioBuffer {
-        public int hz;
+    public static class AudioParams {
+        public int hz; // sample rate
         public int c; // AudioFormat.CHANNEL_OUT_MONO or AudioFormat.CHANNEL_OUT_STEREO
-        public int a;
+        public int a; // AudioFormat.ENCODING_PCM_16BIT
+
+        public int getChannels() {
+            switch (c) {
+                case AudioFormat.CHANNEL_OUT_MONO:
+                    return 1;
+                case AudioFormat.CHANNEL_OUT_STEREO:
+                    return 2;
+                default:
+                    throw new RuntimeException("unknown mode");
+            }
+        }
+
+        @TargetApi(21)
+        public AudioFormat getAudioFormat() {
+            AudioFormat.Builder builder = new AudioFormat.Builder();
+            builder.setEncoding(Sound.DEFAULT_AUDIOFORMAT);
+            builder.setSampleRate(hz);
+            return builder.build();
+        }
+    }
+
+    public static class AudioBuffer extends AudioParams {
         public short[] buffer; // buffer including zeros (to fill minimum size)
         public int len; // buffer length
         public int pos; // write AudioTrack pos
@@ -104,27 +128,8 @@ public class AudioTrack extends android.media.AudioTrack {
             buffer[pos + 1] = s2;
         }
 
-        public int getChannels() {
-            switch (c) {
-                case AudioFormat.CHANNEL_OUT_MONO:
-                    return 1;
-                case AudioFormat.CHANNEL_OUT_STEREO:
-                    return 2;
-                default:
-                    throw new RuntimeException("unknown mode");
-            }
-        }
-
         public void reset() {
             pos = 0;
-        }
-
-        @TargetApi(21)
-        public AudioFormat getAudioFormat() {
-            AudioFormat.Builder builder = new AudioFormat.Builder();
-            builder.setEncoding(Sound.DEFAULT_AUDIOFORMAT);
-            builder.setSampleRate(hz);
-            return builder.build();
         }
 
         public int getBytesLen() {
@@ -146,26 +151,26 @@ public class AudioTrack extends android.media.AudioTrack {
 
     public AudioTrack(int streamType, AudioBuffer buffer) throws IllegalArgumentException {
         this(streamType, buffer, buffer.getBytesMin());
-    }
-
-    public AudioTrack(int streamType, AudioBuffer buffer, int len) throws IllegalArgumentException {
-        super(streamType, buffer.hz, buffer.c, buffer.a, len, MODE_STREAM, AudioManager.AUDIO_SESSION_ID_GENERATE);
-        if (getState() != STATE_INITIALIZED)
-            throw new RuntimeException("Unable initialize AudioTrack");
         write(buffer);
     }
 
     @TargetApi(21)
     public AudioTrack(AudioAttributes a, AudioBuffer buffer) throws IllegalArgumentException {
         this(a, buffer, buffer.getBytesMin());
+        write(buffer);
+    }
+
+    public AudioTrack(int streamType, AudioParams buffer, int len) throws IllegalArgumentException {
+        super(streamType, buffer.hz, buffer.c, buffer.a, len, MODE_STREAM, AudioManager.AUDIO_SESSION_ID_GENERATE);
+        if (getState() != STATE_INITIALIZED)
+            throw new RuntimeException("Unable initialize AudioTrack");
     }
 
     @TargetApi(21)
-    public AudioTrack(AudioAttributes a, AudioBuffer buffer, int len) throws IllegalArgumentException {
+    public AudioTrack(AudioAttributes a, AudioParams buffer, int len) throws IllegalArgumentException {
         super(a, buffer.getAudioFormat(), len, MODE_STREAM, AudioManager.AUDIO_SESSION_ID_GENERATE);
         if (getState() != STATE_INITIALIZED)
             throw new RuntimeException("Unable initialize AudioTrack");
-        write(buffer);
     }
 
     void playbackListenerUpdate() {
