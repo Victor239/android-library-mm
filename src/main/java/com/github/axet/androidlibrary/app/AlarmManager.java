@@ -37,6 +37,12 @@ public class AlarmManager {
         return MainApplication.SIMPLE.format(new Date(time));
     }
 
+    static public String formatDuration(Context context, long diff) {
+        int diffMilliseconds = (int) (diff % 1000);
+
+        return MainApplication.formatDuration(context, diff) + "." + diffMilliseconds;
+    }
+
     public static PendingIntent createPendingIntent(Context context, Intent intent) {
         try {
             Class<?> klass = Class.forName(intent.getComponent().getClassName());
@@ -220,28 +226,28 @@ public class AlarmManager {
             delay = 0;
         long diffMilliseconds = cur % 1000;
         long diffSeconds = (cur / 1000 % 60) * 1000;
-        if (delay < SEC1) {
+        if (delay <= SEC1) {
             ; // nothing
-        } else if (delay < SEC10) {
+        } else if (delay <= SEC10 + SEC1) {
             long step = SEC1;
             delay = step - diffMilliseconds;
-        } else if (delay < MIN1) {
+        } else if (delay <= MIN1 + MIN1) {
             long step = SEC10;
             if (delay - step < step) // if 0:11, make step 00:01
                 step = delay - step;
             delay = step - diffMilliseconds;
-        } else if (delay < MIN5) {
+        } else if (delay <= MIN5 + MIN1) {
             long step = MIN1;
             if (delay - step < step) // if 1:30, make step 00:30
                 step = delay - step;
             delay = step - diffSeconds - diffMilliseconds;
-        } else if (delay < MIN15) {
+        } else if (delay <= MIN15) {
             long step = MIN5;
             if (delay - step < step) // if 5:30, make step 00:30
                 step = delay - step;
             delay = step - diffMilliseconds;
         }
-        Log.d(TAG, "delaying " + MainApplication.formatDuration(context, delay) + ", " + formatTime(time));
+        Log.d(TAG, "delaying " + formatDuration(context, delay) + ", " + formatTime(time));
         handler.postDelayed(r, delay);
         return c;
     }
