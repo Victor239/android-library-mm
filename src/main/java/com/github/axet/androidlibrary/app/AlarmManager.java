@@ -228,24 +228,24 @@ public class AlarmManager {
         long diffSeconds = (cur / 1000 % 60) * 1000;
         if (delay <= SEC1) {
             ; // nothing
-        } else if (delay <= SEC10 + SEC1) {
+        } else if (delay <= SEC10) {
             long step = SEC1;
             delay = step - diffMilliseconds;
-        } else if (delay <= MIN1 + MIN1) {
+        } else if (delay <= MIN1) {
             long step = SEC10;
             if (delay - step < step) // if 0:11, make step 00:01
-                step = delay - step;
+                step = delay - step + diffMilliseconds;
             delay = step - diffMilliseconds;
-        } else if (delay <= MIN5 + SEC1) {
+        } else if (delay <= MIN5) {
             long step = MIN1;
             if (delay - step < step) // if 1:30, make step 00:30
-                step = delay - step;
+                step = delay - step + diffSeconds + diffMilliseconds;
             delay = step - diffSeconds - diffMilliseconds;
         } else if (delay <= MIN15) {
             long step = MIN5;
             if (delay - step < step) // if 5:30, make step 00:30
-                step = delay - step;
-            delay = step - diffMilliseconds;
+                step = delay - step + diffSeconds + diffMilliseconds;
+            delay = step - diffSeconds - diffMilliseconds;
         }
         Log.d(TAG, "delaying " + formatDuration(context, delay) + ", " + formatTime(time));
         handler.postDelayed(r, delay);
