@@ -504,6 +504,8 @@ public class OpenFileDialog extends AlertDialog.Builder {
     public AlertDialog create() {
         LayoutInflater inflater = LayoutInflater.from(getContext());
 
+        int dp2 = ThemeUtils.dp2px(getContext(), 2);
+
         // title layout
         final LinearLayout titlebar = new LinearLayout(getContext());
         titlebar.setOrientation(LinearLayout.HORIZONTAL);
@@ -512,7 +514,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
 
         title = (TextView) inflater.inflate(android.R.layout.simple_list_item_1, null);
         title.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        title.setPadding(0, paddingTop, 0, paddingBottom);
+        title.setPadding(0, paddingTop, dp2, paddingBottom);
 
         PathMax textMax = new PathMax(getContext(), title);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1);
@@ -527,6 +529,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
         titlebar.addView(free);
         ImageView down = new ImageView(getContext());
         down.setImageResource(R.drawable.ic_expand_more_black_24dp);
+        down.setColorFilter(ThemeUtils.getThemeColor(getContext(), android.R.attr.colorAccent));
         lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         lp.gravity = Gravity.CENTER;
         down.setLayoutParams(lp);
@@ -627,7 +630,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
 
             message = new TextView(getContext());
             message.setGravity(Gravity.CENTER);
-            message.setBackgroundColor(0xfffffae3);
+            message.setBackgroundColor(0x22222222);
             message.setVisibility(View.GONE);
             main.addView(message);
         }
