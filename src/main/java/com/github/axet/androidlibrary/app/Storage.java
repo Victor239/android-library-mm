@@ -2,12 +2,16 @@ package com.github.axet.androidlibrary.app;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.StatFs;
+import android.provider.DocumentsContract;
+import android.provider.MediaStore;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
@@ -23,6 +27,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -159,6 +165,48 @@ public class Storage {
 //        }
 
         return file;
+    }
+
+    public static boolean exist(Context context, Uri uri, String name) {
+        ContentResolver contentResolver = context.getContentResolver();
+        Cursor childCursor = contentResolver.query(uri, new String[]{DocumentsContract.Document.COLUMN_DISPLAY_NAME}, null, null, null); // MediaStore.Files.FileColumns.TITLE + " = ?"
+        try {
+            while (childCursor.moveToNext()) {
+                String t = childCursor.getString(0);
+                if (t.equals(name))
+                    return true;
+            }
+            return false;
+        } finally {
+            childCursor.close();
+        }
+    }
+
+    // contentresolver helper
+    public static String getNextFile(Context context, Uri childrenUri, String name, String ext) {
+        String fileName;
+        if (ext == null || ext.isEmpty())
+            fileName = name;
+        else
+            fileName = String.format("%s.%s", name, ext);
+
+        int i = 1;
+        while (exist(context, childrenUri, fileName)) {
+            if (ext == null || ext.isEmpty())
+                fileName = String.format("%s (%d)", name, i);
+            else
+                fileName = String.format("%s (%d).%s", name, i, ext);
+            fileName = fileName.trim(); // if filename is empty
+            i++;
+        }
+
+//        try {
+//            file.createNewFile();
+//        } catch (IOException e) {
+//            throw new RuntimeException("Unable to create: " + file, e);
+//        }
+
+        return fileName;
     }
 
     public static void delete(File f) {

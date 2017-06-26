@@ -21,7 +21,7 @@ import java.util.List;
 
 public class StoragePathPreference extends EditTextPreference {
     public String def;
-    Storage storage = new Storage(getContext());
+    public Storage storage = new Storage(getContext());
 
     public static String getText(Object o) {
         if (o instanceof StoragePathPreference)
@@ -66,19 +66,17 @@ public class StoragePathPreference extends EditTextPreference {
         return ext.getPath();
     }
 
-    public static File getPath(Object object) {
+    public static String getPath(Object object) {
         String path = getText(object);
 
         if (path == null || path.isEmpty()) {
             path = getDefault();
         }
 
-        File p = new File(path);
-
-        return p;
+        return path;
     }
 
-    public static void showDialog(Context context, final Object pref, DialogDelayed delayed) {
+    public static void showDialog(Context context, final Object pref) {
         Storage storage = new Storage(context);
         if (!Storage.permitted(context, Storage.PERMISSIONS)) {
             final List<String> ss = new ArrayList<>();
@@ -88,7 +86,7 @@ public class StoragePathPreference extends EditTextPreference {
                 ss.add(ext.getAbsolutePath());
             AlertDialog.Builder builder = new AlertDialog.Builder(context);
             builder.setTitle(getTitle(pref));
-            File summ = storage.getStoragePath(getPath(pref));
+            File summ = storage.getStoragePath(new File(getPath(pref)));
             builder.setSingleChoiceItems(ss.toArray(new CharSequence[]{}), ss.indexOf(summ.getAbsolutePath()), new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
@@ -102,9 +100,9 @@ public class StoragePathPreference extends EditTextPreference {
             Dialog d = builder.create();
             d.show();
         } else {
-            final OpenFileDialog f = delayed.createDialog();
+            final OpenFileDialog f = new OpenFileDialog(context, OpenFileDialog.DIALOG_TYPE.FOLDER_DIALOG);
 
-            File p = getPath(pref);
+            File p = new File(getPath(pref));
 
             f.setCurrentPath(p);
             f.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
@@ -159,16 +157,7 @@ public class StoragePathPreference extends EditTextPreference {
 
     @Override
     protected void showDialog(Bundle state) {
-        showDialog(getContext(), this, new DialogDelayed() {
-            @Override
-            public OpenFileDialog createDialog() {
-                return StoragePathPreference.this.createDialog();
-            }
-        });
-    }
-
-    public OpenFileDialog createDialog() {
-        return new OpenFileDialog(getContext(), OpenFileDialog.DIALOG_TYPE.FOLDER_DIALOG);
+        showDialog(getContext(), this);
     }
 
     @Override
@@ -195,7 +184,7 @@ public class StoragePathPreference extends EditTextPreference {
     @Override
     protected void onSetInitialValue(boolean restoreValue, Object defaultValue) {
         super.onSetInitialValue(restoreValue, defaultValue);
-        updatePath(getPath(this));
+        updatePath(new File(getPath(this)));
     }
 
     @Override
