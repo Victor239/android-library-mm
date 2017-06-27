@@ -332,6 +332,7 @@ public class Storage {
         }
     }
 
+    // parent = DocumentsContract.buildTreeDocumentUri(t.getAuthority(), DocumentsContract.getTreeDocumentId(t));
     public Uri getNextFile(Uri parent, String name, String ext) {
         String s = parent.getScheme();
         if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
@@ -508,15 +509,13 @@ public class Storage {
         }
     }
 
+    // move should not call getNextFile()
     public Uri move(File f, Uri t) {
         String s = t.getScheme();
         if (Build.VERSION.SDK_INT >= 21 && s.startsWith(ContentResolver.SCHEME_CONTENT)) {
             String ext = getExt(t);
-            String n = getNameNoExt(t);
+            String n = getDocumentName(t);
             ContentResolver contentResolver = context.getContentResolver();
-            Uri doc = DocumentsContract.buildTreeDocumentUri(t.getAuthority(), DocumentsContract.getTreeDocumentId(t));
-            Uri to = getNextFile(doc, n, ext);
-            n = getNameNoExt(to); // update (1)
             String mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext);
             Uri docUri = DocumentsContract.buildDocumentUriUsingTree(t, DocumentsContract.getTreeDocumentId(t));
             Uri toUri = DocumentsContract.createDocument(contentResolver, docUri, mime, n);
