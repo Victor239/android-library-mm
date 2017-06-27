@@ -836,7 +836,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
         if (!readonly) { // show readonly directory tooltip
             File p = currentPath;
             while (!p.exists())
-                p = currentPath.getParentFile();
+                p = p.getParentFile();
             if (!canWrite(p)) {
                 message.setText(R.string.readonly_directory);
                 message.setVisibility(View.VISIBLE);

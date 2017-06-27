@@ -9,6 +9,7 @@ import android.content.res.TypedArray;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Environment;
 import android.os.Parcelable;
 import android.provider.DocumentsContract;
 import android.support.v4.app.Fragment;
@@ -33,6 +34,10 @@ public class StoragePathPreferenceCompat extends EditTextPreference {
     @TargetApi(21)
     public static String getName(Context context, String to) {
         Uri uri = Uri.parse(to);
+
+        final int takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
+        context.getContentResolver().takePersistableUriPermission(uri, takeFlags);
+
         ContentResolver contentResolver = context.getContentResolver();
         Uri docUri = DocumentsContract.buildDocumentUriUsingTree(uri, DocumentsContract.getTreeDocumentId(uri));
         Cursor docCursor = contentResolver.query(docUri, new String[]{DocumentsContract.Document.COLUMN_DISPLAY_NAME}, null, null, null);
@@ -44,6 +49,25 @@ public class StoragePathPreferenceCompat extends EditTextPreference {
             docCursor.close();
         }
         return "saf://" + to;
+    }
+
+    @TargetApi(19)
+    public static boolean showStorageAccessFramework(Context context, String path) {
+        File ext = Environment.getExternalStorageDirectory();
+        if (ext == null)
+            return true;
+        File[] ff = context.getExternalFilesDirs("");
+        int count = 0;
+        for (File f : ff) {
+            if (f.getAbsolutePath().startsWith(ext.getAbsolutePath())) {
+                continue;
+            }
+            count++;
+        }
+        boolean show = count > 0;
+        if (show)
+            return true;
+        return path.startsWith(ContentResolver.SCHEME_CONTENT);
     }
 
     public StoragePathPreferenceCompat(Context context, AttributeSet attrs, int defStyleAttr) {
@@ -68,14 +92,18 @@ public class StoragePathPreferenceCompat extends EditTextPreference {
             if (!Storage.permitted(a, ss, code))
                 return;
         }
-        if (Build.VERSION.SDK_INT >= 21) {
+        String f = StoragePathPreference.getPath(this);
+        if (Build.VERSION.SDK_INT >= 21 && showStorageAccessFramework(getContext(), f)) {
+            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    | Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                    | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION
+                    | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
             if (sf != null) {
-                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
                 sf.startActivityForResult(intent, scode);
                 return;
             }
             if (sa != null) {
-                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
                 sa.startActivityForResult(intent, scode);
                 return;
             }
@@ -99,7 +127,7 @@ public class StoragePathPreferenceCompat extends EditTextPreference {
         return path.getPath();
     }
 
-    void updatePath(String path) {
+    public void updatePath(String path) {
         if (path.startsWith(ContentResolver.SCHEME_CONTENT)) {
             String n = getName(getContext(), path);
             setSummary(n);
@@ -147,7 +175,13 @@ public class StoragePathPreferenceCompat extends EditTextPreference {
         this.scode = code;
     }
 
-    public void onActivityResult(Uri uri) {
+    @TargetApi(19)
+    public void onActivityResult(int resultCode, Intent data) {
+        if (resultCode != Activity.RESULT_OK)
+            return;
+        final int takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
+        Uri uri = data.getData();
+        getContext().getContentResolver().takePersistableUriPermission(uri, takeFlags);
         if (callChangeListener(uri.toString())) {
             setText(uri.toString());
         }
