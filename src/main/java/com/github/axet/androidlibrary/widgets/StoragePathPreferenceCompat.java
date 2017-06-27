@@ -32,7 +32,7 @@ public class StoragePathPreferenceCompat extends EditTextPreference {
     public int scode;
 
     @TargetApi(19)
-    public static boolean showStorageAccessFramework(Context context, String path) {
+    public static boolean showStorageAccessFramework(Context context, String path, String[] ss) {
         File ext = Environment.getExternalStorageDirectory();
         if (ext == null)
             return true;
@@ -44,10 +44,13 @@ public class StoragePathPreferenceCompat extends EditTextPreference {
             }
             count++;
         }
-        boolean show = count > 0;
-        if (show)
+        if (count > 0) // have external drive?
             return true;
-        return path.startsWith(ContentResolver.SCHEME_CONTENT);
+        if (path.startsWith(ContentResolver.SCHEME_CONTENT)) // showed saf before?
+            return true;
+        if (ss == null) // no permission enabled, use saf as main dialog
+            return true;
+        return false;
     }
 
     public StoragePathPreferenceCompat(Context context, AttributeSet attrs, int defStyleAttr) {
@@ -73,7 +76,7 @@ public class StoragePathPreferenceCompat extends EditTextPreference {
                 return;
         }
         String f = StoragePathPreference.getPath(this);
-        if (Build.VERSION.SDK_INT >= 21 && showStorageAccessFramework(getContext(), f)) {
+        if (Build.VERSION.SDK_INT >= 21 && showStorageAccessFramework(getContext(), f, ss)) {
             Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION
                     | Intent.FLAG_GRANT_WRITE_URI_PERMISSION
