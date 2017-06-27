@@ -1,6 +1,7 @@
 package com.github.axet.androidlibrary.app;
 
 import android.Manifest;
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -9,13 +10,18 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
+import android.os.ParcelFileDescriptor;
 import android.os.StatFs;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
+import android.provider.OpenableColumns;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
+import android.system.ErrnoException;
+import android.system.Os;
+import android.system.StructStatVfs;
 
 import org.apache.commons.io.IOUtils;
 
@@ -23,6 +29,7 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,56 +40,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Storage {
-    protected Context context;
-
     public static final String[] PERMISSIONS = new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
 
-    public Storage(Context context) {
-        this.context = context;
-    }
-
-    public File getLocalInternal() {
-        return context.getFilesDir();
-    }
-
-    public File getLocalExternal() {
-        File external = context.getExternalFilesDir("");
-
-        // Starting in KITKAT, no permissions are required to read or write to the getExternalFilesDir;
-        // it's always accessible to the calling app.
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
-            if (!permitted(context, PERMISSIONS))
-                return null;
-        }
-
-        return external;
-    }
-
-    public File getLocalStorage() {
-        File internal = getLocalInternal();
-
-        File external = getLocalExternal();
-        if (external == null) // some old phones <15API with disabled sdcard return null
-            return internal;
-
-        return external;
-    }
-
-    public File getStoragePath(File file) {
-        File parent = file.getParentFile();
-        while (!parent.exists())
-            parent = file.getParentFile();
-        if ((file.canWrite() || parent.canWrite())) {
-            return file;
-        } else {
-            return getLocalStorage();
-        }
-    }
+    protected Context context;
 
     public static long getFree(File f) {
         while (!f.exists())
             f = f.getParentFile();
-
         StatFs fsi = new StatFs(f.getPath());
         if (Build.VERSION.SDK_INT < 18)
             return fsi.getBlockSize() * (long) fsi.getAvailableBlocks();
@@ -92,7 +56,6 @@ public class Storage {
 
     public static String getNameNoExt(File f) {
         String fileName = f.getName();
-
         int i = fileName.lastIndexOf('.');
         if (i > 0) {
             fileName = fileName.substring(0, i);
@@ -102,7 +65,6 @@ public class Storage {
 
     public static String getExt(File f) {
         String fileName = f.getName();
-
         int i = fileName.lastIndexOf('.');
         if (i >= 0) {
             return fileName.substring(i + 1);
@@ -158,55 +120,7 @@ public class Storage {
             i++;
         }
 
-//        try {
-//            file.createNewFile();
-//        } catch (IOException e) {
-//            throw new RuntimeException("Unable to create: " + file, e);
-//        }
-
         return file;
-    }
-
-    public static boolean exist(Context context, Uri uri, String name) {
-        ContentResolver contentResolver = context.getContentResolver();
-        Cursor childCursor = contentResolver.query(uri, new String[]{DocumentsContract.Document.COLUMN_DISPLAY_NAME}, null, null, null); // MediaStore.Files.FileColumns.TITLE + " = ?"
-        try {
-            while (childCursor.moveToNext()) {
-                String t = childCursor.getString(0);
-                if (t.equals(name))
-                    return true;
-            }
-            return false;
-        } finally {
-            childCursor.close();
-        }
-    }
-
-    // contentresolver helper
-    public static String getNextFile(Context context, Uri childrenUri, String name, String ext) {
-        String fileName;
-        if (ext == null || ext.isEmpty())
-            fileName = name;
-        else
-            fileName = String.format("%s.%s", name, ext);
-
-        int i = 1;
-        while (exist(context, childrenUri, fileName)) {
-            if (ext == null || ext.isEmpty())
-                fileName = String.format("%s (%d)", name, i);
-            else
-                fileName = String.format("%s (%d).%s", name, i, ext);
-            fileName = fileName.trim(); // if filename is empty
-            i++;
-        }
-
-//        try {
-//            file.createNewFile();
-//        } catch (IOException e) {
-//            throw new RuntimeException("Unable to create: " + file, e);
-//        }
-
-        return fileName;
     }
 
     public static void delete(File f) {
@@ -277,5 +191,283 @@ public class Storage {
         Uri uri = Uri.fromParts("package", context.getPackageName(), null);
         intent.setData(uri);
         context.startActivity(intent);
+    }
+
+    public Storage(Context context) {
+        this.context = context;
+    }
+
+    public File getLocalInternal() {
+        return context.getFilesDir();
+    }
+
+    public File getLocalExternal() {
+        File external = context.getExternalFilesDir("");
+
+        // Starting in KITKAT, no permissions are required to read or write to the getExternalFilesDir;
+        // it's always accessible to the calling app.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
+            if (!permitted(context, PERMISSIONS))
+                return null;
+        }
+
+        return external;
+    }
+
+    public File getLocalStorage() {
+        File internal = getLocalInternal();
+
+        File external = getLocalExternal();
+        if (external == null) // some old phones <15API with disabled sdcard return null
+            return internal;
+
+        return external;
+    }
+
+    public File getStoragePath(File file) {
+        File parent = file.getParentFile();
+        while (!parent.exists())
+            parent = file.getParentFile();
+        if ((file.canWrite() || parent.canWrite())) {
+            return file;
+        } else {
+            return getLocalStorage();
+        }
+    }
+
+    public boolean exists(Uri uri) {
+        String s = uri.getScheme();
+        if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
+            ContentResolver contentResolver = context.getContentResolver();
+            Cursor childCursor = null;
+            try {
+                childCursor = contentResolver.query(uri, null, null, null, null);
+                if (childCursor.moveToNext()) {
+                    return true;
+                }
+            } catch (RuntimeException e) { // not found catched here
+                ;
+            } finally {
+                if (childCursor != null)
+                    childCursor.close();
+            }
+            return false;
+        } else if (s.startsWith(ContentResolver.SCHEME_FILE)) {
+            File f1 = new File(uri.getPath());
+            return f1.exists();
+        } else {
+            throw new RuntimeException("unknown uri");
+        }
+    }
+
+    public Uri child(Uri uri, String name) {
+        String s = uri.getScheme();
+        if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
+            String f = DocumentsContract.getTreeDocumentId(uri) + "/" + name;
+            Uri test = DocumentsContract.buildDocumentUriUsingTree(uri, f);
+            return test;
+        } else if (s.startsWith(ContentResolver.SCHEME_FILE)) {
+            File f1 = new File(uri.getPath(), name);
+            return Uri.fromFile(f1);
+        } else {
+            throw new RuntimeException("unknown uri");
+        }
+    }
+
+    public void delete(Uri f) {
+        String s = f.getScheme();
+        if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
+            ContentResolver resolver = context.getContentResolver();
+            DocumentsContract.deleteDocument(resolver, f);
+        } else if (s.equals(ContentResolver.SCHEME_FILE)) {
+            File ff = new File(f.getPath());
+            delete(ff);
+        } else {
+            throw new RuntimeException("unknown uri");
+        }
+    }
+
+    public String getNameNoExt(Uri f) {
+        String s = f.getScheme();
+        if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
+            return getNameNoExt(new File(getDocumentName(f)));
+        } else if (s.equals(ContentResolver.SCHEME_FILE)) {
+            return getNameNoExt(new File(f.getPath()));
+        } else {
+            throw new RuntimeException("unknown uri");
+        }
+    }
+
+    public String getExt(Uri f) {
+        String s = f.getScheme();
+        if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
+            return getExt(new File(getDocumentName(f)));
+        } else if (s.equals(ContentResolver.SCHEME_FILE)) {
+            return getExt(new File(f.getPath()));
+        } else {
+            throw new RuntimeException("unknown uri");
+        }
+    }
+
+    public Uri rename(Uri f, String t) {
+        String s = f.getScheme();
+        if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
+            ContentResolver resolver = context.getContentResolver();
+            return DocumentsContract.renameDocument(resolver, f, t);
+        } else if (s.equals(ContentResolver.SCHEME_FILE)) {
+            File f1 = new File(f.getPath());
+            File ff = new File(f1.getParent(), s);
+            if (ff.exists())
+                ff = Storage.getNextFile(ff);
+            f1.renameTo(ff);
+            return Uri.fromFile(ff);
+        } else {
+            throw new RuntimeException("unknown uri");
+        }
+    }
+
+    public Uri getNextFile(Uri parent, String name, String ext) {
+        String s = parent.getScheme();
+        if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
+            String fileName;
+            if (ext == null || ext.isEmpty())
+                fileName = name;
+            else
+                fileName = String.format("%s.%s", name, ext);
+
+            Uri uri = child(parent, fileName);
+
+            int i = 1;
+            while (exists(uri)) {
+                if (ext == null || ext.isEmpty())
+                    fileName = String.format("%s (%d)", name, i);
+                else
+                    fileName = String.format("%s (%d).%s", name, i, ext);
+                fileName = fileName.trim(); // if filename is empty
+                uri = child(parent, fileName);
+                i++;
+            }
+
+            return uri;
+        } else if (s.startsWith(ContentResolver.SCHEME_FILE)) {
+            File f1 = new File(parent.getPath());
+            return Uri.fromFile(getNextFile(f1, name, ext));
+        } else {
+            throw new RuntimeException("unknown uri");
+        }
+    }
+
+    public long getFree(Uri uri) {
+        String s = uri.getScheme();
+        if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
+            Uri docTreeUri = DocumentsContract.buildDocumentUriUsingTree(uri, DocumentsContract.getTreeDocumentId(uri));
+            try {
+                ParcelFileDescriptor pfd = context.getContentResolver().openFileDescriptor(docTreeUri, "r");
+                StructStatVfs stats = Os.fstatvfs(pfd.getFileDescriptor());
+                return stats.f_bavail * stats.f_bsize;
+            } catch (FileNotFoundException | ErrnoException e) {
+                throw new RuntimeException(e);
+            }
+        } else if (s.equals(ContentResolver.SCHEME_FILE)) {
+            File file = new File(uri.getPath());
+            return getFree(file);
+        } else {
+            throw new RuntimeException("unknown uri");
+        }
+    }
+
+    public Uri getStoragePath(String path) {
+        Uri uri = Uri.parse(path);
+        String s = uri.getScheme();
+        if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
+            return uri;
+        } else if (s.equals(ContentResolver.SCHEME_FILE)) {
+            File f = getStoragePath(new File(path));
+            return Uri.fromFile(f);
+        } else {
+            throw new RuntimeException("unknown uri");
+        }
+    }
+
+    @TargetApi(21)
+    public static String getDocumentName(Uri uri) {
+        String s = uri.getScheme();
+        if (s.startsWith(ContentResolver.SCHEME_CONTENT)) {
+            String id = DocumentsContract.getDocumentId(uri);
+            File f = new File(id);
+            return f.getName();
+        } else if (s.startsWith(ContentResolver.SCHEME_FILE)) {
+            File f = new File(uri.getPath());
+            return f.getName();
+        } else {
+            throw new RuntimeException("unknown uri");
+        }
+    }
+
+    public String getName(Uri uri) {
+        ContentResolver contentResolver = context.getContentResolver();
+        Cursor childCursor = null;
+        try {
+            childCursor = contentResolver.query(uri, null, null, null, null);
+            if (childCursor.moveToNext()) {
+                return childCursor.getString(childCursor.getColumnIndex(DocumentsContract.Document.COLUMN_DISPLAY_NAME));
+            }
+        } catch (RuntimeException e) {
+            ;
+        } finally {
+            if (childCursor != null)
+                childCursor.close();
+        }
+        return null;
+    }
+
+    public long getLength(Uri uri) {
+        String s = uri.getScheme();
+        if (s.startsWith(ContentResolver.SCHEME_CONTENT)) {
+            ContentResolver contentResolver = context.getContentResolver();
+            Cursor childCursor = null;
+            try {
+                childCursor = contentResolver.query(uri, null, null, null, null);
+                if (childCursor.moveToNext()) {
+                    return childCursor.getLong(childCursor.getColumnIndex(DocumentsContract.Document.COLUMN_SIZE));
+                }
+            } catch (RuntimeException e) {
+                ;
+            } finally {
+                if (childCursor != null)
+                    childCursor.close();
+            }
+            return -1;
+        } else if (s.startsWith(ContentResolver.SCHEME_FILE)) {
+            File f = new File(uri.getPath());
+            return f.length();
+        } else {
+            throw new RuntimeException("unknown uri");
+        }
+    }
+
+    public long getLast(Uri uri) {
+        String s = uri.getScheme();
+        if (s.startsWith(ContentResolver.SCHEME_CONTENT)) {
+            ContentResolver contentResolver = context.getContentResolver();
+            Cursor childCursor = null;
+            try {
+                childCursor = contentResolver.query(uri, null, null, null, null);
+                if (childCursor.moveToNext()) {
+                    return childCursor.getLong(childCursor.getColumnIndex(DocumentsContract.Document.COLUMN_LAST_MODIFIED));
+                }
+            } catch (RuntimeException e) {
+                ;
+            } finally {
+                if (childCursor != null)
+                    childCursor.close();
+            }
+            return 0;
+        } else if (s.startsWith(ContentResolver.SCHEME_FILE)) {
+            File f = new File(uri.getPath());
+            return f.lastModified();
+        } else {
+            throw new RuntimeException("unknown uri");
+        }
     }
 }
