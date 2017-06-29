@@ -25,6 +25,7 @@ import android.system.StructStatVfs;
 import android.util.Log;
 import android.webkit.MimeTypeMap;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 
@@ -129,7 +130,7 @@ public class Storage {
     }
 
     public static void delete(File f) {
-        f.delete();
+        FileUtils.deleteQuietly(f);
     }
 
     public static boolean isSame(File f, File t) {
