@@ -24,9 +24,9 @@ import com.github.axet.androidlibrary.R;
 import java.io.InputStream;
 
 /**
- * <com.github.axet.androidlibrary.widgets.AboutPreferenceCompat
+ * &lt;com.github.axet.androidlibrary.widgets.AboutPreferenceCompat
  * android:dialogMessage="R.raw.about"
- * android:persistent="false" />
+ * android:persistent="false" /&gt;
  */
 public class AboutPreferenceCompat extends DialogPreference {
 

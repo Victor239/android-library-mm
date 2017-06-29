@@ -604,22 +604,22 @@ public class OpenFileDialog extends AlertDialog.Builder {
             if (!readonly) { // show new folder button
                 Button textView = new Button(getContext());
                 textView.setPadding(paddingLeft, 0, paddingRight, 0);
-                textView.setText(R.string.OpenFileDialogNewFolder);
+                textView.setText(R.string.filedialog_newfolder);
                 textView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
                 textView.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
                         final EditTextDialog builder = new EditTextDialog(getContext());
-                        builder.setTitle(R.string.OpenFileDialogFolderName);
+                        builder.setTitle(R.string.filedialog_foldername);
                         builder.setText("");
                         builder.setPositiveButton(new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 File f = new File(currentPath, builder.getText());
                                 if (!mkdirs(f)) {
-                                    toast(getContext().getString(R.string.OpenFileDialogUnableCreate, builder.getText()));
+                                    toast(getContext().getString(R.string.filedialog_unablecreatefolder, builder.getText()));
                                 } else {
-                                    toast(getContext().getString(R.string.OpenFileDialogFolderCreated, builder.getText()));
+                                    toast(getContext().getString(R.string.filedialog_foldercreated, builder.getText()));
                                 }
                                 adapter.scan(currentPath);
                             }
@@ -648,7 +648,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
                     final PopupMenu p = new PopupMenu(getContext(), view);
                     if (!readonly) { // show rename / delete
                         p.getMenu().add(getContext().getString(R.string.filedialog_rename));
-                        p.getMenu().add(getContext().getString(R.string.OpenFileDialogDelete));
+                        p.getMenu().add(getContext().getString(R.string.filedialog_delete));
                     }
                     p.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                         @Override
@@ -656,24 +656,24 @@ public class OpenFileDialog extends AlertDialog.Builder {
                             if (item.getTitle().equals(getContext().getString(R.string.filedialog_rename))) {
                                 final File ff = adapter.getItem(position);
                                 final EditTextDialog b = new EditTextDialog(getContext());
-                                b.setTitle(getContext().getString(R.string.OpenFileDialogFolderName));
+                                b.setTitle(getContext().getString(R.string.filedialog_foldername));
                                 b.setText(ff.getName());
                                 b.setPositiveButton(new DialogInterface.OnClickListener() {
                                     @Override
                                     public void onClick(DialogInterface dialog, int which) {
                                         File f = new File(ff.getParent(), b.getText());
                                         ff.renameTo(f);
-                                        toast(getContext().getString(R.string.OpenFileDialogRenamedTo, f.getName()));
+                                        toast(getContext().getString(R.string.filedialog_renameto, f.getName()));
                                         adapter.scan(currentPath);
                                     }
                                 });
                                 b.show();
                                 return true;
                             }
-                            if (item.getTitle().equals(getContext().getString(R.string.OpenFileDialogDelete))) {
+                            if (item.getTitle().equals(getContext().getString(R.string.filedialog_delete))) {
                                 File ff = adapter.getItem(position);
                                 delete(ff);
-                                toast(getContext().getString(R.string.OpenFileDialogFolderDeleted, ff.getName()));
+                                toast(getContext().getString(R.string.filedialog_folderdeleted, ff.getName()));
                                 adapter.scan(currentPath);
                                 return true;
                             }
@@ -721,7 +721,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
 
         {
             TextView text = (TextView) LayoutInflater.from(getContext()).inflate(android.R.layout.simple_list_item_1, null);
-            text.setText(getContext().getString(R.string.OpenFileDialogEmptyList));
+            text.setText(getContext().getString(R.string.filedialog_empty));
             text.setVisibility(View.GONE);
             listView.setEmptyView(text);
             main.addView(text);
@@ -840,7 +840,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
             while (!p.exists())
                 p = p.getParentFile();
             if (!canWrite(p)) {
-                message.setText(R.string.readonly_directory);
+                message.setText(R.string.filedialog_readonly);
                 message.setVisibility(View.VISIBLE);
             } else {
                 message.setVisibility(View.GONE);
