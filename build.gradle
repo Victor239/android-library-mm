@@ -25,8 +25,8 @@ android {
     defaultConfig {
         minSdkVersion 9
         targetSdkVersion 25
-        versionCode 196
-        versionName "1.14.2"
+        versionCode 197
+        versionName "1.14.3"
     }
     buildTypes {
         release {
