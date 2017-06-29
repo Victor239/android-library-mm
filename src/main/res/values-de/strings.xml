@@ -10,8 +10,9 @@
     <string name="filedialog_renameto">Umbenannt zu: \'%1$s\'</string>
     <string name="filedialog_empty">Leere Liste</string>
     <string name="filedialog_readonly">Nur-lesen-Verzeichnis</string>
+    <string name="filedialog_selectfolder">Bitte wähle einen Ordner</string>
+
     <string name="ShareAction">Teilen</string>
-    <string name="select_folder">Bitte wähle einen Ordner</string>
 
     <plurals name="days">
         <item quantity="one">%d Tag</item>

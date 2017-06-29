@@ -10,8 +10,9 @@
     <string name="filedialog_renameto">Rinominata come: \'%1$s\'</string>
     <string name="filedialog_empty">Lista vuota</string>
     <string name="filedialog_readonly">Cartella accessibile in sola lettura</string>
+    <string name="filedialog_selectfolder">Per favore, seleziona una cartella</string>
+
     <string name="ShareAction">Condividi</string>
-    <string name="select_folder">Per favore, seleziona una cartella</string>
 
     <plurals name="days">
         <item quantity="one">%d giorno</item>

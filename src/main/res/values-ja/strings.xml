@@ -10,8 +10,9 @@
     <string name="filedialog_renameto">名前を変更しました: \'%1$s\'</string>
     <string name="filedialog_empty">空のリスト</string>
     <string name="filedialog_readonly">読み取り専用ディレクトリー</string>
+    <string name="filedialog_selectfolder">フォルダーを選択してください</string>
+
     <string name="ShareAction">共有</string>
-    <string name="select_folder">フォルダーを選択してください</string>
 
     <plurals name="days">
         <item quantity="one">%d 日</item>

@@ -10,8 +10,9 @@
     <string name="filedialog_renameto">Переименовано: \'%1$s\'</string>
     <string name="filedialog_empty">Пустой список</string>
     <string name="filedialog_readonly">Папка только для чтения</string>
+    <string name="filedialog_selectfolder">Выберите папку</string>
+
     <string name="ShareAction">Поделиться</string>
-    <string name="select_folder">Выберите папку</string>
 
     <plurals name="days">
         <item quantity="one">%d день</item>

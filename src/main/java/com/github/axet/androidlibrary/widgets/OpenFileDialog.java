@@ -711,7 +711,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
                                 adapter.notifyDataSetChanged();
                                 break;
                             default:
-                                Toast.makeText(getContext(), R.string.select_folder, Toast.LENGTH_SHORT).show();
+                                Toast.makeText(getContext(), R.string.filedialog_selectfolder, Toast.LENGTH_SHORT).show();
                         }
                     }
                 }
