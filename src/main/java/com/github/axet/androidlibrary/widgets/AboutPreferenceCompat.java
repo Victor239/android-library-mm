@@ -10,6 +10,7 @@ import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.net.Uri;
+import android.os.Build;
 import android.support.v4.content.res.TypedArrayUtils;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.preference.DialogPreference;
@@ -32,7 +33,7 @@ public class AboutPreferenceCompat extends DialogPreference {
 
     int id;
 
-    public static void showDialog(final Context context, int id) {
+    public static AlertDialog.Builder buildDialog(final Context context, int id) {
         LayoutInflater inflater = LayoutInflater.from(context);
         View title = inflater.inflate(R.layout.about_title, null);
         TextView t = (TextView) title.findViewById(R.id.about_title_name);
@@ -94,8 +95,13 @@ public class AboutPreferenceCompat extends DialogPreference {
                 ;
             }
         });
-        Dialog d = builder.create();
+        return builder;
+    }
+
+    public static Dialog showDialog(final Context context, int id) {
+        Dialog d = buildDialog(context, id).create();
         d.show();
+        return d;
     }
 
     public static int getResourceId(Context context, String res) {
