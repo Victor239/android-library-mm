@@ -1,16 +1,16 @@
 <resources>
     <!--OpenFileDialog-->
     <string name="filedialog_rename">Переименовать</string>
-    <string name="OpenFileDialogDelete">Удалить</string>
-    <string name="OpenFileDialogNewFolder">Новая Папка</string>
-    <string name="OpenFileDialogFolderName">Имя папки</string>
-    <string name="OpenFileDialogUnableCreate">Не получилось создать папку: \'%1$s\'</string>
-    <string name="OpenFileDialogFolderCreated">Папка \'%1$s\' создана</string>
-    <string name="OpenFileDialogFolderDeleted">Удалено: \'%1$s\'</string>
-    <string name="OpenFileDialogRenamedTo">Переименовано: \'%1$s\'</string>
-    <string name="OpenFileDialogEmptyList">Пустой список</string>
+    <string name="filedialog_delete">Удалить</string>
+    <string name="filedialog_newfolder">Новая Папка</string>
+    <string name="filedialog_foldername">Имя папки</string>
+    <string name="filedialog_unablecreatefolder">Не получилось создать папку: \'%1$s\'</string>
+    <string name="filedialog_foldercreated">Папка \'%1$s\' создана</string>
+    <string name="filedialog_folderdeleted">Удалено: \'%1$s\'</string>
+    <string name="filedialog_renameto">Переименовано: \'%1$s\'</string>
+    <string name="filedialog_empty">Пустой список</string>
+    <string name="filedialog_readonly">Папка только для чтения</string>
     <string name="ShareAction">Поделиться</string>
-    <string name="readonly_directory">Папка только для чтения</string>
     <string name="select_folder">Выберите папку</string>
 
     <plurals name="days">

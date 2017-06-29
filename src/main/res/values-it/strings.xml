@@ -1,16 +1,16 @@
 <resources>
     <!--OpenFileDialog-->
     <string name="filedialog_rename">Rinomina</string>
-    <string name="OpenFileDialogDelete">Elimina</string>
-    <string name="OpenFileDialogNewFolder">Nuova Cartella</string>
-    <string name="OpenFileDialogFolderName">Nome della Cartella</string>
-    <string name="OpenFileDialogUnableCreate">Impossibile create cartella: \'%1$s\'</string>
-    <string name="OpenFileDialogFolderCreated">Creata cartella \'%1$s\'</string>
-    <string name="OpenFileDialogFolderDeleted">Elimita: \'%1$s\'</string>
-    <string name="OpenFileDialogRenamedTo">Rinominata come: \'%1$s\'</string>
-    <string name="OpenFileDialogEmptyList">Lista vuota</string>
+    <string name="filedialog_delete">Elimina</string>
+    <string name="filedialog_newfolder">Nuova Cartella</string>
+    <string name="filedialog_foldername">Nome della Cartella</string>
+    <string name="filedialog_unablecreatefolder">Impossibile create cartella: \'%1$s\'</string>
+    <string name="filedialog_foldercreated">Creata cartella \'%1$s\'</string>
+    <string name="filedialog_folderdeleted">Elimita: \'%1$s\'</string>
+    <string name="filedialog_renameto">Rinominata come: \'%1$s\'</string>
+    <string name="filedialog_empty">Lista vuota</string>
+    <string name="filedialog_readonly">Cartella accessibile in sola lettura</string>
     <string name="ShareAction">Condividi</string>
-    <string name="readonly_directory">Cartella accessibile in sola lettura</string>
     <string name="select_folder">Per favore, seleziona una cartella</string>
 
     <plurals name="days">

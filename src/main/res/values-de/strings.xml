@@ -1,16 +1,16 @@
 <resources>
     <!--OpenFileDialog-->
     <string name="filedialog_rename">Umbenennen</string>
-    <string name="OpenFileDialogDelete">Löschen</string>
-    <string name="OpenFileDialogNewFolder">Neuer Ordner</string>
-    <string name="OpenFileDialogFolderName">Ordner Name</string>
-    <string name="OpenFileDialogUnableCreate">Ordner kann nicht erstellt werden: \'%1$s\'</string>
-    <string name="OpenFileDialogFolderCreated">Ordner \'%1$s\' erstellt</string>
-    <string name="OpenFileDialogFolderDeleted">Gelöscht: \'%1$s\'</string>
-    <string name="OpenFileDialogRenamedTo">Umbenannt zu: \'%1$s\'</string>
-    <string name="OpenFileDialogEmptyList">Leere Liste</string>
+    <string name="filedialog_delete">Löschen</string>
+    <string name="filedialog_newfolder">Neuer Ordner</string>
+    <string name="filedialog_foldername">Ordner Name</string>
+    <string name="filedialog_unablecreatefolder">Ordner kann nicht erstellt werden: \'%1$s\'</string>
+    <string name="filedialog_foldercreated">Ordner \'%1$s\' erstellt</string>
+    <string name="filedialog_folderdeleted">Gelöscht: \'%1$s\'</string>
+    <string name="filedialog_renameto">Umbenannt zu: \'%1$s\'</string>
+    <string name="filedialog_empty">Leere Liste</string>
+    <string name="filedialog_readonly">Nur-lesen-Verzeichnis</string>
     <string name="ShareAction">Teilen</string>
-    <string name="readonly_directory">Nur-lesen-Verzeichnis</string>
     <string name="select_folder">Bitte wähle einen Ordner</string>
 
     <plurals name="days">

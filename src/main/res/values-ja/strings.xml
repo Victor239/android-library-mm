@@ -1,16 +1,16 @@
 <resources>
     <!--OpenFileDialog-->
     <string name="filedialog_rename">名前を変更</string>
-    <string name="OpenFileDialogDelete">削除</string>
-    <string name="OpenFileDialogNewFolder">新しいフォルダー</string>
-    <string name="OpenFileDialogFolderName">フォルダー名</string>
-    <string name="OpenFileDialogUnableCreate">フォルダーを作成できません: \'%1$s\'</string>
-    <string name="OpenFileDialogFolderCreated">フォルダー \'%1$s\' を作成しました</string>
-    <string name="OpenFileDialogFolderDeleted">削除しました: \'%1$s\'</string>
-    <string name="OpenFileDialogRenamedTo">名前を変更しました: \'%1$s\'</string>
-    <string name="OpenFileDialogEmptyList">空のリスト</string>
+    <string name="filedialog_delete">削除</string>
+    <string name="filedialog_newfolder">新しいフォルダー</string>
+    <string name="filedialog_foldername">フォルダー名</string>
+    <string name="filedialog_unablecreatefolder">フォルダーを作成できません: \'%1$s\'</string>
+    <string name="filedialog_foldercreated">フォルダー \'%1$s\' を作成しました</string>
+    <string name="filedialog_folderdeleted">削除しました: \'%1$s\'</string>
+    <string name="filedialog_renameto">名前を変更しました: \'%1$s\'</string>
+    <string name="filedialog_empty">空のリスト</string>
+    <string name="filedialog_readonly">読み取り専用ディレクトリー</string>
     <string name="ShareAction">共有</string>
-    <string name="readonly_directory">読み取り専用ディレクトリー</string>
     <string name="select_folder">フォルダーを選択してください</string>
 
     <plurals name="days">

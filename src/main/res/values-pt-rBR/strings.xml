@@ -1,16 +1,16 @@
 <resources>
     <!--OpenFileDialog-->
     <string name="filedialog_rename">Renomear</string>
-    <string name="OpenFileDialogDelete">Deletar</string>
-    <string name="OpenFileDialogNewFolder">Nova pasta</string>
-    <string name="OpenFileDialogFolderName">Nome da pasta</string>
-    <string name="OpenFileDialogUnableCreate">Impossível criar pasta: \'%1$s\'</string>
-    <string name="OpenFileDialogFolderCreated">Pasta \'%1$s\' foi criada</string>
-    <string name="OpenFileDialogFolderDeleted">\'%1$s\' foi deletado</string>
-    <string name="OpenFileDialogRenamedTo">Renomeado para: \'%1$s\'</string>
-    <string name="OpenFileDialogEmptyList">Lista Vazia</string>
+    <string name="filedialog_delete">Deletar</string>
+    <string name="filedialog_newfolder">Nova pasta</string>
+    <string name="filedialog_foldername">Nome da pasta</string>
+    <string name="filedialog_unablecreatefolder">Impossível criar pasta: \'%1$s\'</string>
+    <string name="filedialog_foldercreated">Pasta \'%1$s\' foi criada</string>
+    <string name="filedialog_folderdeleted">\'%1$s\' foi deletado</string>
+    <string name="filedialog_renameto">Renomeado para: \'%1$s\'</string>
+    <string name="filedialog_empty">Lista Vazia</string>
+    <string name="filedialog_readonly">O diretório é para leitura apenas (read-only)</string>
     <string name="ShareAction">Compartilhar</string>
-    <string name="readonly_directory">O diretório é para leitura apenas (read-only)</string>
     <string name="select_folder">Por favor, selecione uma pasta</string>
 
     <plurals name="days">
