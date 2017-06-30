@@ -1,9 +1,11 @@
 package com.github.axet.androidlibrary.widgets;
 
 import android.app.Dialog;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.res.TypedArray;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Parcelable;
@@ -76,17 +78,17 @@ public class StoragePathPreference extends EditTextPreference {
         return path;
     }
 
-    public static void showDialog(Context context, final Object pref) {
-        Storage storage = new Storage(context);
-        if (!Storage.permitted(context, Storage.PERMISSIONS)) {
+    public static void showDialog(Storage storage, final Object pref) {
+        if (!Storage.permitted(storage.getContext(), Storage.PERMISSIONS)) {
             final List<String> ss = new ArrayList<>();
             ss.add(storage.getLocalInternal().getAbsolutePath());
             File ext = storage.getLocalExternal();
             if (ext != null)
                 ss.add(ext.getAbsolutePath());
-            AlertDialog.Builder builder = new AlertDialog.Builder(context);
+            AlertDialog.Builder builder = new AlertDialog.Builder(storage.getContext());
             builder.setTitle(getTitle(pref));
-            File summ = storage.getStoragePath(new File(getPath(pref)));
+            Uri u = storage.getStoragePath(getPath(pref));
+            File summ = new File(u.getPath());
             builder.setSingleChoiceItems(ss.toArray(new CharSequence[]{}), ss.indexOf(summ.getAbsolutePath()), new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
@@ -100,9 +102,10 @@ public class StoragePathPreference extends EditTextPreference {
             Dialog d = builder.create();
             d.show();
         } else {
-            final OpenFileDialog f = new OpenFileDialog(context, OpenFileDialog.DIALOG_TYPE.FOLDER_DIALOG);
+            final OpenFileDialog f = new OpenFileDialog(storage.getContext(), OpenFileDialog.DIALOG_TYPE.FOLDER_DIALOG);
 
-            File p = new File(getPath(pref));
+            Uri u = storage.getStoragePath(getPath(pref));
+            File p = new File(u.getPath());
 
             f.setCurrentPath(p);
             f.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
@@ -157,7 +160,7 @@ public class StoragePathPreference extends EditTextPreference {
 
     @Override
     protected void showDialog(Bundle state) {
-        showDialog(getContext(), this);
+        showDialog(storage, this);
     }
 
     @Override

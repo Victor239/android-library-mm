@@ -210,6 +210,10 @@ public class Storage {
         this.resolver = context.getContentResolver();
     }
 
+    public Context getContext() {
+        return context;
+    }
+
     public File getLocalInternal() {
         return context.getFilesDir();
     }
@@ -391,15 +395,15 @@ public class Storage {
     }
 
     public Uri getStoragePath(String path) {
-        Uri uri = Uri.parse(path);
-        String s = uri.getScheme();
-        if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
+        if (Build.VERSION.SDK_INT >= 21 && path.equals(ContentResolver.SCHEME_CONTENT)) {
+            Uri uri = Uri.parse(path);
             return uri;
-        } else if (s.equals(ContentResolver.SCHEME_FILE)) {
+        } else if (path.equals(ContentResolver.SCHEME_FILE)) {
             File f = getStoragePath(new File(path));
             return Uri.fromFile(f);
         } else {
-            throw new RuntimeException("unknown uri");
+            File f = getStoragePath(new File(path));
+            return Uri.fromFile(f);
         }
     }
 
