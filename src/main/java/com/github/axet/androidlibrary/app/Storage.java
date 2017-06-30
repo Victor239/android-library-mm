@@ -395,10 +395,10 @@ public class Storage {
     }
 
     public Uri getStoragePath(String path) {
-        if (Build.VERSION.SDK_INT >= 21 && path.equals(ContentResolver.SCHEME_CONTENT)) {
+        if (Build.VERSION.SDK_INT >= 21 && path.startsWith(ContentResolver.SCHEME_CONTENT)) {
             Uri uri = Uri.parse(path);
             return uri;
-        } else if (path.equals(ContentResolver.SCHEME_FILE)) {
+        } else if (path.startsWith(ContentResolver.SCHEME_FILE)) {
             File f = getStoragePath(new File(path));
             return Uri.fromFile(f);
         } else {
