@@ -91,7 +91,7 @@ public class StoragePathPreferenceCompat extends EditTextPreference {
                 return;
             }
         }
-        StoragePathPreference.showDialog(getContext(), this);
+        StoragePathPreference.showDialog(storage, this);
     }
 
     @Override
@@ -147,7 +147,7 @@ public class StoragePathPreferenceCompat extends EditTextPreference {
     }
 
     public void onRequestPermissionsResult() {
-        StoragePathPreference.showDialog(getContext(), this);
+        StoragePathPreference.showDialog(storage, this);
     }
 
     public void setStorageAccessFramework(Activity a, int code) {
