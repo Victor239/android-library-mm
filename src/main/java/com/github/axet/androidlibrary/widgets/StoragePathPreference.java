@@ -78,14 +78,14 @@ public class StoragePathPreference extends EditTextPreference {
         return path;
     }
 
-    public static void showDialog(Storage storage, final Object pref) {
-        if (!Storage.permitted(storage.getContext(), Storage.PERMISSIONS)) {
+    public static void showDialog(Context context, Storage storage, final Object pref) {
+        if (!Storage.permitted(context, Storage.PERMISSIONS)) {
             final List<String> ss = new ArrayList<>();
             ss.add(storage.getLocalInternal().getAbsolutePath());
             File ext = storage.getLocalExternal();
             if (ext != null)
                 ss.add(ext.getAbsolutePath());
-            AlertDialog.Builder builder = new AlertDialog.Builder(storage.getContext());
+            AlertDialog.Builder builder = new AlertDialog.Builder(context);
             builder.setTitle(getTitle(pref));
             Uri u = storage.getStoragePath(getPath(pref));
             File summ = new File(u.getPath());
@@ -102,7 +102,7 @@ public class StoragePathPreference extends EditTextPreference {
             Dialog d = builder.create();
             d.show();
         } else {
-            final OpenFileDialog f = new OpenFileDialog(storage.getContext(), OpenFileDialog.DIALOG_TYPE.FOLDER_DIALOG);
+            final OpenFileDialog f = new OpenFileDialog(context, OpenFileDialog.DIALOG_TYPE.FOLDER_DIALOG);
 
             Uri u = storage.getStoragePath(getPath(pref));
             File p = new File(u.getPath());
@@ -160,7 +160,7 @@ public class StoragePathPreference extends EditTextPreference {
 
     @Override
     protected void showDialog(Bundle state) {
-        showDialog(storage, this);
+        showDialog(getContext(), storage, this);
     }
 
     @Override
