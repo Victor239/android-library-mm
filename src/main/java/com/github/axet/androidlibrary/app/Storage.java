@@ -130,8 +130,8 @@ public class Storage {
         return file;
     }
 
-    public static void delete(File f) {
-        FileUtils.deleteQuietly(f);
+    public static boolean delete(File f) {
+        return FileUtils.deleteQuietly(f);
     }
 
     public static boolean isSame(File f, File t) {
@@ -293,13 +293,13 @@ public class Storage {
         }
     }
 
-    public void delete(Uri f) {
+    public boolean delete(Uri f) {
         String s = f.getScheme();
         if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
-            DocumentsContract.deleteDocument(resolver, f);
+            return DocumentsContract.deleteDocument(resolver, f);
         } else if (s.equals(ContentResolver.SCHEME_FILE)) {
             File ff = new File(f.getPath());
-            delete(ff);
+            return delete(ff);
         } else {
             throw new RuntimeException("unknown uri");
         }
@@ -384,7 +384,7 @@ public class Storage {
                 StructStatVfs stats = Os.fstatvfs(pfd.getFileDescriptor());
                 return stats.f_bavail * stats.f_bsize;
             } catch (FileNotFoundException | ErrnoException e) {
-                throw new RuntimeException(e);
+                return 0;
             }
         } else if (s.equals(ContentResolver.SCHEME_FILE)) {
             File file = new File(uri.getPath());
