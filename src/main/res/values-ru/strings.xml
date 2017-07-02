@@ -49,8 +49,8 @@
     <string name="size_kb">%1$.1f кб</string>
     <string name="optimization_dialog">Оптимизация батареи</string>
     <string name="optimization_message">Добавьте приложение в белый список менеджера памяти телефона, чтобы предотвратить нежелательные выключения программы.</string>
-    <string name="settings">Настройки</string>
-    <string name="about">О программе</string>
+    <string name="menu_settings">Настройки</string>
+    <string name="menu_about">О программе</string>
     <string name="open_browser">Открыть браузер</string>
     <string name="are_you_sure">Вы уверены?</string>
 </resources>

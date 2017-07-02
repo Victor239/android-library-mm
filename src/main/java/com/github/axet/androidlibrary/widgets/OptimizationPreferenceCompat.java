@@ -25,7 +25,6 @@ import android.widget.Toast;
 
 import com.github.axet.androidlibrary.R;
 import com.github.axet.androidlibrary.app.AlarmManager;
-import com.github.axet.androidlibrary.app.MainApplication;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -453,7 +452,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         };
         if (Build.VERSION.SDK_INT >= 23) {
             if (click != null)
-                builder.setNeutralButton(R.string.settings, click);
+                builder.setNeutralButton(R.string.menu_settings, click);
             builder.setPositiveButton(android.R.string.yes, opt);
         } else {
             builder.setPositiveButton(android.R.string.yes, click);

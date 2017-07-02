@@ -10,8 +10,6 @@ import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.net.Uri;
-import android.os.Build;
-import android.support.v4.content.res.TypedArrayUtils;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.preference.DialogPreference;
 import android.util.AttributeSet;
@@ -148,7 +146,7 @@ public class AboutPreferenceCompat extends DialogPreference {
         } catch (PackageManager.NameNotFoundException e) {
             throw new RuntimeException(e);
         }
-        setTitle(getContext().getString(R.string.about));
+        setTitle(getContext().getString(R.string.menu_about));
     }
 
     @Override
