@@ -73,6 +73,7 @@ public class AudioTrack extends android.media.AudioTrack {
             AudioFormat.Builder builder = new AudioFormat.Builder();
             builder.setEncoding(Sound.DEFAULT_AUDIOFORMAT);
             builder.setSampleRate(hz);
+            builder.setChannelMask(c);
             return builder.build();
         }
     }
