@@ -47,6 +47,7 @@ public class Storage {
     private static final String TAG = Storage.class.getSimpleName();
 
     public static final String[] PERMISSIONS = new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
+    public static final String SAF = "com.android.externalstorage";
 
     protected Context context;
     protected ContentResolver resolver;
@@ -507,24 +508,35 @@ public class Storage {
     public String getTargetName(Uri uri) {
         String s = uri.getScheme();
         if (s.startsWith(ContentResolver.SCHEME_CONTENT)) { // saf folder for content
-            Uri docUri = DocumentsContract.buildDocumentUriUsingTree(uri, DocumentsContract.getTreeDocumentId(uri));
             String saf = null;
-            try {
-                Cursor docCursor = resolver.query(docUri, null, null, null, null);
-                if (docCursor != null) {
-                    if (docCursor.moveToNext()) {
-                        saf = "saf://" + docCursor.getString(docCursor.getColumnIndex(DocumentsContract.Document.COLUMN_DISPLAY_NAME));
-                        if (DocumentsContract.isDocumentUri(context, uri)) {
-                            String parent = DocumentsContract.getTreeDocumentId(uri);
-                            String docId = DocumentsContract.getDocumentId(uri);
-                            docId = docId.substring(parent.length());
-                            saf += docId;
+            if (DocumentsContract.isDocumentUri(context, uri)) {
+                Uri docUri = DocumentsContract.buildDocumentUri(uri.getAuthority(), DocumentsContract.getDocumentId(uri));
+                try {
+                    Cursor docCursor = resolver.query(docUri, null, null, null, null);
+                    if (docCursor != null) {
+                        if (docCursor.moveToNext()) {
+                            saf = "saf://.../";
+                            saf += docCursor.getString(docCursor.getColumnIndex(DocumentsContract.Document.COLUMN_DISPLAY_NAME));
                         }
+                        docCursor.close();
                     }
-                    docCursor.close();
+                } catch (SecurityException e) {
+                    Log.d(TAG, "Unable to get folder", e);
                 }
-            } catch (SecurityException e) {
-                Log.d(TAG, "Unable to get folder", e);
+            } else {
+                Uri docUri = DocumentsContract.buildDocumentUriUsingTree(uri, DocumentsContract.getTreeDocumentId(uri));
+                try {
+                    Cursor docCursor = resolver.query(docUri, null, null, null, null);
+                    if (docCursor != null) {
+                        if (docCursor.moveToNext()) {
+                            saf = "saf://";
+                            saf += docCursor.getString(docCursor.getColumnIndex(DocumentsContract.Document.COLUMN_DISPLAY_NAME));
+                        }
+                        docCursor.close();
+                    }
+                } catch (SecurityException e) {
+                    Log.d(TAG, "Unable to get folder", e);
+                }
             }
             return saf;
         } else if (s.startsWith(ContentResolver.SCHEME_FILE)) { // full destionation for files
