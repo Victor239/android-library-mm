@@ -12,7 +12,7 @@ import java.nio.ByteOrder;
 import java.nio.ShortBuffer;
 
 public class AudioTrack extends android.media.AudioTrack {
-    public static int SHORT_SIZE = Short.SIZE / 8;
+    public static int SHORT_SIZE = Short.SIZE / Byte.SIZE;
 
     int markerInFrames = -1;
     int periodInFrames = 1000;
