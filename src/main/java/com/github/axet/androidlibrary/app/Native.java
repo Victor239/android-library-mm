@@ -54,6 +54,8 @@ public class Native {
      */
     public static void loadLibrary(final Context context, String libname) {
         String file = search(context, System.mapLibraryName(libname));
+        if (file == null)
+            throw new UnsatisfiedLinkError("file not found: " + libname);
         System.load(file);
     }
 
