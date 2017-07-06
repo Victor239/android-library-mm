@@ -88,7 +88,7 @@ public class StoragePathPreference extends EditTextPreference {
             AlertDialog.Builder builder = new AlertDialog.Builder(context);
             builder.setTitle(getTitle(pref));
             Uri u = storage.getStoragePath(getPath(pref));
-            File summ = new File(u.getPath());
+            File summ = Storage.getFile(u);
             builder.setSingleChoiceItems(ss.toArray(new CharSequence[]{}), ss.indexOf(summ.getAbsolutePath()), new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
@@ -105,7 +105,7 @@ public class StoragePathPreference extends EditTextPreference {
             final OpenFileDialog f = new OpenFileDialog(context, OpenFileDialog.DIALOG_TYPE.FOLDER_DIALOG);
 
             Uri u = storage.getStoragePath(getPath(pref));
-            File p = new File(u.getPath());
+            File p = Storage.getFile(u);
 
             f.setCurrentPath(p);
             f.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {

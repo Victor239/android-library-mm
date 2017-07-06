@@ -13,8 +13,6 @@ import android.os.Build;
 import android.os.ParcelFileDescriptor;
 import android.os.StatFs;
 import android.provider.DocumentsContract;
-import android.provider.MediaStore;
-import android.provider.OpenableColumns;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
@@ -26,7 +24,6 @@ import android.util.Log;
 import android.webkit.MimeTypeMap;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 
 import java.io.BufferedInputStream;
@@ -38,8 +35,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.nio.charset.Charset;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -206,6 +204,11 @@ public class Storage {
         context.startActivity(intent);
     }
 
+    public static File getFile(Uri u) {
+        String p = u.getPath();
+        return new File(p);
+    }
+
     public Storage(Context context) {
         this.context = context;
         this.resolver = context.getContentResolver();
@@ -273,7 +276,7 @@ public class Storage {
             }
             return false;
         } else if (s.startsWith(ContentResolver.SCHEME_FILE)) {
-            File f1 = new File(uri.getPath());
+            File f1 = getFile(uri);
             return f1.exists();
         } else {
             throw new RuntimeException("unknown uri");
@@ -287,7 +290,7 @@ public class Storage {
             Uri test = DocumentsContract.buildDocumentUriUsingTree(uri, f);
             return test;
         } else if (s.startsWith(ContentResolver.SCHEME_FILE)) {
-            File f1 = new File(uri.getPath(), name);
+            File f1 = new File(getFile(uri), name);
             return Uri.fromFile(f1);
         } else {
             throw new RuntimeException("unknown uri");
@@ -299,7 +302,7 @@ public class Storage {
         if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
             return DocumentsContract.deleteDocument(resolver, f);
         } else if (s.equals(ContentResolver.SCHEME_FILE)) {
-            File ff = new File(f.getPath());
+            File ff = getFile(f);
             return delete(ff);
         } else {
             throw new RuntimeException("unknown uri");
@@ -311,7 +314,7 @@ public class Storage {
         if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
             return getNameNoExt(new File(getDocumentName(f)));
         } else if (s.equals(ContentResolver.SCHEME_FILE)) {
-            return getNameNoExt(new File(f.getPath()));
+            return getNameNoExt(getFile(f));
         } else {
             throw new RuntimeException("unknown uri");
         }
@@ -322,7 +325,7 @@ public class Storage {
         if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
             return getExt(new File(getDocumentName(f)));
         } else if (s.equals(ContentResolver.SCHEME_FILE)) {
-            return getExt(new File(f.getPath()));
+            return getExt(getFile(f));
         } else {
             throw new RuntimeException("unknown uri");
         }
@@ -333,7 +336,7 @@ public class Storage {
         if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
             return DocumentsContract.renameDocument(resolver, f, t);
         } else if (s.equals(ContentResolver.SCHEME_FILE)) {
-            File f1 = new File(f.getPath());
+            File f1 = getFile(f);
             File ff = new File(f1.getParent(), t);
             if (ff.exists())
                 ff = Storage.getNextFile(ff);
@@ -369,7 +372,7 @@ public class Storage {
 
             return uri;
         } else if (s.startsWith(ContentResolver.SCHEME_FILE)) {
-            File f1 = new File(parent.getPath());
+            File f1 = getFile(parent);
             return Uri.fromFile(getNextFile(f1, name, ext));
         } else {
             throw new RuntimeException("unknown uri");
@@ -388,7 +391,7 @@ public class Storage {
                 return 0;
             }
         } else if (s.equals(ContentResolver.SCHEME_FILE)) {
-            File file = new File(uri.getPath());
+            File file = getFile(uri);
             return getFree(file);
         } else {
             throw new RuntimeException("unknown uri");
@@ -418,7 +421,7 @@ public class Storage {
             File f = new File(id);
             return f.getPath();
         } else if (s.startsWith(ContentResolver.SCHEME_FILE)) {
-            File f = new File(uri.getPath());
+            File f = getFile(uri);
             return f.getName();
         } else {
             throw new RuntimeException("unknown uri");
@@ -433,7 +436,7 @@ public class Storage {
             File f = new File(id);
             return f.getName();
         } else if (s.startsWith(ContentResolver.SCHEME_FILE)) {
-            File f = new File(uri.getPath());
+            File f = getFile(uri);
             return f.getName();
         } else {
             throw new RuntimeException("unknown uri");
@@ -473,7 +476,7 @@ public class Storage {
             }
             return -1;
         } else if (s.startsWith(ContentResolver.SCHEME_FILE)) {
-            File f = new File(uri.getPath());
+            File f = getFile(uri);
             return f.length();
         } else {
             throw new RuntimeException("unknown uri");
@@ -497,7 +500,7 @@ public class Storage {
             }
             return 0;
         } else if (s.startsWith(ContentResolver.SCHEME_FILE)) {
-            File f = new File(uri.getPath());
+            File f = getFile(uri);
             return f.lastModified();
         } else {
             throw new RuntimeException("unknown uri");
@@ -540,7 +543,7 @@ public class Storage {
             }
             return saf;
         } else if (s.startsWith(ContentResolver.SCHEME_FILE)) { // full destionation for files
-            File f = new File(uri.getPath());
+            File f = getFile(uri);
             return f.getAbsolutePath();
         } else {
             throw new RuntimeException("unknown uri");
@@ -573,7 +576,7 @@ public class Storage {
             String ext = getExt(t);
             String n = getNameNoExt(t);
 
-            File tf = new File(t.getPath());
+            File tf = getFile(t);
             File td = tf.getParentFile();
 
             if (Storage.isSame(parent, td))
