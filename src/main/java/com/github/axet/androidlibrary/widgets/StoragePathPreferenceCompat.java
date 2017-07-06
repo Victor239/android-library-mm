@@ -147,7 +147,7 @@ public class StoragePathPreferenceCompat extends EditTextPreference {
     }
 
     public void onRequestPermissionsResult() {
-        StoragePathPreference.showDialog(getContext(), storage, this);
+        onClick();
     }
 
     public void setStorageAccessFramework(Activity a, int code) {
