@@ -463,7 +463,7 @@ public class Storage {
     public boolean ejected(Uri path) { // check target forlder for RW access if does not exist, and R if exists
         String s = path.getScheme();
         if (Build.VERSION.SDK_INT >= 21 && s.startsWith(ContentResolver.SCHEME_CONTENT)) {
-            return permitted(path, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            return !permitted(path, Intent.FLAG_GRANT_READ_URI_PERMISSION);
         } else if (s.startsWith(ContentResolver.SCHEME_FILE)) {
             File p = new File(path.getPath());
             return ejected(p);
