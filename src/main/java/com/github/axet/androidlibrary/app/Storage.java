@@ -454,14 +454,13 @@ public class Storage {
     }
 
     public Uri getStoragePath(String path) {
+        File f;
         if (Build.VERSION.SDK_INT >= 21 && path.startsWith(ContentResolver.SCHEME_CONTENT)) {
             Uri u = Uri.parse(path);
             if (permitted(u))
                 return u;
-            path = fallbackStorage().getAbsolutePath(); // we need to fallback to local storage internal or exernal
-        }
-        File f;
-        if (path.startsWith(ContentResolver.SCHEME_FILE)) {
+            f = fallbackStorage(); // we need to fallback to local storage internal or exernal
+        } else if (path.startsWith(ContentResolver.SCHEME_FILE)) {
             f = Storage.getFile(Uri.parse(path));
         } else {
             f = new File(path);
