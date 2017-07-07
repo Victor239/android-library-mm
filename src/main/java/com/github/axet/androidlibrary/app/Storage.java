@@ -288,7 +288,7 @@ public class Storage {
         return file;
     }
 
-    public boolean exists(Uri uri) {
+    public boolean exists(Uri uri) { // document query uri
         String s = uri.getScheme();
         if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
             Cursor childCursor = null;
@@ -439,7 +439,8 @@ public class Storage {
             resolver.takePersistableUriPermission(uri, takeFlags);
             Cursor childCursor = null;
             try {
-                childCursor = resolver.query(uri, null, null, null, null);
+                Uri doc = DocumentsContract.buildDocumentUriUsingTree(uri, DocumentsContract.getTreeDocumentId(uri));
+                childCursor = resolver.query(doc, null, null, null, null);
                 if (childCursor != null) {
                     boolean n = childCursor.moveToNext();
                     childCursor.close();
@@ -466,8 +467,9 @@ public class Storage {
         } else if (s.startsWith(ContentResolver.SCHEME_FILE)) {
             File p = new File(path.getPath());
             return ejected(p);
+        } else {
+            throw new RuntimeException("unknown uri");
         }
-        return false;
     }
 
     public static boolean ejected(File p) { // check target forlder for RW access if does not exist, and R if exists
