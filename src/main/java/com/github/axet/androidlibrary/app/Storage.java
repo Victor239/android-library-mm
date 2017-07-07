@@ -283,14 +283,9 @@ public class Storage {
     }
 
     public File getStoragePath(File file) {
-        File parent = file.getParentFile();
-        while (!parent.exists())
-            parent = file.getParentFile();
-        if ((file.canWrite() || parent.canWrite())) {
-            return file;
-        } else {
+        if (ejected(file) || !file.canWrite())
             return getLocalStorage();
-        }
+        return file;
     }
 
     public boolean exists(Uri uri) {
@@ -314,6 +309,8 @@ public class Storage {
             return false;
         } else if (s.startsWith(ContentResolver.SCHEME_FILE)) {
             File f1 = getFile(uri);
+            if (!f1.canRead())
+                return false;
             return f1.exists();
         } else {
             throw new RuntimeException("unknown uri");
@@ -436,21 +433,57 @@ public class Storage {
     }
 
     @TargetApi(21)
-    public boolean permitted(Uri uri) {
+    public boolean permitted(Uri uri) { // rw
+        String s = uri.getScheme();
         Uri doc = DocumentsContract.buildDocumentUriUsingTree(uri, DocumentsContract.getTreeDocumentId(uri));
         ContentResolver resolver = context.getContentResolver();
         try {
             final int takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
             resolver.takePersistableUriPermission(uri, takeFlags);
-            Cursor c = resolver.query(doc, null, null, null, null);
-            if (c != null) {
-                c.close();
-                return true;
+            Cursor childCursor = null;
+            try {
+                childCursor = resolver.query(uri, null, null, null, null);
+                if (childCursor != null) {
+                    boolean n = childCursor.moveToNext();
+                    childCursor.close();
+                    if (n)
+                        return true;
+                }
+            } catch (RuntimeException e) { // not found catched here
+                ;
+            } finally {
+                if (childCursor != null)
+                    childCursor.close();
             }
+            return false;
         } catch (SecurityException e) {
             Log.d(TAG, "open SAF failed", e);
         }
         return false;
+    }
+
+    public boolean ejected(Uri path) { // check target forlder for RW access if does not exist, and R if exists
+        String s = path.getScheme();
+        if (Build.VERSION.SDK_INT >= 21 && s.startsWith(ContentResolver.SCHEME_CONTENT)) {
+            return permitted(path);
+        } else if (s.startsWith(ContentResolver.SCHEME_FILE)) {
+            File p = new File(path.getPath());
+            return ejected(p);
+        }
+        return false;
+    }
+
+    public static boolean ejected(File p) { // check target forlder for RW access if does not exist, and R if exists
+        if (!p.exists()) {
+            while (!p.exists()) {
+                p = p.getParentFile();
+            }
+            if (p.canWrite())
+                return false; // torrent parent folder not exist, but we have write access and can create subdirs
+            else
+                return true; // no write access - ejected
+        }
+        return !p.canRead(); // readonly check
     }
 
     public Uri getStoragePath(String path) {
