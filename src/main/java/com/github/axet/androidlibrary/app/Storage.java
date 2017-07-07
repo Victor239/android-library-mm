@@ -235,11 +235,48 @@ public class Storage {
         return external;
     }
 
+    public boolean isLocalStorage(Uri u) {
+        String s = u.getScheme();
+        if (s.equals(ContentResolver.SCHEME_CONTENT))
+            return false;
+        if (s.equals(ContentResolver.SCHEME_FILE)) {
+            File f = getFile(u);
+            File internal = getLocalInternal();
+
+            File external = getLocalExternal();
+            if (external != null) // some old phones <15API with disabled sdcard return null
+                if (external.equals(f))
+                    return true;
+
+            return internal.equals(f);
+        } else {
+            throw new RuntimeException("unknown uri");
+        }
+    }
+
     public File getLocalStorage() {
         File internal = getLocalInternal();
 
         File external = getLocalExternal();
         if (external == null) // some old phones <15API with disabled sdcard return null
+            return internal;
+
+        return external;
+    }
+
+    public File fallbackStorage() {
+        File internal = getLocalInternal();
+
+        // Starting in KITKAT, no permissions are required to read or write to the returned path;
+        // it's always accessible to the calling app.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
+            if (!permitted(context, PERMISSIONS))
+                return internal;
+        }
+
+        File external = getLocalExternal();
+
+        if (external == null)
             return internal;
 
         return external;
@@ -398,16 +435,41 @@ public class Storage {
         }
     }
 
+    @TargetApi(21)
+    public boolean permitted(Uri uri) {
+        Uri doc = DocumentsContract.buildDocumentUriUsingTree(uri, DocumentsContract.getTreeDocumentId(uri));
+        ContentResolver resolver = context.getContentResolver();
+        try {
+            final int takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
+            resolver.takePersistableUriPermission(uri, takeFlags);
+            Cursor c = resolver.query(doc, null, null, null, null);
+            if (c != null) {
+                c.close();
+                return true;
+            }
+        } catch (SecurityException e) {
+            Log.d(TAG, "open SAF failed", e);
+        }
+        return false;
+    }
+
     public Uri getStoragePath(String path) {
         if (Build.VERSION.SDK_INT >= 21 && path.startsWith(ContentResolver.SCHEME_CONTENT)) {
-            Uri uri = Uri.parse(path);
-            return uri;
-        } else if (path.startsWith(ContentResolver.SCHEME_FILE)) {
-            File f = getStoragePath(new File(path));
-            return Uri.fromFile(f);
+            Uri u = Uri.parse(path);
+            if (permitted(u))
+                return u;
+            path = fallbackStorage().getAbsolutePath(); // we need to fallback to local storage internal or exernal
+        }
+        File f;
+        if (path.startsWith(ContentResolver.SCHEME_FILE)) {
+            f = Storage.getFile(Uri.parse(path));
         } else {
-            File f = getStoragePath(new File(path));
-            return Uri.fromFile(f);
+            f = new File(path);
+        }
+        if (!permitted(context, PERMISSIONS)) {
+            return Uri.fromFile(getLocalStorage());
+        } else {
+            return Uri.fromFile(getStoragePath(f));
         }
     }
 

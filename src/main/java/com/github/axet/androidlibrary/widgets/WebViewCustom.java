@@ -768,7 +768,7 @@ public class WebViewCustom extends WebView {
             String[] cc = cookies.split(";");
             for (String c : cc) {
                 String[] vv = c.split("=");
-                for (File f = Storage.getFile(uri); f != null; f = f.getParentFile()) {
+                for (File f = new File(uri.getPath()); f != null; f = f.getParentFile()) {
                     String p;
                     String path;
                     if (f.equals(new File(File.separator))) {
