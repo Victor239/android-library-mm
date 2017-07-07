@@ -434,10 +434,9 @@ public class Storage {
 
     @TargetApi(21)
     public boolean permitted(Uri uri, int takeFlags) {
-        Uri doc = DocumentsContract.buildDocumentUriUsingTree(uri, DocumentsContract.getTreeDocumentId(uri));
         ContentResolver resolver = context.getContentResolver();
         try {
-            resolver.takePersistableUriPermission(doc, takeFlags);
+            resolver.takePersistableUriPermission(uri, takeFlags);
             Cursor childCursor = null;
             try {
                 childCursor = resolver.query(uri, null, null, null, null);
