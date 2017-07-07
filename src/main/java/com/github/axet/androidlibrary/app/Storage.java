@@ -433,13 +433,11 @@ public class Storage {
     }
 
     @TargetApi(21)
-    public boolean permitted(Uri uri) { // rw
-        String s = uri.getScheme();
+    public boolean permitted(Uri uri, int takeFlags) {
         Uri doc = DocumentsContract.buildDocumentUriUsingTree(uri, DocumentsContract.getTreeDocumentId(uri));
         ContentResolver resolver = context.getContentResolver();
         try {
-            final int takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
-            resolver.takePersistableUriPermission(uri, takeFlags);
+            resolver.takePersistableUriPermission(doc, takeFlags);
             Cursor childCursor = null;
             try {
                 childCursor = resolver.query(uri, null, null, null, null);
@@ -465,7 +463,7 @@ public class Storage {
     public boolean ejected(Uri path) { // check target forlder for RW access if does not exist, and R if exists
         String s = path.getScheme();
         if (Build.VERSION.SDK_INT >= 21 && s.startsWith(ContentResolver.SCHEME_CONTENT)) {
-            return permitted(path);
+            return permitted(path, Intent.FLAG_GRANT_READ_URI_PERMISSION);
         } else if (s.startsWith(ContentResolver.SCHEME_FILE)) {
             File p = new File(path.getPath());
             return ejected(p);
@@ -490,7 +488,7 @@ public class Storage {
         File f;
         if (Build.VERSION.SDK_INT >= 21 && path.startsWith(ContentResolver.SCHEME_CONTENT)) {
             Uri u = Uri.parse(path);
-            if (permitted(u))
+            if (permitted(u, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION))
                 return u;
             f = fallbackStorage(); // we need to fallback to local storage internal or exernal
         } else if (path.startsWith(ContentResolver.SCHEME_FILE)) {
