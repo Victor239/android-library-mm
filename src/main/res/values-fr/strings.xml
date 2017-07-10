@@ -1,0 +1,51 @@
+<resources>
+    <!--OpenFileDialog-->
+    <string name="filedialog_rename">Renommer</string>
+    <string name="filedialog_delete">Effacer</string>
+    <string name="filedialog_newfolder">Nouveau Dossier</string>
+    <string name="filedialog_foldername">Nom du dossier</string>
+    <string name="filedialog_unablecreatefolder">Impossible de créer le dossier: \'%1$s\'</string>
+    <string name="filedialog_foldercreated">Dossier \'%1$s\' crée</string>
+    <string name="filedialog_folderdeleted">Effacé: \'%1$s\'</string>
+    <string name="filedialog_renameto">Renommé en: \'%1$s\'</string>
+    <string name="filedialog_empty">Liste vide</string>
+    <string name="filedialog_readonly">Emplacement en lecture seule</string>
+    <string name="filedialog_selectfolder">Sélectionner un dossier</string>
+
+    <string name="ShareAction">Partager</string>
+
+    <plurals name="days">
+        <item quantity="one">%d jour</item>
+        <item quantity="other">%d jours</item>
+    </plurals>
+
+    <plurals name="hours">
+        <item quantity="one">%d heure</item>
+        <item quantity="other">%d heures</item>
+    </plurals>
+
+    <plurals name="minutes">
+        <item quantity="one">%d minute</item>
+        <item quantity="other">%d minutes</item>
+    </plurals>
+
+    <plurals name="seconds">
+        <item quantity="one">%d seconde</item>
+        <item quantity="other">%d secondes</item>
+    </plurals>
+
+    <string name="days_symbol">"d"</string>
+
+    <string name="size_gb">%1$.1f GB</string>
+    <string name="size_mb">%1$.1f MB</string>
+    <string name="size_kb">%1$.1f kb</string>
+
+    <string name="optimization_dialog">Paramètres d'optimisation de la batterie</string>
+    <string name="optimization_message">Ajouter l'appilication aux exceptions d'optimisation de batterie pour éviter que ces données en mémoire ne soit supprimées</string>
+
+    <string name="menu_settings">Paramétres</string>
+    <string name="menu_about">About</string>
+
+    <string name="open_browser">Open Browser</string>
+    <string name="are_you_sure">Êtes vous sûr?</string>
+</resources>
