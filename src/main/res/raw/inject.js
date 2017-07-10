@@ -24,6 +24,29 @@ function interceptor(e) {
             JSON.stringify({"form" : aa}));
 }
 
+function EnableRW(obj, name) {
+    var val = null;
+	var prop = {}
+	function getter() {
+		return val;
+	}
+	function setter(v) {
+		val = v;
+	}
+	Object.defineProperty(obj, name, {
+	    get: getter,
+	    set: setter,
+	    configurable: true
+	});
+}
+
+EnableRW(XMLHttpRequest.prototype, 'onreadystatechange');
+EnableRW(XMLHttpRequest.prototype, 'responseURL');
+EnableRW(XMLHttpRequest.prototype, 'responseXML');
+EnableRW(XMLHttpRequest.prototype, 'status');
+EnableRW(XMLHttpRequest.prototype, 'statusText');
+EnableRW(XMLHttpRequest.prototype, 'readyState');
+
 // 3) XMLHttpRequest.prototype.send
 XMLHttpRequest.prototype.open = function(method, url, async, user, pass) {
     this.params = {
@@ -37,14 +60,17 @@ XMLHttpRequest.prototype.open = function(method, url, async, user, pass) {
     this.setRequestHeader = function(name, value) {
         this.header[name] = value;
     }
+    EnableRW(this, 'response');
+    EnableRW(this, 'responseText');
 };
 
 XMLHttpRequest.prototype.send = function(form) {
     var params = this.params;
-    this.response = interception.customAjax(params.method, params.url, params.user, params.password, JSON.stringify(this.header), form);
-    this.responseText = this.response;
+    var response = interception.customAjax(params.method, params.url, params.user, params.password, JSON.stringify(this.header), form);
+    this.response = response;
+    this.responseText = response;
     this.responseURL = params.url;
-    this.responseXML = this.response;
+    this.responseXML = response;
     this.readyState = 4;
     this.status = 200;
     this.statusText = "OK";
