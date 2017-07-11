@@ -64,7 +64,7 @@ import cz.msebera.android.httpclient.client.methods.HttpGet;
 public class WebViewCustom extends WebView {
     public static final String TAG = WebViewCustom.class.getSimpleName();
 
-    public static final String INJECTS_URL = "inject://";
+    public static final String INJECTS_URL = "https://inject/";
     public static final String ABOUT_ERROR = "about:error";
 
     protected boolean destroyed;
@@ -350,7 +350,7 @@ public class WebViewCustom extends WebView {
     HttpClient.DownloadResponse getInject(String url) {
         if (url.startsWith(INJECTS_URL)) {
             Uri u = Uri.parse(url);
-            int i = Integer.parseInt(u.getAuthority());
+            int i = Integer.valueOf(u.getPath().substring(1));
             String js = injects.get(i);
             return new HttpClient.DownloadResponse("text/javascript", Charset.defaultCharset().name(), js);
         }
@@ -619,6 +619,10 @@ public class WebViewCustom extends WebView {
                 body.append(addInject(js));
         }
         return doc.outerHtml();
+    }
+
+    protected String expandInject(String js) {
+        return "<script type='text/javascript'>\n" + js + "\n</script>";
     }
 
     protected String addInject(String js) {
