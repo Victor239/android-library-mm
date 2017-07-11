@@ -42,14 +42,12 @@ public class PathMax extends ViewGroup {
     // created manualu
     public PathMax(Context context, TextView text) {
         super(context);
-
         addView(text);
     }
 
     @Override
     public void addView(View child, int index, LayoutParams params) {
         super.addView(child, index, params);
-
         attach(child);
     }
 
@@ -86,10 +84,10 @@ public class PathMax extends ViewGroup {
         }
     }
 
-    public String makePath(String prefix, List<String> ss, String suffix) {
+    public String makePath(String prefix, List<String> ss, String separator, String suffix) {
         if (ss.size() == 0)
             return ROOT;
-        return prefix + TextUtils.join(File.separator, ss) + suffix;
+        return prefix + TextUtils.join(separator, ss) + suffix;
     }
 
     public List<String> splitPath(String s) {
@@ -135,16 +133,24 @@ public class PathMax extends ViewGroup {
 
         String suffix = s.endsWith(File.separator) ? File.separator : "";
 
+        String d;
+
         // when s == "/"
         if (ss.size() == 0) {
-            return measureText(scheme + s);
+            d = scheme + s;
+        } else {
+            d = dots(max, ss, scheme, File.separator, suffix);
         }
 
+        return measureText(d);
+    }
+
+    String dots(int max, List<String> ss, String scheme, String separator, String suffix) {
         boolean removed = false;
 
         List<String> ssdots = ss;
 
-        String sdots = makePath(scheme, ssdots, suffix);
+        String sdots = makePath(scheme, ssdots, separator, suffix);
 
         while (measureText(sdots) > max) {
             if (ss.size() == 3) {
@@ -153,7 +159,7 @@ public class PathMax extends ViewGroup {
                 ssdots.set(mid, MID);
                 removed = true;
                 ss.remove(mid);
-                sdots = makePath(scheme, ssdots, suffix);
+                sdots = makePath(scheme, ssdots, separator, suffix);
             } else if (ss.size() == 2) {
                 String sdot = ss.get(1);
 
@@ -165,7 +171,7 @@ public class PathMax extends ViewGroup {
                     ssdots.set(mid, MID);
                     ss.remove(mid);
                     removed = true;
-                    sdots = makePath(scheme, ssdots, suffix);
+                    sdots = makePath(scheme, ssdots, separator, suffix);
                 } else {
                     int mid = sdot.length() / 2;
                     // cut mid char
@@ -177,17 +183,17 @@ public class PathMax extends ViewGroup {
 
                     if (removed) {
                         if (scheme.isEmpty())
-                            sdot = MID + File.separator + sdot;
+                            sdot = MID + separator + sdot;
                     }
 
-                    sdots = scheme + ss.get(0) + File.separator + sdot + suffix;
+                    sdots = scheme + ss.get(0) + separator + sdot + suffix;
                 }
             } else if (ss.size() == 1) {
                 String sdot = ss.get(0);
 
                 // cant go lower return
                 if (sdot.length() <= 2) {
-                    return measureText(scheme + MID);
+                    return scheme + MID;
                 }
 
                 int mid = sdot.length() / 2;
@@ -200,9 +206,9 @@ public class PathMax extends ViewGroup {
 
                 if (removed) {
                     if (scheme.isEmpty())
-                        sdot = MID + File.separator + sdot;
+                        sdot = MID + separator + sdot;
                     else
-                        sdot = sdot + File.separator + MID;
+                        sdot = sdot + separator + MID;
                 }
 
                 sdots = scheme + sdot + suffix;
@@ -212,11 +218,11 @@ public class PathMax extends ViewGroup {
                 ssdots.set(mid, MID);
                 removed = true;
                 ss.remove(mid);
-                sdots = makePath(scheme, ssdots, suffix);
+                sdots = makePath(scheme, ssdots, separator, suffix);
             }
         }
 
-        return measureText(sdots);
+        return sdots;
     }
 
     @Override
