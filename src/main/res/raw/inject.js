@@ -41,11 +41,6 @@ function EnableRW(obj, name) {
 }
 
 EnableRW(XMLHttpRequest.prototype, 'onreadystatechange');
-EnableRW(XMLHttpRequest.prototype, 'responseURL');
-EnableRW(XMLHttpRequest.prototype, 'responseXML');
-EnableRW(XMLHttpRequest.prototype, 'status');
-EnableRW(XMLHttpRequest.prototype, 'statusText');
-EnableRW(XMLHttpRequest.prototype, 'readyState');
 
 // 3) XMLHttpRequest.prototype.send
 XMLHttpRequest.prototype.open = function(method, url, async, user, pass) {
@@ -62,6 +57,11 @@ XMLHttpRequest.prototype.open = function(method, url, async, user, pass) {
     }
     EnableRW(this, 'response');
     EnableRW(this, 'responseText');
+    EnableRW(this, 'responseURL');
+    EnableRW(this, 'responseXML');
+    EnableRW(this, 'status');
+    EnableRW(this, 'statusText');
+    EnableRW(this, 'readyState');
 };
 
 XMLHttpRequest.prototype.send = function(form) {
