@@ -190,7 +190,8 @@ public class WebViewCustom extends WebView {
                     JSONObject json = new JSONObject(headers);
                     Map<String, Object> hh = toMap(json);
                     HttpClient.DownloadResponse r = get(hh, url);
-                    return r.getHtml();
+                    if (r.getError() == null)
+                        return r.getHtml();
                 } catch (Exception e) {
                     logIO(url, e);
                 }
@@ -200,12 +201,13 @@ public class WebViewCustom extends WebView {
                 try {
                     url = new URL(new URL(base), action).toString();
                     HttpClient.DownloadResponse r = post(url, form.getBytes(Charset.defaultCharset()));
-                    return r.getHtml();
+                    if (r.getError() == null)
+                        return r.getHtml();
                 } catch (Exception e) {
                     logIO(url, e);
                 }
             }
-            return "";
+            return null;
         }
     }
 
