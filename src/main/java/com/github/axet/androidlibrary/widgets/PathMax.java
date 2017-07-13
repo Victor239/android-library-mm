@@ -162,11 +162,8 @@ public class PathMax extends ViewGroup {
                 sdots = makePath(scheme, ssdots, separator, suffix);
             } else if (ss.size() == 2) {
                 String sdot = ss.get(1);
-
-                // cant go lower remove last element
                 if (sdot.length() <= 2) {
-                    int mid = 1;
-
+                    int mid = 1; // for 2 elements, remove second one
                     ssdots = new ArrayList<>(ss);
                     ssdots.set(mid, MID);
                     ss.remove(mid);
@@ -174,8 +171,8 @@ public class PathMax extends ViewGroup {
                     sdots = makePath(scheme, ssdots, separator, suffix);
                 } else {
                     int mid = sdot.length() / 2;
-                    // cut mid char
-                    sdot = sdot.substring(0, mid) + sdot.substring(mid + 1, sdot.length());
+
+                    sdot = sdot.substring(0, mid) + sdot.substring(mid + 1, sdot.length()); // cut mid char
 
                     ss.set(1, sdot);
 
@@ -191,24 +188,19 @@ public class PathMax extends ViewGroup {
             } else if (ss.size() == 1) {
                 String sdot = ss.get(0);
 
-                // cant go lower return
-                if (sdot.length() <= 2) {
+                if (sdot.length() <= 2) { // cant go lower return
                     return scheme + MID;
                 }
 
                 int mid = sdot.length() / 2;
-                // cut mid char
-                sdot = sdot.substring(0, mid) + sdot.substring(mid + 1, sdot.length());
+                sdot = sdot.substring(0, mid) + sdot.substring(mid + 1, sdot.length()); // cut mid char
 
                 ss.set(0, sdot);
 
                 sdot = sdot.substring(0, mid) + MID + sdot.substring(mid, sdot.length());
 
                 if (removed) {
-                    if (scheme.isEmpty())
-                        sdot = MID + separator + sdot;
-                    else
-                        sdot = sdot + separator + MID;
+                    sdot = sdot + separator + MID;
                 }
 
                 sdots = scheme + sdot + suffix;
