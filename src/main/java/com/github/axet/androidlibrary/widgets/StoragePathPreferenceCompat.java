@@ -79,7 +79,7 @@ public class StoragePathPreferenceCompat extends EditTextPreference {
             return true;
         if (isExternalSDPortable(context)) // does external SD card formatted as portable?
             return true;
-        if (path.startsWith(ContentResolver.SCHEME_CONTENT)) // showed saf before?
+        if (path != null && path.startsWith(ContentResolver.SCHEME_CONTENT)) // showed saf before?
             return true;
         if (ss == null) // no permission enabled, use saf as main dialog
             return true;
@@ -146,7 +146,7 @@ public class StoragePathPreferenceCompat extends EditTextPreference {
     public void updatePath(String path) {
         if (Build.VERSION.SDK_INT >= 21 && path.startsWith(ContentResolver.SCHEME_CONTENT)) {
             Uri u = storage.getStoragePath(path);
-            String n = storage.getTargetName(u); // can be null
+            String n = storage.getDisplayName(u); // can be null
             setSummary(n);
             return;
         }

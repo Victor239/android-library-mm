@@ -44,7 +44,7 @@ import java.util.regex.Pattern;
 public class Storage {
     private static final String TAG = Storage.class.getSimpleName();
 
-    private static final String PATH_TREE = "tree";
+    public static final String PATH_TREE = "tree";
     public static final String[] PERMISSIONS = new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
     public static final String SAF = "com.android.externalstorage";
 
@@ -70,7 +70,7 @@ public class Storage {
         return fileName;
     }
 
-    public static String getExt(String fileName) {
+    public static String getExt(String fileName) { // FilenameUtils.getExtension(n)
         int i = fileName.lastIndexOf('.');
         if (i >= 0) {
             return fileName.substring(i + 1);
@@ -158,7 +158,7 @@ public class Storage {
             IOUtils.copy(in, out);
             in.close();
             out.close();
-            f.delete();
+            delete(f);
             to.setLastModified(last);
             return to;
         } catch (IOException e) {
@@ -238,7 +238,7 @@ public class Storage {
             return f.getPath();
         } else if (s.startsWith(ContentResolver.SCHEME_FILE)) {
             File f = getFile(uri);
-            return f.getName();
+            return f.getPath();
         } else {
             throw new RuntimeException("unknown uri");
         }
@@ -355,7 +355,6 @@ public class Storage {
                 childCursor = resolver.query(uri, null, null, null, null);
                 if (childCursor != null) {
                     boolean n = childCursor.moveToNext();
-                    childCursor.close();
                     if (n)
                         return true;
                 }
@@ -507,7 +506,6 @@ public class Storage {
                 childCursor = resolver.query(doc, null, null, null, null);
                 if (childCursor != null) {
                     boolean n = childCursor.moveToNext();
-                    childCursor.close();
                     if (n)
                         return true;
                 }
@@ -595,7 +593,7 @@ public class Storage {
         }
     }
 
-    public long getLast(Uri uri) {
+    public long getLastModified(Uri uri) {
         String s = uri.getScheme();
         if (s.startsWith(ContentResolver.SCHEME_CONTENT)) {
             Cursor childCursor = null;
@@ -620,14 +618,13 @@ public class Storage {
     }
 
     @TargetApi(21)
-    public String getTargetName(Uri uri) {
+    public String getDisplayName(Uri uri) {
         String s = uri.getScheme();
         if (s.startsWith(ContentResolver.SCHEME_CONTENT)) { // saf folder for content
             String saf = null;
             if (DocumentsContract.isDocumentUri(context, uri)) {
-                Uri docUri = DocumentsContract.buildDocumentUri(uri.getAuthority(), DocumentsContract.getDocumentId(uri));
                 try {
-                    Cursor docCursor = resolver.query(docUri, null, null, null, null);
+                    Cursor docCursor = resolver.query(uri, null, null, null, null);
                     if (docCursor != null) {
                         if (docCursor.moveToNext()) {
                             saf = "saf://.../";
@@ -662,21 +659,30 @@ public class Storage {
         }
     }
 
+    @TargetApi(21)
+    public Uri move(File f, Uri dir, String t) {
+        Uri u = createFile(dir, t);
+        if (u == null)
+            throw new RuntimeException("unable to create file " + t);
+        try {
+            InputStream is = new FileInputStream(f);
+            OutputStream os = resolver.openOutputStream(u);
+            IOUtils.copy(is, os);
+            is.close();
+            os.close();
+            delete(f);
+            return u;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     // call getNextFile() on 't'
     public Uri move(File f, Uri t) {
         String s = t.getScheme();
         if (Build.VERSION.SDK_INT >= 21 && s.startsWith(ContentResolver.SCHEME_CONTENT)) {
-            try {
-                InputStream is = new FileInputStream(f);
-                OutputStream os = resolver.openOutputStream(t);
-                IOUtils.copy(is, os);
-                is.close();
-                os.close();
-                f.delete();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            return t;
+            Uri root = getDocumentTreeUri(t);
+            return move(f, root, getDocumentPath(t));
         } else if (s.startsWith(ContentResolver.SCHEME_FILE)) {
             File parent = f.getParentFile();
 
@@ -697,9 +703,7 @@ public class Storage {
             if (Storage.isSame(f, to))
                 return null;
 
-            Storage.move(f, to);
-
-            return Uri.fromFile(to);
+            return Uri.fromFile(Storage.move(f, to));
         } else {
             throw new RuntimeException("unknown uri");
         }
@@ -708,7 +712,7 @@ public class Storage {
     public Uri migrate(File f, Uri dir) {
         String s = dir.getScheme();
         if (Build.VERSION.SDK_INT >= 21 && s.startsWith(ContentResolver.SCHEME_CONTENT)) {
-            Log.d(TAG, "migrate: " + f + " --> " + getTargetName(dir));
+            Log.d(TAG, "migrate: " + f + " --> " + getDisplayName(dir));
             String n = getNameNoExt(f);
             String e = getExt(f);
             Uri t = getNextFile(dir, n, e);
@@ -720,12 +724,10 @@ public class Storage {
                         migrate(m, tt);
                     }
                 }
-                FileUtils.deleteQuietly(f);
+                delete(f);
                 return tt;
             } else {
-                Uri u = createFile(dir, getDocumentName(t));
-                u = move(f, u);
-                return u;
+                return move(f, dir, getDocumentPath(t));
             }
         } else if (s.startsWith(ContentResolver.SCHEME_FILE)) {
             Log.d(TAG, "migrate: " + f + " --> " + dir.getPath());
@@ -738,7 +740,7 @@ public class Storage {
                         move(ff, tt);
                     }
                 }
-                FileUtils.deleteQuietly(f);
+                delete(f);
                 return dir;
             } else {
                 File to = new File(dir.getPath());
