@@ -553,18 +553,25 @@ public class Storage {
         }
     }
 
-    public String getName(Uri uri) {
-        Cursor childCursor = null;
-        try {
-            childCursor = resolver.query(uri, null, null, null, null);
-            if (childCursor != null && childCursor.moveToNext()) {
-                return childCursor.getString(childCursor.getColumnIndex(DocumentsContract.Document.COLUMN_DISPLAY_NAME));
+    public String getName(Uri f) {
+        String s = f.getScheme();
+        if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
+            Cursor childCursor = null;
+            try {
+                childCursor = resolver.query(f, null, null, null, null);
+                if (childCursor != null && childCursor.moveToNext()) {
+                    return childCursor.getString(childCursor.getColumnIndex(DocumentsContract.Document.COLUMN_DISPLAY_NAME));
+                }
+            } catch (RuntimeException e) {
+                ;
+            } finally {
+                if (childCursor != null)
+                    childCursor.close();
             }
-        } catch (RuntimeException e) {
-            ;
-        } finally {
-            if (childCursor != null)
-                childCursor.close();
+        } else if (s.equals(ContentResolver.SCHEME_FILE)) {
+            return getFile(f).getName();
+        } else {
+            throw new RuntimeException("unknown uri");
         }
         return null;
     }
