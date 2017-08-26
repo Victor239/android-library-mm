@@ -86,6 +86,13 @@ public class StoragePathPreferenceCompat extends EditTextPreference {
         return false;
     }
 
+    @TargetApi(19)
+    public static boolean showStorageAccessFramework(Context context, String path, String[] ss, Intent intent) { // samsung 6.0 crash, has no OPEN_DOCUMENT
+        if (!OptimizationPreferenceCompat.isCallable(context, intent))
+            return false;
+        return showStorageAccessFramework(context, path, ss);
+    }
+
     public StoragePathPreferenceCompat(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
     }
