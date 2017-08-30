@@ -48,6 +48,8 @@ public class Storage {
     public static final String[] PERMISSIONS = new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
     public static final String SAF = "com.android.externalstorage";
 
+    public final static String STORAGE_PRIMARY = "primary"; // sdcard name
+
     protected Context context;
     protected ContentResolver resolver;
 
@@ -232,8 +234,7 @@ public class Storage {
         String s = uri.getScheme();
         if (s.startsWith(ContentResolver.SCHEME_CONTENT)) {
             String id = DocumentsContract.getDocumentId(uri);
-            String parent = DocumentsContract.getTreeDocumentId(uri);
-            id = id.substring(parent.length() + 1);
+            id = id.substring(id.indexOf(":") + 1);
             File f = new File(id);
             return f.getPath();
         } else if (s.startsWith(ContentResolver.SCHEME_FILE)) {
@@ -249,6 +250,7 @@ public class Storage {
         String s = uri.getScheme();
         if (s.startsWith(ContentResolver.SCHEME_CONTENT)) {
             String id = DocumentsContract.getDocumentId(uri);
+            id = id.substring(id.indexOf(":") + 1);
             File f = new File(id);
             return f.getName();
         } else if (s.startsWith(ContentResolver.SCHEME_FILE)) {
@@ -508,7 +510,7 @@ public class Storage {
                 if (childCursor != null && childCursor.moveToNext()) {
                     Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(uri, DocumentsContract.getTreeDocumentId(uri));
                     childCursor2 = resolver.query(childrenUri, null, null, null, null); // check read directory content
-                    if (childCursor2 != null && childCursor2.moveToNext()) {
+                    if (childCursor2 != null) {
                         return false;
                     }
                 }
@@ -636,7 +638,16 @@ public class Storage {
             } else {
                 String tree = DocumentsContract.getTreeDocumentId(uri);
                 String[] ss = tree.split(":"); // 1D13-0F08:private
-                return "saf://" + ss[1];
+                String path;
+                if (ss.length > 1)
+                    path = ss[1];
+                else {
+                    if (ss[0].equals(STORAGE_PRIMARY))
+                        path = "SDCARD/internal";
+                    else
+                        path = "SDCARD/external";
+                }
+                return "saf://" + path;
             }
         } else if (s.startsWith(ContentResolver.SCHEME_FILE)) { // full destionation for files
             File f = getFile(uri);
@@ -669,7 +680,7 @@ public class Storage {
         String s = t.getScheme();
         if (Build.VERSION.SDK_INT >= 21 && s.startsWith(ContentResolver.SCHEME_CONTENT)) {
             Uri root = getDocumentTreeUri(t);
-            return move(f, root, getDocumentPath(t));
+            return move(f, root, getDocumentName(t));
         } else if (s.startsWith(ContentResolver.SCHEME_FILE)) {
             File parent = f.getParentFile();
 
@@ -714,7 +725,7 @@ public class Storage {
                 delete(f);
                 return tt;
             } else {
-                return move(f, dir, getDocumentPath(t));
+                return move(f, dir, getDocumentName(t));
             }
         } else if (s.startsWith(ContentResolver.SCHEME_FILE)) {
             Log.d(TAG, "migrate: " + f + " --> " + dir.getPath());
