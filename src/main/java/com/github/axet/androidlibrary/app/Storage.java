@@ -657,10 +657,11 @@ public class Storage {
     public String getDisplayName(Uri uri) {
         String s = uri.getScheme();
         if (s.startsWith(ContentResolver.SCHEME_CONTENT)) { // saf folder for content
+            String saf = "saf://";
             if (DocumentsContract.isDocumentUri(context, uri)) {
-                String tree = DocumentsContract.getTreeDocumentId(uri);
-                String[] ss = tree.split(":"); // 1D13-0F08:private
-                return "saf://" + getDocumentStorage(ss[0]) + "/" + getDocumentPath(uri);
+                String id = DocumentsContract.getDocumentId(uri);
+                String[] ss = id.split(":"); // 1D13-0F08:private
+                return saf + getDocumentStorage(ss[0]) + "/" + getDocumentPath(uri);
             } else {
                 String tree = DocumentsContract.getTreeDocumentId(uri);
                 String[] ss = tree.split(":"); // 1D13-0F08:private
@@ -670,7 +671,7 @@ public class Storage {
                 else {
                     path = getDocumentStorage(ss[0]);
                 }
-                return "saf://" + path;
+                return saf + path;
             }
         } else if (s.startsWith(ContentResolver.SCHEME_FILE)) { // full destionation for files
             File f = getFile(uri);
