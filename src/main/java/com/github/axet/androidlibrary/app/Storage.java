@@ -239,9 +239,9 @@ public class Storage {
     public static String getDocumentStorage(String s) {
         String path;
         if (s.equals(STORAGE_PRIMARY))
-            path = "SDCARD[internal]";
+            path = "SDCARD[I]";
         else
-            path = "SDCARD[external]";
+            path = "SDCARD[E]";
         return path;
     }
 
@@ -259,6 +259,14 @@ public class Storage {
         } else {
             throw new RuntimeException("unknown uri");
         }
+    }
+
+    @TargetApi(21)
+    public static String getDocumentChildPath(Uri uri) {
+        String id = DocumentsContract.getDocumentId(uri);
+        String parent = DocumentsContract.getTreeDocumentId(uri);
+        id = id.substring(parent.length() + 1);
+        return id;
     }
 
     @TargetApi(21)
@@ -695,7 +703,7 @@ public class Storage {
         String s = t.getScheme();
         if (Build.VERSION.SDK_INT >= 21 && s.startsWith(ContentResolver.SCHEME_CONTENT)) {
             Uri root = getDocumentTreeUri(t);
-            return move(f, root, getDocumentName(t));
+            return move(f, root, getDocumentChildPath(t));
         } else if (s.startsWith(ContentResolver.SCHEME_FILE)) {
             File parent = f.getParentFile();
 
@@ -740,7 +748,7 @@ public class Storage {
                 delete(f);
                 return tt;
             } else {
-                return move(f, dir, getDocumentName(t));
+                return move(f, dir, getDocumentChildPath(t));
             }
         } else if (s.startsWith(ContentResolver.SCHEME_FILE)) {
             Log.d(TAG, "migrate: " + f + " --> " + dir.getPath());
