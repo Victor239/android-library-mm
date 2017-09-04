@@ -4,6 +4,7 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
+import android.os.Build;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.widget.ListPopupWindowCompat;
 import android.support.v7.view.menu.ListMenuItemView;
@@ -36,6 +37,16 @@ public class PopupShareActionProvider extends ListPopupWindow {
     MenuAdapter adp;
     FrameLayout mMeasureParent;
     Context context;
+
+    public static void show(Context context, View share, Intent intent) {
+        if (Build.VERSION.SDK_INT < 11) {
+            context.startActivity(intent);
+        } else {
+            PopupShareActionProvider shareProvider = new PopupShareActionProvider(context, share);
+            shareProvider.setShareIntent(intent);
+            shareProvider.show();
+        }
+    }
 
     public class MenuAdapter extends BaseAdapter {
         private SubMenu menu;
@@ -84,7 +95,6 @@ public class PopupShareActionProvider extends ListPopupWindow {
             super.notifyDataSetChanged();
         }
     }
-
 
     public PopupShareActionProvider(Context context, View anchor) {
         super(context);
