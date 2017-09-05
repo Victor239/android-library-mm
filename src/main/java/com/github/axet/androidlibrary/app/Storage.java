@@ -3,6 +3,7 @@ package com.github.axet.androidlibrary.app;
 import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
@@ -52,6 +53,7 @@ public class Storage {
 
     protected Context context;
     protected ContentResolver resolver;
+    protected static boolean permitted = false; // static bugged phone flag
 
     public static long getFree(File f) {
         while (!f.exists())
@@ -169,6 +171,8 @@ public class Storage {
     }
 
     public static boolean permitted(Context context, String[] ss) {
+        if (permitted)
+            return true;
         if (Build.VERSION.SDK_INT < 16)
             return true;
         for (String s : ss) {
@@ -180,11 +184,18 @@ public class Storage {
     }
 
     public static boolean permitted(Activity a, String[] ss, int code) {
+        if (permitted)
+            return true;
         if (Build.VERSION.SDK_INT < 16)
             return true;
         for (String s : ss) {
             if (ContextCompat.checkSelfPermission(a, s) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(a, ss, code);
+                try {
+                    ActivityCompat.requestPermissions(a, ss, code);
+                } catch (ActivityNotFoundException e) {
+                    permitted = true;
+                    return true; // bugged phones has no PackageManager.ACTION_REQUEST_PERMISSIONS acitivty allow it all
+                }
                 return false;
             }
         }
@@ -192,11 +203,18 @@ public class Storage {
     }
 
     public static boolean permitted(Fragment f, String[] ss, int code) {
+        if (permitted)
+            return true;
         if (Build.VERSION.SDK_INT < 16)
             return true;
         for (String s : ss) {
             if (ContextCompat.checkSelfPermission(f.getContext(), s) != PackageManager.PERMISSION_GRANTED) {
-                f.requestPermissions(ss, code);
+                try {
+                    f.requestPermissions(ss, code);
+                } catch (ActivityNotFoundException e) {
+                    permitted = true;
+                    return true; // bugged phones has no PackageManager.ACTION_REQUEST_PERMISSIONS acitivty allow it all
+                }
                 return false;
             }
         }

@@ -51,7 +51,6 @@ public class Sound {
     }
 
     protected Context context;
-
     protected int soundMode = -1;
 
     public Sound(Context context) {
@@ -79,8 +78,7 @@ public class Sound {
         AudioManager am = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
         soundMode = am.getRingerMode();
 
-        if (soundMode == AudioManager.RINGER_MODE_SILENT) {
-            // we already in SILENT mode. keep all unchanged.
+        if (soundMode == AudioManager.RINGER_MODE_SILENT) { // we already in SILENT mode. keep all unchanged.
             soundMode = -1;
             return;
         }
