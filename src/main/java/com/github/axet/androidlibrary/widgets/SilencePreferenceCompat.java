@@ -47,6 +47,20 @@ public class SilencePreferenceCompat extends SwitchPreferenceCompat {
         return notificationManager.isNotificationPolicyAccessGranted();
     }
 
+    @TargetApi(23)
+    public static boolean isNotificationPolicyAccessGranted(Context context, Intent intent) {
+        if (!OptimizationPreferenceCompat.isCallable(context, intent))
+            return true;
+        return isNotificationPolicyAccessGranted(context);
+    }
+
+    @TargetApi(23)
+    public static Intent accessIntent() {
+        Intent intent = new Intent(android.provider.Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        return intent;
+    }
+
     @TargetApi(21)
     public SilencePreferenceCompat(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
@@ -78,9 +92,8 @@ public class SilencePreferenceCompat extends SwitchPreferenceCompat {
         if (Build.VERSION.SDK_INT >= 23) {
             boolean b = (boolean) newValue;
             if (b) {
-                if (!isNotificationPolicyAccessGranted(getContext())) {
-                    Intent intent = new Intent(android.provider.Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                Intent intent = accessIntent();
+                if (!isNotificationPolicyAccessGranted(getContext(), intent)) {
                     getContext().startActivity(intent);
                     resume = true;
                     return false;
@@ -92,7 +105,8 @@ public class SilencePreferenceCompat extends SwitchPreferenceCompat {
 
     public void onResume() {
         if (Build.VERSION.SDK_INT >= 23) {
-            if (!isNotificationPolicyAccessGranted(getContext())) {
+            Intent intent = accessIntent();
+            if (!isNotificationPolicyAccessGranted(getContext(), intent)) {
                 setChecked(false);
             } else {
                 if (resume) {

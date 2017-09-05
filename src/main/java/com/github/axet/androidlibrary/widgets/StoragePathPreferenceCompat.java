@@ -86,8 +86,9 @@ public class StoragePathPreferenceCompat extends EditTextPreference {
         return false;
     }
 
+    // samsung 6.0 has no Intent.OPEN_DOCUMENT activity to start, check before call
     @TargetApi(19)
-    public static boolean showStorageAccessFramework(Context context, String path, String[] ss, Intent intent) { // samsung 6.0 crash, has no OPEN_DOCUMENT
+    public static boolean showStorageAccessFramework(Context context, String path, String[] ss, Intent intent) {
         if (!OptimizationPreferenceCompat.isCallable(context, intent))
             return false;
         return showStorageAccessFramework(context, path, ss);
@@ -116,19 +117,21 @@ public class StoragePathPreferenceCompat extends EditTextPreference {
                 return;
         }
         String f = StoragePathPreference.getPath(this);
-        if (Build.VERSION.SDK_INT >= 21 && showStorageAccessFramework(getContext(), f, ss)) {
+        if (Build.VERSION.SDK_INT >= 21) {
             Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION
                     | Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                     | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION
                     | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
-            if (sf != null) {
-                sf.startActivityForResult(intent, scode);
-                return;
-            }
-            if (sa != null) {
-                sa.startActivityForResult(intent, scode);
-                return;
+            if (showStorageAccessFramework(getContext(), f, ss, intent)) {
+                if (sf != null) {
+                    sf.startActivityForResult(intent, scode);
+                    return;
+                }
+                if (sa != null) {
+                    sa.startActivityForResult(intent, scode);
+                    return;
+                }
             }
         }
         StoragePathPreference.showDialog(getContext(), storage, this);
