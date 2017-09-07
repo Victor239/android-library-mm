@@ -105,7 +105,11 @@ public class StoragePathPreference extends EditTextPreference {
             final OpenFileDialog f = new OpenFileDialog(context, OpenFileDialog.DIALOG_TYPE.FOLDER_DIALOG);
 
             Uri u = storage.getStoragePath(getPath(pref));
-            File p = Storage.getFile(u);
+            File p;
+            if (u == null) // support for 'not selected'
+                p = new File(getDefault());
+            else
+                p = Storage.getFile(u);
 
             f.setCurrentPath(p);
             f.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {

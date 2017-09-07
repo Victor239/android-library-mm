@@ -168,7 +168,10 @@ public class StoragePathPreferenceCompat extends EditTextPreference {
             f = new File(path);
         }
         File p = storage.getStoragePath(f);
-        setSummary(p.toString());
+        String s = "";
+        if (p != null) // support for 'not selected'
+            s = p.toString();
+        setSummary(s);
     }
 
     @Override
@@ -224,7 +227,5 @@ public class StoragePathPreferenceCompat extends EditTextPreference {
 
     public void setStorage(Storage storage) {
         this.storage = storage;
-        String f = StoragePathPreference.getPath(this);
-        updatePath(f);
     }
 }
