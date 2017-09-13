@@ -102,7 +102,7 @@ public class AboutPreferenceCompat extends DialogPreference {
         return d;
     }
 
-    public static int getResourceId(Context context, String res) {
+    public static int getResourceId(Context context, String res) { // get resource id from String "R.raw.about" -> id
         try {
             String[] rr = res.split("\\."); // R.raw.about
             String name = rr[2];
@@ -130,9 +130,8 @@ public class AboutPreferenceCompat extends DialogPreference {
 
     void create(AttributeSet attrs, int defStyleAttr) {
         if (attrs != null) {
-            final TypedArray a = getContext().obtainStyledAttributes(attrs, R.styleable.DialogPreference, defStyleAttr, 0);
-            String s = a.getString(R.styleable.DialogPreference_android_dialogMessage);
-            id = getResourceId(getContext(), s);
+            final TypedArray a = getContext().obtainStyledAttributes(attrs, R.styleable.AboutPreferenceCompat, defStyleAttr, 0);
+            id = a.getResourceId(R.styleable.AboutPreferenceCompat_html, -1);
         }
         setPersistent(false);
         try {

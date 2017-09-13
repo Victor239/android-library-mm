@@ -528,7 +528,7 @@ public class Storage {
                 ParcelFileDescriptor pfd = resolver.openFileDescriptor(docTreeUri, "r");
                 StructStatVfs stats = Os.fstatvfs(pfd.getFileDescriptor());
                 return stats.f_bavail * stats.f_bsize;
-            } catch (FileNotFoundException | ErrnoException e) {
+            } catch (IllegalArgumentException | FileNotFoundException | ErrnoException e) {
                 return 0;
             }
         } else if (s.equals(ContentResolver.SCHEME_FILE)) {
