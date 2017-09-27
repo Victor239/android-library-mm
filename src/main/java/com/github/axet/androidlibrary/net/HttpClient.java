@@ -28,6 +28,7 @@ import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
 import java.security.KeyManagementException;
@@ -660,7 +661,15 @@ public class HttpClient {
     public static String safe(String url) {
         try {
             URL u = new URL(url);
-            URI uri = new URI(u.getProtocol(), u.getUserInfo(), u.getHost(), u.getPort(), u.getPath(), u.getQuery(), u.getRef());
+            String q = u.getQuery();
+            if (q != null) {
+                try {
+                    q = URLDecoder.decode(q, Charset.defaultCharset().displayName());
+                } catch (UnsupportedEncodingException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            URI uri = new URI(u.getProtocol(), u.getUserInfo(), u.getHost(), u.getPort(), u.getPath(), q, u.getRef());
             return uri.toString();
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
