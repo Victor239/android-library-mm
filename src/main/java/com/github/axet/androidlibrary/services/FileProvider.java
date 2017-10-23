@@ -11,6 +11,7 @@ import android.content.pm.ResolveInfo;
 import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.CancellationSignal;
 import android.os.ParcelFileDescriptor;
 import android.provider.OpenableColumns;
@@ -52,24 +53,37 @@ public class FileProvider extends ContentProvider {
     }
 
     public static void grantPermissions(Context context, Intent intent) {
-        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        grantPermissions(context, intent, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+    }
 
-        Object uri = intent.getExtras().get(Intent.EXTRA_STREAM);
+    public static void grantPermissions(Context context, Intent intent, int flags) {
+        intent.addFlags(flags);
+
+        Object uri = null;
+        Bundle e = intent.getExtras();
+        if (e != null)
+            uri = e.get(Intent.EXTRA_STREAM);
+        if (uri == null)
+            uri = intent.getData();
 
         if (uri instanceof Uri) {
-            grantPermissions(context, intent, (Uri) uri);
+            grantPermissions(context, intent, (Uri) uri, flags);
         }
         if (uri instanceof ArrayList) {
             for (Uri u : (ArrayList<Uri>) uri)
-                grantPermissions(context, intent, u);
+                grantPermissions(context, intent, u, flags);
         }
     }
 
     public static void grantPermissions(Context context, Intent intent, Uri u) {
+        grantPermissions(context, intent, u, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+    }
+
+    public static void grantPermissions(Context context, Intent intent, Uri u, int flags) {
         List<ResolveInfo> resInfoList = context.getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
         for (ResolveInfo resolveInfo : resInfoList) {
             String packageName = resolveInfo.activityInfo.packageName;
-            context.grantUriPermission(packageName, u, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            context.grantUriPermission(packageName, u, flags);
         }
     }
 

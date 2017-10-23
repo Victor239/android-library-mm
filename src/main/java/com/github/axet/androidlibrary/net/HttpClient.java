@@ -664,7 +664,7 @@ public class HttpClient {
             String q = u.getQuery();
             if (q != null) {
                 try {
-                    q = URLDecoder.decode(q, Charset.defaultCharset().displayName());
+                    q = URLDecoder.decode(q, Charset.defaultCharset().name());
                 } catch (UnsupportedEncodingException e) {
                     throw new RuntimeException(e);
                 }
