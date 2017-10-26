@@ -1,16 +1,19 @@
 buildscript {
     repositories {
         jcenter()
+        mavenLocal()
+        google()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.3.3'
-        classpath 'com.github.dcendents:android-maven-gradle-plugin:1.5'
+        classpath 'com.android.tools.build:gradle:3.0.0'
+        classpath 'com.github.dcendents:android-maven-gradle-plugin:2.0'
     }
 }
 
 repositories {
     jcenter()
     mavenLocal()
+    google()
 }
 
 apply plugin: 'com.android.library'
@@ -20,7 +23,7 @@ apply plugin: 'com.github.dcendents.android-maven' // 'gradle install' task
 
 android {
     compileSdkVersion 25
-    buildToolsVersion "25.0.2"
+    buildToolsVersion "26.0.2"
 
     defaultConfig {
         minSdkVersion 9
@@ -82,7 +85,6 @@ uploadArchives {
             pom.project {
                 name 'Android Library'
                 packaging 'jar'
-                // optionally artifactId can be defined here
                 description 'Android Simple Widgets and Support classes.'
                 url 'https://gitlab.com/axet/android-library'
 
@@ -114,9 +116,9 @@ uploadArchives {
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     testCompile 'junit:junit:4.12'
-    compile 'com.android.support:support-v4:25.3.1'
-    compile 'com.android.support:appcompat-v7:25.3.1'
-    compile 'com.android.support:preference-v7:25.3.1'
+    compile 'com.android.support:support-v4:25.4.0'
+    compile 'com.android.support:appcompat-v7:25.4.0'
+    compile 'com.android.support:preference-v7:25.4.0'
     compile 'cz.msebera.android:httpclient:4.4.1.2'
     compile 'commons-codec:commons-codec:1.10'
     compile 'org.jsoup:jsoup:1.9.2'
