@@ -20,7 +20,10 @@ import android.widget.TextView;
 
 import com.github.axet.androidlibrary.R;
 
+import org.apache.commons.io.IOUtils;
+
 import java.io.InputStream;
+import java.nio.charset.Charset;
 
 /**
  * &lt;com.github.axet.androidlibrary.widgets.AboutPreferenceCompat
@@ -28,7 +31,6 @@ import java.io.InputStream;
  * android:persistent="false" /&gt;
  */
 public class AboutPreferenceCompat extends DialogPreference {
-
     int id;
 
     public static AlertDialog.Builder buildDialog(final Context context, int id) {
@@ -51,34 +53,15 @@ public class AboutPreferenceCompat extends DialogPreference {
         WebViewCustom web = new WebViewCustom(context) {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, final String url) {
-                AlertDialog.Builder b = new AlertDialog.Builder(getContext());
-                b.setTitle(R.string.open_browser);
-                b.setMessage(R.string.are_you_sure);
-                b.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface d, int which) {
-                        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                        context.startActivity(browserIntent);
-                        d.cancel();
-                    }
-                });
-                b.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                    }
-                });
-                AlertDialog d = b.create();
-                d.show();
+                openUrl(getContext(), url);
                 return true;
             }
         };
         web.getSettings().setBuiltInZoomControls(false);
         try {
             Resources res = context.getResources();
-            InputStream in_s = res.openRawResource(id);
-            byte[] b = new byte[in_s.available()];
-            in_s.read(b);
-            String html = new String(b);
+            InputStream is = res.openRawResource(id);
+            String html = IOUtils.toString(is, Charset.defaultCharset());
             web.loadHtmlWithBaseURL("", html, "");
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -90,10 +73,34 @@ public class AboutPreferenceCompat extends DialogPreference {
         builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                ;
             }
         });
         return builder;
+    }
+
+    public static void openUrl(final Context context, final String url) {
+        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+        context.startActivity(browserIntent);
+    }
+
+    public static void openUrlDialog(final Context context, final String url) {
+        AlertDialog.Builder b = new AlertDialog.Builder(context);
+        b.setTitle(R.string.open_browser);
+        b.setMessage(R.string.are_you_sure);
+        b.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface d, int which) {
+                openUrl(context, url);
+                d.cancel();
+            }
+        });
+        b.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+            }
+        });
+        AlertDialog d = b.create();
+        d.show();
     }
 
     public static Dialog showDialog(final Context context, int id) {
@@ -156,5 +163,4 @@ public class AboutPreferenceCompat extends DialogPreference {
     public void setDialog(int id) {
         this.id = id;
     }
-
 }
