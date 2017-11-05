@@ -311,6 +311,27 @@ public class Storage {
         }
     }
 
+    @TargetApi(21)
+    public static String getDocumentName(Context context, Uri uri) {
+        String s = uri.getScheme();
+        if (s.startsWith(ContentResolver.SCHEME_CONTENT)) {
+            String id;
+            if (DocumentsContract.isDocumentUri(context, uri)) {
+                id = DocumentsContract.getDocumentId(uri);
+            } else {
+                id = DocumentsContract.getTreeDocumentId(uri);
+            }
+            id = id.substring(id.indexOf(":") + 1);
+            File f = new File(id);
+            return f.getName();
+        } else if (s.startsWith(ContentResolver.SCHEME_FILE)) {
+            File f = getFile(uri);
+            return f.getName();
+        } else {
+            throw new RuntimeException("unknown uri");
+        }
+    }
+
     // get document folder from document uri
     @TargetApi(21)
     public static Uri getDocumentTreeUri(Uri treeUri) {
@@ -853,45 +874,4 @@ public class Storage {
         return DocumentsContract.createDocument(resolver, docUri, DocumentsContract.Document.MIME_TYPE_DIR, p.getName());
     }
 
-    public static Intent openFolderIntent(Context context, Uri p, Uri local) {
-        boolean perms = false;
-        String s = p.getScheme();
-        if (s.equals(ContentResolver.SCHEME_CONTENT) && Build.VERSION.SDK_INT >= 21) { // convert content:///primary to file://
-            String tree = DocumentsContract.getTreeDocumentId(p);
-            String[] ss = tree.split(":"); // 1D13-0F08:private
-            if (ss[0].equals(Storage.STORAGE_PRIMARY)) {
-                File f = Environment.getExternalStorageDirectory();
-                if (ss.length > 1)
-                    f = new File(f, ss[1]);
-                p = Uri.fromFile(f);
-            } else {
-                if (local != null)
-                    p = local; // TorrentContentProvider url
-                perms = true;
-            }
-        }
-        Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.setDataAndType(p, "resource/folder");
-        if (perms)
-            FileProvider.grantPermissions(context, intent, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
-        return intent;
-    }
-
-    public static boolean isFolderCallable(Context context, Intent intent, String authory) {
-        Uri p = intent.getData();
-        String s = p.getScheme();
-        if (s.equals(ContentResolver.SCHEME_CONTENT) && Build.VERSION.SDK_INT >= 21 && !p.getAuthority().equals(authory)) {
-            String tree = DocumentsContract.getTreeDocumentId(p);
-            String[] ss = tree.split(":"); // 1D13-0F08:private
-            if (!ss[0].equals(Storage.STORAGE_PRIMARY)) {
-                return false;
-            }
-        }
-        if (s.equals(ContentResolver.SCHEME_FILE)) {
-            int t = context.getApplicationInfo().targetSdkVersion;
-            if (t >= 25)
-                return false; // target sdk 25+ failed to open file:// links
-        }
-        return OptimizationPreferenceCompat.isCallable(context, intent);
-    }
 }

@@ -20,6 +20,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+// Help open app/resources/assets files access
+//
 // manifest.xml
 // <application>
 //   <provider
