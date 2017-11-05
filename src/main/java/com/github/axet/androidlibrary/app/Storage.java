@@ -887,6 +887,11 @@ public class Storage {
                 return false;
             }
         }
+        if (s.equals(ContentResolver.SCHEME_FILE)) {
+            int t = context.getApplicationInfo().targetSdkVersion;
+            if (t >= 25)
+                return false; // target sdk 25+ failed to open file:// links
+        }
         return OptimizationPreferenceCompat.isCallable(context, intent);
     }
 }
