@@ -46,24 +46,25 @@ import java.util.Map;
 // </application>
 //
 // url example:
-// content://com.github.axet.androidlibrary/ab123a123a12aa123a1231/image.jpg
+// content://com.github.axet.androidlibrary/35470c701a29ef8a9d58fbf8bd89dd83/image.jpg
 public class StorageProvider extends ContentProvider {
     public static long TIMEOUT = 1 * 1000 * 60;
+    public static int MD5_SIZE = 32;
 
     protected static ProviderInfo info;
 
     public static HashMap<String, Uri> hashs = new HashMap<>(); // hash -> original url
     public static HashMap<Uri, Long> uris = new HashMap<>(); // original url -> time
 
-    Runnable refresh = new Runnable() {
+    protected Runnable refresh = new Runnable() {
         @Override
         public void run() {
             freeUris();
         }
     };
-    Handler handler = new Handler();
-    Storage storage;
-    ContentResolver resolver;
+    protected Handler handler = new Handler();
+    protected Storage storage;
+    protected ContentResolver resolver;
 
     public static Intent openFolderIntent(Context context, Uri p) {
         if (Build.VERSION.SDK_INT >= 25 && context.getApplicationInfo().targetSdkVersion >= 25) { // 25+ failed to open file:// with FileUriExposedException
