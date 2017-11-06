@@ -162,6 +162,10 @@ public class StorageProvider extends ContentProvider {
         return info.authority;
     }
 
+    public static boolean isStorageUri(Uri uri) {
+        return uri.getPathSegments().get(0).length() == MD5_SIZE;
+    }
+
     Uri find(Uri uri) { // hashed uri -> original uri
         String hash = uri.getPathSegments().get(0);
         Uri f = hashs.get(hash);
