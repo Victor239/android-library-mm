@@ -140,7 +140,20 @@ public class StorageProvider extends ContentProvider {
         uris.put(u, now);
         String hash = md5(u.toString());
         hashs.put(hash, u);
-        File path = new File(hash, Storage.getDocumentName(context, u));
+
+        String name;
+
+        String s = u.getScheme();
+        if (Build.VERSION.SDK_INT >= 21 && s.startsWith(ContentResolver.SCHEME_CONTENT) && !DocumentsContract.isDocumentUri(context, u)) {
+            String id = DocumentsContract.getTreeDocumentId(u);
+            id = id.substring(id.indexOf(":") + 1);
+            File f = new File(id);
+            name = f.getName();
+        } else {
+            name = Storage.getDocumentName(u);
+        }
+
+        File path = new File(hash, name);
         return new Uri.Builder().scheme(ContentResolver.SCHEME_CONTENT).authority(info.authority).path(path.toString()).build();
     }
 

@@ -311,27 +311,6 @@ public class Storage {
         }
     }
 
-    @TargetApi(21)
-    public static String getDocumentName(Context context, Uri uri) {
-        String s = uri.getScheme();
-        if (s.startsWith(ContentResolver.SCHEME_CONTENT)) {
-            String id;
-            if (DocumentsContract.isDocumentUri(context, uri)) {
-                id = DocumentsContract.getDocumentId(uri);
-            } else {
-                id = DocumentsContract.getTreeDocumentId(uri);
-            }
-            id = id.substring(id.indexOf(":") + 1);
-            File f = new File(id);
-            return f.getName();
-        } else if (s.startsWith(ContentResolver.SCHEME_FILE)) {
-            File f = getFile(uri);
-            return f.getName();
-        } else {
-            throw new RuntimeException("unknown uri");
-        }
-    }
-
     // get document folder from document uri
     @TargetApi(21)
     public static Uri getDocumentTreeUri(Uri treeUri) {
