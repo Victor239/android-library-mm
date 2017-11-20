@@ -224,11 +224,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
                 public boolean accept(File file) {
                     String name = file.getName();
                     Matcher m = OpenFileDialog.DEFAULT_STORAGE_PATTERN.matcher(name);
-                    if (m.matches()) {
-                        if (canWrite(file))
-                            return true;
-                    }
-                    return false;
+                    return m.matches();
                 }
             });
             for (File f : ff) {
