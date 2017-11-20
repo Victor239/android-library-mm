@@ -116,6 +116,10 @@ public class StoragePathPreferenceCompat extends EditTextPreference {
             if (!Storage.permitted(a, ss, code))
                 return;
         }
+        onClickDialog();
+    }
+
+    public void onClickDialog() {
         String f = StoragePathPreference.getPath(this);
         if (Build.VERSION.SDK_INT >= 21) {
             Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
@@ -199,7 +203,7 @@ public class StoragePathPreferenceCompat extends EditTextPreference {
     }
 
     public void onRequestPermissionsResult() {
-        onClick();
+        onClickDialog();
     }
 
     public void setStorageAccessFramework(Activity a, int code) {

@@ -91,7 +91,7 @@ public class StoragePathPreference extends EditTextPreference {
         return path;
     }
 
-    public static void showDialog(final Context context, Storage storage, final Object pref) {
+    public static void showDialog(final Context context, final Storage storage, final Object pref) {
         if (!Storage.permitted(context, Storage.PERMISSIONS)) {
             final List<String> ss = new ArrayList<>();
             ss.add(storage.getLocalInternal().getAbsolutePath());
@@ -141,6 +141,7 @@ public class StoragePathPreference extends EditTextPreference {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     File path = new File(getDefault(), getDefault(pref));
+                    path = storage.getStoragePath(path);
                     f.setCurrentPath(path);
                 }
             });
