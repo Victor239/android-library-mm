@@ -41,6 +41,7 @@ import com.github.axet.androidlibrary.app.Storage;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -50,8 +51,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class OpenFileDialog extends AlertDialog.Builder {
+    public static final String ANDROID_STORAGE = "ANDROID_STORAGE";
+    public static final String DEFAULT_STORAGE_PATH = "/storage";
+    public static final Pattern DEFAULT_STORAGE_PATTERN = Pattern.compile("\\w\\w\\w\\w-\\w\\w\\w\\w");
+
     public static final String UP = "[..]";
     public static final String ROOT = "/";
 
@@ -207,6 +214,25 @@ public class OpenFileDialog extends AlertDialog.Builder {
                         }
                     }
                 }
+            }
+            String path = System.getenv(OpenFileDialog.ANDROID_STORAGE);
+            if (path == null || path.isEmpty())
+                path = OpenFileDialog.DEFAULT_STORAGE_PATH;
+            File storage = new File(path);
+            File[] ff = storage.listFiles(new FileFilter() {
+                @Override
+                public boolean accept(File file) {
+                    String name = file.getName();
+                    Matcher m = OpenFileDialog.DEFAULT_STORAGE_PATTERN.matcher(name);
+                    if (m.matches()) {
+                        if (canWrite(file))
+                            return true;
+                    }
+                    return false;
+                }
+            });
+            for (File f : ff) {
+                add(f);
             }
         }
 
