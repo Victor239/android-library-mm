@@ -49,4 +49,5 @@
     <string name="menu_about">O programe</string>
     <string name="open_browser">Otvoriť prehliadač</string>
     <string name="are_you_sure">Ste si istí?</string>
+    <string name="default_folder">Default</string>
 </resources>
