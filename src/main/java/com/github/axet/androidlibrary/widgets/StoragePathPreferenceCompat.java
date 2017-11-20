@@ -20,6 +20,7 @@ import android.util.AttributeSet;
 import com.github.axet.androidlibrary.app.Storage;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FilenameFilter;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -27,6 +28,7 @@ import java.util.regex.Pattern;
 public class StoragePathPreferenceCompat extends EditTextPreference {
     public static String ANDROID_STORAGE = "ANDROID_STORAGE";
     public static String DEFAULT_STORAGE_PATH = "/storage";
+    public static Pattern DEFAULT_STORAGE_PATTERN = Pattern.compile("\\w\\w\\w\\w-\\w\\w\\w\\w");
 
     public String def;
     public Storage storage = new Storage(getContext());
@@ -43,16 +45,21 @@ public class StoragePathPreferenceCompat extends EditTextPreference {
         if (path == null || path.isEmpty())
             path = DEFAULT_STORAGE_PATH;
 
-        final Pattern p = Pattern.compile("\\w\\w\\w\\w-\\w\\w\\w\\w");
         File storage = new File(path);
-        File[] ff = storage.listFiles(new FilenameFilter() {
+        File[] ff = storage.listFiles(new FileFilter() {
             @Override
-            public boolean accept(File dir, String name) {
-                Matcher m = p.matcher(name);
-                return m.matches();
+            public boolean accept(File file) {
+                String name = file.getName();
+                Matcher m = DEFAULT_STORAGE_PATTERN.matcher(name);
+                if (m.matches()) {
+                    if (file.canWrite())
+                        return false; // does we have rw access /storage/1234-1234/* if so, skip
+                    return true;
+                }
+                return false;
             }
         });
-        if (ff != null && ff.length > 0)
+        if (ff != null && ff.length > 0) // we have files in /storage/1234-1234
             return true;
 
         File ext = Environment.getExternalStorageDirectory();
