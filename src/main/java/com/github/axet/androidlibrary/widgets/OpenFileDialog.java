@@ -19,6 +19,7 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AbsListView;
@@ -60,34 +61,36 @@ public class OpenFileDialog extends AlertDialog.Builder {
         BOOTH
     }
 
-    File currentPath;
-    TextView free;
-    TextView title;
-    TextView message;
-    ListView listView;
-    FilenameFilter filenameFilter;
-    int folderIcon;
-    int fileIcon;
-    FileAdapter adapter;
+    protected File currentPath;
+    protected TextView free;
+    protected TextView title;
+    protected TextView message;
+    protected ListView listView;
+    protected FilenameFilter filenameFilter;
+    protected int folderIcon;
+    protected int fileIcon;
+    protected FileAdapter adapter;
+    protected DialogInterface.OnShowListener onshow;
+    protected DialogInterface.OnClickListener neutral;
 
-    int paddingLeft;
-    int paddingRight;
-    int paddingBottom;
-    int paddingTop;
-    int iconSize;
-    Runnable changeFolder;
+    protected int paddingLeft;
+    protected int paddingRight;
+    protected int paddingBottom;
+    protected int paddingTop;
+    protected int iconSize;
+    protected Runnable changeFolder;
 
     // file / folder readonly dialog selection or output directory? also shows readonly folder tooltip.
-    boolean readonly = false;
+    protected boolean readonly = false;
     // allow select files, or just select directory
-    DIALOG_TYPE type = DIALOG_TYPE.BOOTH;
+    protected DIALOG_TYPE type = DIALOG_TYPE.BOOTH;
 
-    Button positive; // enable / disable OK
+    protected Button positive; // enable / disable OK
 
     // cache folders, keep folder visible, when android shows none
-    static Map<File, Set<File>> cache = new TreeMap<>();
+    protected static Map<File, Set<File>> cache = new TreeMap<>();
 
-    static void cache(Context context) {
+    protected static void cache(Context context) {
         cache(context.getExternalCacheDir());
         if (Build.VERSION.SDK_INT >= 19) {
             File[] ff = context.getExternalCacheDirs();
@@ -97,7 +100,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
         }
     }
 
-    static void cache(File path) {
+    protected static void cache(File path) {
         while (path != null && path.isFile()) // skip file links, go up folder
             path = path.getParentFile();
         if (path == null)
@@ -118,7 +121,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
         }
     }
 
-    static List<File> cache(File path, FilenameFilter filter) {
+    protected static List<File> cache(File path, FilenameFilter filter) {
         Set<File> list = null;
         File[] ff = path.listFiles();
         if (ff != null) {
@@ -157,7 +160,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
         return false;
     }
 
-    static class SortFiles implements Comparator<File> {
+    protected static class SortFiles implements Comparator<File> {
         @Override
         public int compare(File f1, File f2) {
             if (isDirectory(f1) && isFile(f2))
@@ -169,7 +172,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
         }
     }
 
-    class StorageAdapter implements ListAdapter {
+    protected class StorageAdapter implements ListAdapter {
         ArrayList<File> list = new ArrayList<>();
 
         public StorageAdapter() {
@@ -464,7 +467,8 @@ public class OpenFileDialog extends AlertDialog.Builder {
         public AlertDialog create() {
             AlertDialog d = super.create();
 
-            d.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+            Window w = d.getWindow();
+            w.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
 
             return d;
         }
@@ -494,6 +498,11 @@ public class OpenFileDialog extends AlertDialog.Builder {
         fileIcon = R.drawable.ic_file;
 
         cache(context);
+    }
+
+    public OpenFileDialog(Context context, DIALOG_TYPE type, boolean readonly) {
+        this(context, type);
+        setReadonly(readonly);
     }
 
     public int dp2px(int dp) {
@@ -734,7 +743,8 @@ public class OpenFileDialog extends AlertDialog.Builder {
         listView.setAdapter(adapter);
 
         final AlertDialog d = super.create();
-        d.setOnShowListener(new DialogInterface.OnShowListener() {
+
+        onshow = new DialogInterface.OnShowListener() {
             @Override
             public void onShow(DialogInterface dialogInterface) {
                 positive = d.getButton(DialogInterface.BUTTON_POSITIVE);
@@ -746,8 +756,19 @@ public class OpenFileDialog extends AlertDialog.Builder {
                         listView.setSelection(adapter.selectedIndex);
                     }
                 });
+                if (neutral != null) {
+                    Button n = d.getButton(DialogInterface.BUTTON_NEUTRAL);
+                    n.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            neutral.onClick(d, DialogInterface.BUTTON_NEUTRAL);
+                        }
+                    });
+                }
             }
-        });
+        };
+
+        d.setOnShowListener(onshow);
         return d;
     }
 
@@ -796,8 +817,22 @@ public class OpenFileDialog extends AlertDialog.Builder {
         this.changeFolder = r;
     }
 
+    @Override
+    public AlertDialog.Builder setNeutralButton(CharSequence text, DialogInterface.OnClickListener listener) {
+        neutral = listener;
+        return super.setNeutralButton(text, listener);
+    }
+
+    @Override
+    public AlertDialog.Builder setNeutralButton(int textId, DialogInterface.OnClickListener listener) {
+        neutral = listener;
+        return super.setNeutralButton(textId, listener);
+    }
+
     public void setCurrentPath(File path) {
         currentPath = path;
+        if (adapter != null) // created?
+            rebuildFiles();
     }
 
     public File getCurrentPath() {
@@ -834,7 +869,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
         return getScreenSize(context).y;
     }
 
-    protected void rebuildFiles() {
+    public void rebuildFiles() {
         if (!readonly) { // show readonly directory tooltip
             File p = currentPath;
             while (!p.exists())

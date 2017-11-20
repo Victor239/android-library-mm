@@ -26,6 +26,7 @@ import java.util.regex.Pattern;
 
 public class StoragePathPreferenceCompat extends EditTextPreference {
     public static String ANDROID_STORAGE = "ANDROID_STORAGE";
+    public static String DEFAULT_STORAGE_PATH = "/storage";
 
     public String def;
     public Storage storage = new Storage(getContext());
@@ -40,7 +41,7 @@ public class StoragePathPreferenceCompat extends EditTextPreference {
     public static boolean isExternalSDPortable(Context context) {
         String path = System.getenv(ANDROID_STORAGE);
         if (path == null || path.isEmpty())
-            path = "/storage";
+            path = DEFAULT_STORAGE_PATH;
 
         final Pattern p = Pattern.compile("\\w\\w\\w\\w-\\w\\w\\w\\w");
         File storage = new File(path);
@@ -86,10 +87,9 @@ public class StoragePathPreferenceCompat extends EditTextPreference {
         return false;
     }
 
-    // samsung 6.0 has no Intent.OPEN_DOCUMENT activity to start, check before call
     @TargetApi(19)
     public static boolean showStorageAccessFramework(Context context, String path, String[] ss, Intent intent) {
-        if (!OptimizationPreferenceCompat.isCallable(context, intent))
+        if (!OptimizationPreferenceCompat.isCallable(context, intent)) // samsung 6.0 has no Intent.OPEN_DOCUMENT activity to start, check before call
             return false;
         return showStorageAccessFramework(context, path, ss);
     }
@@ -126,11 +126,11 @@ public class StoragePathPreferenceCompat extends EditTextPreference {
             if (showStorageAccessFramework(getContext(), f, ss, intent)) {
                 if (sf != null) {
                     sf.startActivityForResult(intent, scode);
-                    return;
+                    return; // exit
                 }
                 if (sa != null) {
                     sa.startActivityForResult(intent, scode);
-                    return;
+                    return; // exit
                 }
             }
         }

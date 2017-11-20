@@ -13,8 +13,11 @@ import android.preference.EditTextPreference;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.preference.Preference;
 import android.util.AttributeSet;
+import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
+import com.github.axet.androidlibrary.R;
 import com.github.axet.androidlibrary.app.Storage;
 
 import java.io.File;
@@ -68,6 +71,16 @@ public class StoragePathPreference extends EditTextPreference {
         return ext.getPath();
     }
 
+    public static String getDefault(Object o) {
+        if (o instanceof StoragePathPreference) {
+            return ((StoragePathPreference) o).def;
+        }
+        if (o instanceof StoragePathPreferenceCompat) {
+            return ((StoragePathPreferenceCompat) o).def;
+        }
+        throw new RuntimeException("unknown class");
+    }
+
     public static String getPath(Object object) {
         String path = getText(object);
 
@@ -78,7 +91,7 @@ public class StoragePathPreference extends EditTextPreference {
         return path;
     }
 
-    public static void showDialog(Context context, Storage storage, final Object pref) {
+    public static void showDialog(final Context context, Storage storage, final Object pref) {
         if (!Storage.permitted(context, Storage.PERMISSIONS)) {
             final List<String> ss = new ArrayList<>();
             ss.add(storage.getLocalInternal().getAbsolutePath());
@@ -116,12 +129,23 @@ public class StoragePathPreference extends EditTextPreference {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     File ff = f.getCurrentPath();
-                    if (!ff.isDirectory())
-                        ff = ff.getParentFile();
+                    if (ff.exists() && !ff.isDirectory()) // point to file?
+                        ff = ff.getParentFile(); // use parent
                     String fileName = ff.getPath();
                     if (callChangeListener(pref, fileName)) {
                         setText(pref, fileName);
                     }
+                }
+            });
+            f.setNeutralButton(R.string.default_folder, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    File path = new File(getDefault(), getDefault(pref));
+                    if (!path.exists() && !path.mkdirs()) { // we can not point to non existen folder, support for "ejected"
+                        Toast.makeText(context, context.getString(R.string.filedialog_unablecreatefolder, path), Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    f.setCurrentPath(path);
                 }
             });
             final AlertDialog d = f.create();
@@ -147,7 +171,7 @@ public class StoragePathPreference extends EditTextPreference {
     }
 
     public interface DialogDelayed {
-        public OpenFileDialog createDialog();
+        OpenFileDialog createDialog();
     }
 
     public StoragePathPreference(Context context, AttributeSet attrs, int defStyleAttr) {
