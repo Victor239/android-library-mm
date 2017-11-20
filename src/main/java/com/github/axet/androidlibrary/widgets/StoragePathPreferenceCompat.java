@@ -59,7 +59,7 @@ public class StoragePathPreferenceCompat extends EditTextPreference {
                 return false;
             }
         });
-        if (ff != null && ff.length > 0) // we have files in /storage/1234-1234
+        if (ff != null && ff.length > 0) // we have files like /storage/1234-1234
             return true;
 
         File ext = Environment.getExternalStorageDirectory();
