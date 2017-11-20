@@ -26,10 +26,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class StoragePathPreferenceCompat extends EditTextPreference {
-    public static String ANDROID_STORAGE = "ANDROID_STORAGE";
-    public static String DEFAULT_STORAGE_PATH = "/storage";
-    public static Pattern DEFAULT_STORAGE_PATTERN = Pattern.compile("\\w\\w\\w\\w-\\w\\w\\w\\w");
-
     public String def;
     public Storage storage = new Storage(getContext());
     public Fragment f;
@@ -41,16 +37,16 @@ public class StoragePathPreferenceCompat extends EditTextPreference {
     public int scode;
 
     public static boolean isExternalSDPortable(Context context) {
-        String path = System.getenv(ANDROID_STORAGE);
+        String path = System.getenv(OpenFileDialog.ANDROID_STORAGE);
         if (path == null || path.isEmpty())
-            path = DEFAULT_STORAGE_PATH;
+            path = OpenFileDialog.DEFAULT_STORAGE_PATH;
 
         File storage = new File(path);
         File[] ff = storage.listFiles(new FileFilter() {
             @Override
             public boolean accept(File file) {
                 String name = file.getName();
-                Matcher m = DEFAULT_STORAGE_PATTERN.matcher(name);
+                Matcher m = OpenFileDialog.DEFAULT_STORAGE_PATTERN.matcher(name);
                 if (m.matches()) {
                     if (file.canWrite())
                         return false; // does we have rw access /storage/1234-1234/* if so, skip
