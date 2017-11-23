@@ -243,6 +243,7 @@ public class OpenChoicer {
         if (showSAF(true))
             return;
         Toast.makeText(context, R.string.not_permitted, Toast.LENGTH_SHORT).show();
+        onCancel();
         onDismiss();
     }
 
