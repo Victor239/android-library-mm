@@ -80,6 +80,8 @@ public class OpenChoicer {
             b = Storage.permitted(f, perms, permsresult);
         if (b)
             fileDialog();
+        else // all failed, dismissed
+            onDismiss();
     }
 
     @TargetApi(21)
@@ -129,6 +131,12 @@ public class OpenChoicer {
                 onResult(Uri.fromFile(f), false);
             }
         });
+        dialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+            @Override
+            public void onCancel(DialogInterface dialog) {
+                OpenChoicer.this.onCancel();
+            }
+        });
         dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
             @Override
             public void onDismiss(DialogInterface d) {
@@ -140,6 +148,7 @@ public class OpenChoicer {
 
     public void onActivityResult(int resultCode, Intent data) {
         if (resultCode != Activity.RESULT_OK) {
+            onCancel();
             onDismiss();
             return;
         }
@@ -153,6 +162,7 @@ public class OpenChoicer {
                 onResult(u, true);
             }
         }
+        onDismiss();
     }
 
     public void onRequestPermissionsResult(String[] permissions, int[] grantResults) {
@@ -167,7 +177,7 @@ public class OpenChoicer {
         if (showSAF(true))
             return;
         Toast.makeText(context, R.string.not_permitted, Toast.LENGTH_SHORT).show();
-        onCancel();
+        onDismiss();
     }
 
     public void onDismiss() {

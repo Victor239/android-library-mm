@@ -54,6 +54,18 @@ public class OpenStorageChoicer extends OpenChoicer {
                 dialog.dismiss();
             }
         });
+        builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
+            @Override
+            public void onCancel(DialogInterface dialog) {
+                OpenStorageChoicer.this.onCancel();
+            }
+        });
+        builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialog) {
+                OpenStorageChoicer.this.onDismiss();
+            }
+        });
         Dialog d = builder.create();
         d.show();
     }

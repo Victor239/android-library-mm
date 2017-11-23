@@ -99,6 +99,18 @@ public class StoragePathPreferenceCompat extends EditTextPreference {
 
     public StoragePathPreferenceCompat(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        create();
+    }
+
+    public StoragePathPreferenceCompat(Context context, AttributeSet attrs) {
+        this(context, attrs, 0);
+    }
+
+    public StoragePathPreferenceCompat(Context context) {
+        this(context, null);
+    }
+
+    public void create() {
         choicer = new OpenStorageChoicer(storage, OpenFileDialog.DIALOG_TYPE.FOLDER_DIALOG, false) {
             @Override
             public void onResult(Uri uri) {
@@ -109,14 +121,6 @@ public class StoragePathPreferenceCompat extends EditTextPreference {
         };
         choicer.def = def;
         choicer.setTitle(getTitle().toString());
-    }
-
-    public StoragePathPreferenceCompat(Context context, AttributeSet attrs) {
-        this(context, attrs, 0);
-    }
-
-    public StoragePathPreferenceCompat(Context context) {
-        this(context, null);
     }
 
     @Override
