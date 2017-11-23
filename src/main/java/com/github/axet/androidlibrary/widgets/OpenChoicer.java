@@ -9,7 +9,9 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Environment;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.widget.Button;
 import android.widget.Toast;
@@ -18,8 +20,10 @@ import com.github.axet.androidlibrary.R;
 import com.github.axet.androidlibrary.app.Storage;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
 
 public class OpenChoicer {
     public Context context;
@@ -34,6 +38,67 @@ public class OpenChoicer {
     public Fragment sf;
     public int sresult;
     public String title;
+
+    public static boolean isExternalSDPortable(Context context) {
+        String path = System.getenv(OpenFileDialog.ANDROID_STORAGE);
+        if (path == null || path.isEmpty())
+            path = OpenFileDialog.DEFAULT_STORAGE_PATH;
+
+        File storage = new File(path);
+        File[] ff = storage.listFiles(new FileFilter() {
+            @Override
+            public boolean accept(File file) {
+                String name = file.getName();
+                Matcher m = OpenFileDialog.DEFAULT_STORAGE_PATTERN.matcher(name);
+                if (m.matches()) {
+                    if (file.canWrite())
+                        return false; // does we have rw access /storage/1234-1234/* if so, skip
+                    return true;
+                }
+                return false;
+            }
+        });
+        if (ff != null && ff.length > 0) // we have files like /storage/1234-1234
+            return true;
+
+        File ext = Environment.getExternalStorageDirectory();
+        if (ext == null)
+            return false;
+
+        ff = ContextCompat.getExternalFilesDirs(context, ""); // can show no external dir: https://stackoverflow.com/questions/33350250
+        int count = 0;
+        for (File f : ff) {
+            if (f == null || f.getAbsolutePath().startsWith(ext.getAbsolutePath())) { // f can be null, if media unmounted
+                continue;
+            }
+            count++;
+        }
+        if (count > 0) // have external SD formatted as portable?
+            return true;
+
+        return false;
+    }
+
+    @TargetApi(19)
+    public static boolean showStorageAccessFramework(Context context, String path, String[] ss, boolean readonly) {
+        File ext = Environment.getExternalStorageDirectory();
+        if (ext == null)
+            return true;
+        if (!readonly && isExternalSDPortable(context)) // does external SD card formatted as portable?
+            return true;
+        if (path != null && path.startsWith(ContentResolver.SCHEME_CONTENT)) // showed saf before?
+            return true;
+        if (ss == null) // no permission enabled, use saf as main dialog
+            return true;
+        return false;
+    }
+
+    @TargetApi(19)
+    public static boolean showStorageAccessFramework(Context context, String path, String[] ss, Intent intent, boolean readonly) {
+        if (!OptimizationPreferenceCompat.isCallable(context, intent)) // samsung 6.0 has no Intent.OPEN_DOCUMENT activity to start, check before call
+            return false;
+        return showStorageAccessFramework(context, path, ss, readonly);
+    }
 
     public OpenChoicer(OpenFileDialog.DIALOG_TYPE type, boolean readonly) {
         this.type = type;
@@ -103,7 +168,7 @@ public class OpenChoicer {
                 intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
         }
         // intent.putExtra(EXTRA_INITIAL_URI, old); // API 26+
-        if (force || StoragePathPreferenceCompat.showStorageAccessFramework(context, old != null ? old.toString() : null, perms, intent, readonly)) {
+        if (force || showStorageAccessFramework(context, old != null ? old.toString() : null, perms, intent, readonly)) {
             if (sa != null) {
                 sa.startActivityForResult(intent, sresult);
                 return true;

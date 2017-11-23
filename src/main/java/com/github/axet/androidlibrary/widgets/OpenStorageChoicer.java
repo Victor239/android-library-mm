@@ -1,9 +1,14 @@
 package com.github.axet.androidlibrary.widgets;
 
+import android.annotation.TargetApi;
 import android.app.Dialog;
+import android.content.ContentResolver;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Environment;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.widget.Button;
 
@@ -11,8 +16,10 @@ import com.github.axet.androidlibrary.R;
 import com.github.axet.androidlibrary.app.Storage;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
 
 public class OpenStorageChoicer extends OpenChoicer {
     public String def;
