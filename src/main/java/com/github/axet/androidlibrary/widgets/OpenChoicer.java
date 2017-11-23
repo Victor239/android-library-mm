@@ -138,15 +138,17 @@ public class OpenChoicer {
             if (showSAF(nofile))
                 return;
         }
-        boolean b = false;
-        if (a != null)
-            b = Storage.permitted(a, perms, permsresult);
-        if (f != null)
-            b = Storage.permitted(f, perms, permsresult);
-        if (b)
-            fileDialog();
-        else // all failed, dismissed
-            onDismiss();
+        if (a != null) {
+            if (Storage.permitted(a, perms, permsresult))
+                fileDialog();
+            return; // perms shown
+        }
+        if (f != null) {
+            if (Storage.permitted(f, perms, permsresult))
+                fileDialog();
+            return; // perms shown
+        }
+        onDismiss(); // all failed, dismissed
     }
 
     @TargetApi(21)
