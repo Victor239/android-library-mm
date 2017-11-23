@@ -158,17 +158,13 @@ public class OpenChoicer {
             intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
             intent.addCategory(Intent.CATEGORY_OPENABLE);
             intent.setType("*/*");
-            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
-            if (!readonly)
-                intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
         } else {
             intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
-            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION
-                    | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION
-                    | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
-            if (!readonly)
-                intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            intent.addFlags(Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
         }
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+        if (!readonly)
+            intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
         // intent.putExtra(EXTRA_INITIAL_URI, old); // API 26+
         if (force || showStorageAccessFramework(context, old != null ? old.toString() : null, perms, intent, readonly)) {
             if (sa != null) {
@@ -223,7 +219,10 @@ public class OpenChoicer {
         if (Build.VERSION.SDK_INT >= 21) {
             ContentResolver resolver = context.getContentResolver();
             try {
-                resolver.takePersistableUriPermission(u, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                int flags = Intent.FLAG_GRANT_READ_URI_PERMISSION;
+                if (!readonly)
+                    flags |= Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
+                resolver.takePersistableUriPermission(u, flags);
                 onResult(u, false);
             } catch (SecurityException e) { // remote SAF?
                 onResult(u, true);
