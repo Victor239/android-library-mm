@@ -179,8 +179,74 @@ public class OpenChoicer {
         return false;
     }
 
+    public void showFallbackFolders() { // simple folder selection
+        final List<String> ss = new ArrayList<>();
+        File local = OpenFileDialog.getLocalInternal(context);
+        ss.add(local.getAbsolutePath());
+        File[] ext = OpenFileDialog.getLocalExternals(context, readonly);
+        if (ext != null) {
+            for (File f : ext) {
+                ss.add(f.getAbsolutePath());
+            }
+        }
+        AlertDialog.Builder b = showFallbackFoldersBuild(ss);
+        AlertDialog d = b.create();
+        d.show();
+    }
+
+    public AlertDialog.Builder showFallbackFoldersBuild(final List<String> ss) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setTitle(title);
+        File summ = Storage.getFile(old);
+        builder.setSingleChoiceItems(ss.toArray(new CharSequence[]{}), ss.indexOf(summ.getAbsolutePath()), new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                String fileName = ss.get(which);
+                File f = new File(fileName);
+                Uri u = Uri.fromFile(f);
+                onResult(u, true);
+                dialog.dismiss();
+            }
+        });
+        builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
+            @Override
+            public void onCancel(DialogInterface dialog) {
+                OpenChoicer.this.onCancel();
+            }
+        });
+        builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialog) {
+                OpenChoicer.this.onDismiss();
+            }
+        });
+        return builder;
+    }
+
     public void fileDialog() {
-        fileDialogBuild().show();
+        if (!readonly && !Storage.permitted(context, Storage.PERMISSIONS) && type != OpenFileDialog.DIALOG_TYPE.FILE_DIALOG) {
+            showFallbackFolders();
+        } else {
+            final OpenFileDialog f = fileDialogBuild();
+            final AlertDialog d = f.create();
+            if (!readonly) {
+                f.setChangeFolderListener(new Runnable() {
+                    @Override
+                    public void run() {
+                        File ff = f.getCurrentPath();
+                        if (!ff.isDirectory())
+                            ff = ff.getParentFile();
+                        Button b2 = d.getButton(AlertDialog.BUTTON_POSITIVE);
+                        if (!ff.canWrite()) {
+                            b2.setEnabled(false);
+                        } else {
+                            b2.setEnabled(true);
+                        }
+                    }
+                });
+            }
+            d.show();
+        }
     }
 
     public OpenFileDialog fileDialogBuild() {
@@ -197,6 +263,12 @@ public class OpenChoicer {
         dialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
             @Override
             public void onCancel(DialogInterface dialog) {
+                OpenChoicer.this.onCancel();
+            }
+        });
+        dialog.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
                 OpenChoicer.this.onCancel();
             }
         });
@@ -235,16 +307,20 @@ public class OpenChoicer {
         if (Storage.permitted(context, permissions)) {
             fileDialog();
         } else {
-            onRequestPermissionsFailed();
+            onRequestPermissionsFailed(permissions);
         }
     }
 
-    public void onRequestPermissionsFailed() {
+    public void onRequestPermissionsFailed(String[] permissions) {
         if (showSAF(true))
             return;
-        Toast.makeText(context, R.string.not_permitted, Toast.LENGTH_SHORT).show();
-        onCancel();
-        onDismiss();
+        if (type == OpenFileDialog.DIALOG_TYPE.FILE_DIALOG) {
+            Toast.makeText(context, R.string.not_permitted, Toast.LENGTH_SHORT).show();
+            onCancel();
+            onDismiss();
+        } else {
+            showFallbackFolders(); // unable to show SAF, show simple folder dialog
+        }
     }
 
     public void onDismiss() {

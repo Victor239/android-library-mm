@@ -26,6 +26,7 @@ import android.util.Log;
 import android.webkit.MimeTypeMap;
 
 import com.github.axet.androidlibrary.services.FileProvider;
+import com.github.axet.androidlibrary.widgets.OpenFileDialog;
 import com.github.axet.androidlibrary.widgets.OptimizationPreferenceCompat;
 
 import org.apache.commons.io.FileUtils;
@@ -330,7 +331,7 @@ public class Storage {
     }
 
     public File getLocalInternal() {
-        return context.getFilesDir();
+        return OpenFileDialog.getLocalInternal(context);
     }
 
     public File getLocalExternal() {

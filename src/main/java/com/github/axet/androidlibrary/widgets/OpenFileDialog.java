@@ -1,5 +1,6 @@
 package com.github.axet.androidlibrary.widgets;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.database.DataSetObserver;
@@ -58,6 +59,9 @@ public class OpenFileDialog extends AlertDialog.Builder {
     public static final String ANDROID_STORAGE = "ANDROID_STORAGE";
     public static final String DEFAULT_STORAGE_PATH = "/storage";
     public static final Pattern DEFAULT_STORAGE_PATTERN = Pattern.compile("\\w\\w\\w\\w-\\w\\w\\w\\w");
+
+    public static final String[] PERMISSIONS_RO = new String[]{Manifest.permission.READ_EXTERNAL_STORAGE};
+    public static final String[] PERMISSIONS_RW = new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
 
     public static final String UP = "[..]";
     public static final String ROOT = "/";
@@ -179,17 +183,39 @@ public class OpenFileDialog extends AlertDialog.Builder {
         }
     }
 
-    protected class StorageAdapter implements ListAdapter {
+    public static File getLocalInternal(Context context) {
+        return context.getFilesDir();
+    }
+
+    public static File[] getLocalExternals(Context context, boolean readonly) {
+        File[] external = ContextCompat.getExternalFilesDirs(context, "");
+
+        // Starting in KITKAT, no permissions are required to read or write to the getExternalFilesDir;
+        // it's always accessible to the calling app.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
+            if (readonly) {
+                if (!Storage.permitted(context, PERMISSIONS_RO))
+                    return null;
+            } else {
+                if (!Storage.permitted(context, PERMISSIONS_RW))
+                    return null;
+            }
+        }
+
+        return external;
+    }
+
+    public class StorageAdapter implements ListAdapter {
         ArrayList<File> list = new ArrayList<>();
 
         public StorageAdapter() {
             File ext = Environment.getExternalStorageDirectory();
             cache(ext);
             if (ext == null || (!readonly && !canWrite(ext)))
-                ext = getContext().getFilesDir();
+                ext = getLocalInternal(getContext());
             add(ext);
             if (Build.VERSION.SDK_INT >= 19) {
-                File[] ff = ContextCompat.getExternalFilesDirs(getContext(), "");
+                File[] ff = getLocalExternals(getContext(), readonly);
                 if (ff != null) {
                     for (File f : ff) {
                         if (f == null)
