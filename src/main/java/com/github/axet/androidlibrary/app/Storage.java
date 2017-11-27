@@ -398,7 +398,8 @@ public class Storage {
         File p = file.getParentFile();
         boolean ew = file.exists() && !file.canWrite(); // folder exist and can't write
         boolean pw = !file.exists() && !p.canWrite(); // folder not exist, and parent cant write
-        if (ejected(file) || ew || pw)
+        boolean ps = file.exists() && file.getFreeSpace() <= 0 || !file.exists() && p.exists() && p.getFreeSpace() <= 0; // some devices can only report no free space, exit
+        if (ejected(file) || ew || pw || ps)
             return getLocalStorage();
         return file;
     }

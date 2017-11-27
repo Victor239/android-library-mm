@@ -941,7 +941,14 @@ public class OpenFileDialog extends AlertDialog.Builder {
     }
 
     protected boolean canWrite(File p) {
-        return p.canWrite();
+        if (!p.canWrite()) // can't write, exit
+            return false;
+        if (p.exists() && p.getFreeSpace() > 0) // folder, and free space
+            return true;
+        File pp = p.getParentFile(); // check only one parent
+        if (!p.exists() && pp.exists() && pp.getFreeSpace() > 0) // folder, and free space
+            return true;
+        return false;
     }
 
     protected boolean delete(File f) {
