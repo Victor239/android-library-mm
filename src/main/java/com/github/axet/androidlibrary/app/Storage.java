@@ -321,6 +321,19 @@ public class Storage {
                 .build();
     }
 
+    public static boolean canWrite(File f) {
+        if (!f.canWrite())
+            return false;
+        if (f.exists() && f.getFreeSpace() > 0)
+            return true;
+        File p = f.getParentFile();
+        if (!f.exists() && !p.canWrite())
+            return false;
+        if (!f.exists() && p.exists() && p.getFreeSpace() > 0)
+            return true;
+        return false;
+    }
+
     public Storage(Context context) {
         this.context = context;
         this.resolver = context.getContentResolver();
@@ -396,10 +409,7 @@ public class Storage {
 
     public File getStoragePath(File file) {
         File p = file.getParentFile();
-        boolean ew = file.exists() && !file.canWrite(); // folder exist and can't write
-        boolean pw = !file.exists() && !p.canWrite(); // folder not exist, and parent cant write
-        boolean ps = file.exists() && file.getFreeSpace() <= 0 || !file.exists() && p.exists() && p.getFreeSpace() <= 0; // some devices can only report no free space, exit
-        if (ejected(file) || ew || pw || ps)
+        if (ejected(file) || !canWrite(p))
             return getLocalStorage();
         return file;
     }
