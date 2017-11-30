@@ -75,6 +75,7 @@ public class RingtoneChoicer extends OpenChoicer {
             onDismiss();
             return;
         }
+
         Uri u = data.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI);
 
         if (u == null) { // user selected none
@@ -114,6 +115,7 @@ public class RingtoneChoicer extends OpenChoicer {
 
     @Override
     public void onRequestPermissionsFailed(String[] permissions) {
+        Toast.makeText(context, com.github.axet.androidlibrary.R.string.not_permitted, Toast.LENGTH_SHORT).show();
         show(permresult);
     }
 }
