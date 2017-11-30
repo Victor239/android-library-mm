@@ -114,6 +114,7 @@ public class RingtoneChoicer extends OpenChoicer {
 
     @Override
     public void onRequestPermissionsFailed(String[] permissions) {
+        Toast.makeText(context, com.github.axet.androidlibrary.R.string.not_permitted, Toast.LENGTH_SHORT).show();
         show(permresult);
     }
 }
