@@ -2,17 +2,19 @@ package com.github.axet.androidlibrary.widgets;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
-import android.app.Dialog;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.Toast;
 
@@ -26,6 +28,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 
 public class OpenChoicer {
+    public static String TAG = OpenChoicer.class.getSimpleName();
+
     public Context context;
     public OpenFileDialog.DIALOG_TYPE type;
     public boolean readonly;
@@ -38,6 +42,24 @@ public class OpenChoicer {
     public Fragment sf;
     public int sresult;
     public String title;
+
+    public static void activityCheck(Activity a) {
+        PackageManager packageManager = a.getPackageManager();
+        try {
+            ActivityInfo info = packageManager.getActivityInfo(a.getComponentName(), 0);
+            if ((info.configChanges & ActivityInfo.CONFIG_ORIENTATION) != ActivityInfo.CONFIG_ORIENTATION ||
+                    (info.configChanges & ActivityInfo.CONFIG_SCREEN_SIZE) != ActivityInfo.CONFIG_SCREEN_SIZE) {
+                String msg = "Please add 'android:configChanges=\"orientation|screenSize\' to manifest.xml to keep open file dialog"; // since we don't want to deal with save/load state
+                Log.e(TAG, msg);
+            }
+            if (info.launchMode == ActivityInfo.LAUNCH_SINGLE_INSTANCE) {
+                String msg = "Please add android:launchMode=\"singleTop\" instead of singleInstance to manifest.xml"; // http://stackoverflow.com/questions/3354955/onactivityresult-called-prematurely
+                Log.e(TAG, msg);
+            }
+        } catch (PackageManager.NameNotFoundException e) {
+            Log.d(TAG, "activity check", e);
+        }
+    }
 
     public static boolean isExternalSDPortable(Context context) {
         String path = System.getenv(OpenFileDialog.ANDROID_STORAGE);
@@ -106,6 +128,7 @@ public class OpenChoicer {
     }
 
     public void setPermissionsDialog(Fragment f, String[] ss, int code) {
+        activityCheck(f.getActivity());
         this.context = f.getContext();
         this.f = f;
         this.perms = ss;
@@ -113,6 +136,7 @@ public class OpenChoicer {
     }
 
     public void setPermissionsDialog(Activity a, String[] ss, int code) {
+        activityCheck(a);
         this.context = a;
         this.a = a;
         this.perms = ss;
@@ -120,12 +144,14 @@ public class OpenChoicer {
     }
 
     public void setStorageAccessFramework(Activity a, int code) {
+        activityCheck(a);
         this.context = a;
         this.sa = a;
         this.sresult = code;
     }
 
     public void setStorageAccessFramework(Fragment f, int code) {
+        activityCheck(f.getActivity());
         this.context = f.getContext();
         this.sf = f;
         this.sresult = code;
@@ -296,7 +322,7 @@ public class OpenChoicer {
                     flags |= Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
                 resolver.takePersistableUriPermission(u, flags);
                 onResult(u, false);
-            } catch (SecurityException e) { // remote SAF?
+            } catch (SecurityException e) { // remote / sdcard SAF?
                 onResult(u, true);
             }
         }
@@ -312,10 +338,10 @@ public class OpenChoicer {
     }
 
     public void onRequestPermissionsFailed(String[] permissions) {
+        Toast.makeText(context, R.string.not_permitted, Toast.LENGTH_SHORT).show();
         if (showSAF(true))
             return;
         if (type == OpenFileDialog.DIALOG_TYPE.FILE_DIALOG) {
-            Toast.makeText(context, R.string.not_permitted, Toast.LENGTH_SHORT).show();
             onCancel();
             onDismiss();
         } else {

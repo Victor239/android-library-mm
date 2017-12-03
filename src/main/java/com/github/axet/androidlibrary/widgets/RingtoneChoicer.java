@@ -44,6 +44,7 @@ public class RingtoneChoicer extends OpenChoicer {
     }
 
     public void setRingtone(Fragment f, int type, int result) {
+        activityCheck(f.getActivity());
         this.context = f.getContext();
         this.f = f;
         this.type = type;
