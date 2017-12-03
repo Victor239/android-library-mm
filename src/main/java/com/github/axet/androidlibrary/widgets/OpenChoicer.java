@@ -2,7 +2,6 @@ package com.github.axet.androidlibrary.widgets;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
-import android.app.Dialog;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -28,9 +27,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 
-import static android.content.pm.ActivityInfo.CONFIG_ORIENTATION;
-import static android.content.pm.ActivityInfo.CONFIG_SCREEN_SIZE;
-
 public class OpenChoicer {
     public static String TAG = OpenChoicer.class.getSimpleName();
 
@@ -51,13 +47,14 @@ public class OpenChoicer {
         PackageManager packageManager = a.getPackageManager();
         try {
             ActivityInfo info = packageManager.getActivityInfo(a.getComponentName(), 0);
-            if ((info.configChanges & CONFIG_ORIENTATION) != CONFIG_ORIENTATION || (info.configChanges & CONFIG_SCREEN_SIZE) != CONFIG_SCREEN_SIZE) {
+            if ((info.configChanges & ActivityInfo.CONFIG_ORIENTATION) != ActivityInfo.CONFIG_ORIENTATION ||
+                    (info.configChanges & ActivityInfo.CONFIG_SCREEN_SIZE) != ActivityInfo.CONFIG_SCREEN_SIZE) {
                 String msg = "Please add 'android:configChanges=\"orientation|screenSize\' to manifest.xml to keep open file dialog"; // since we don't want to deal with save/load state
-                Log.d(TAG, msg);
+                Log.e(TAG, msg);
             }
             if (info.launchMode == ActivityInfo.LAUNCH_SINGLE_INSTANCE) {
                 String msg = "Please add android:launchMode=\"singleTop\" instead of singleInstance to manifest.xml"; // http://stackoverflow.com/questions/3354955/onactivityresult-called-prematurely
-                Log.d(TAG, msg);
+                Log.e(TAG, msg);
             }
         } catch (PackageManager.NameNotFoundException e) {
             Log.d(TAG, "activity check", e);
