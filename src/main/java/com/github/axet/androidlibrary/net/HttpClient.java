@@ -341,7 +341,8 @@ public class HttpClient {
                             }
                         }
                     }
-                    setEncoding(Charsets.toCharset(enc).name());
+                    if (enc != null)
+                        setEncoding(Charsets.toCharset(enc).name());
                     setData(new ByteArrayInputStream(buf));
                     downloaded = true;
                 }
