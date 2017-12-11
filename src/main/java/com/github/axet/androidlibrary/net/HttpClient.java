@@ -340,6 +340,8 @@ public class HttpClient {
                                 }
                             }
                         }
+                        if (enc == null)
+                            enc = Charset.defaultCharset();
                     }
                     if (enc != null)
                         setEncoding(Charsets.toCharset(enc).name());
