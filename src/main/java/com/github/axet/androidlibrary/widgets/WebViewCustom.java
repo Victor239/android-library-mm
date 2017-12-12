@@ -24,7 +24,6 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 import com.github.axet.androidlibrary.R;
-import com.github.axet.androidlibrary.app.Storage;
 import com.github.axet.androidlibrary.crypto.MD5;
 import com.github.axet.androidlibrary.net.HttpClient;
 
@@ -55,7 +54,6 @@ import java.util.Set;
 import java.util.TimeZone;
 import java.util.TreeSet;
 
-import cz.msebera.android.httpclient.client.methods.CloseableHttpResponse;
 import cz.msebera.android.httpclient.client.methods.HttpGet;
 
 // Custom WebView with POST/GET interception requests.
@@ -66,6 +64,21 @@ public class WebViewCustom extends WebView {
 
     public static final String INJECTS_URL = "https://inject/";
     public static final String ABOUT_ERROR = "about:error";
+
+    public static final String METHOD_POST = "POST";
+    public static final String METHOD_GET = "GET";
+
+    public static final String SCHEME_HTTP = "http";
+    public static final String SCHEME_HTTPS = "https";
+    public static final String SCHEME_DATA = "data";
+    public static final String SCHEME_JAVASCRIPT = "javascript";
+
+    public static final String HTML_BODY = "body";
+    public static final String HTML_HEAD = "head";
+
+    public static final String CONTENTTYPE_JAVASCRIPT = "text/javascript";
+
+    public static final SimpleDateFormat RFC1123 = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
 
     protected boolean destroyed;
 
@@ -147,7 +160,7 @@ public class WebViewCustom extends WebView {
         @JavascriptInterface
         public void customSubmit(String method, String action, String enctype, String form) { // TODO support enctype
             Log.d(TAG, "customSubmit()");
-            if (method.toUpperCase().equals("POST")) {
+            if (method.toUpperCase().equals(METHOD_POST)) {
                 String url = null;
                 try {
                     url = new URL(new URL(base), action).toString();
@@ -167,7 +180,7 @@ public class WebViewCustom extends WebView {
                 }
                 return;
             }
-            if (method.toUpperCase().equals("GET")) { // even possible? just ignore 'form' then
+            if (method.toUpperCase().equals(METHOD_GET)) { // even possible? just ignore 'form' then
                 String url = null;
                 try {
                     url = new URL(new URL(base), action).toString();
@@ -183,7 +196,7 @@ public class WebViewCustom extends WebView {
         @JavascriptInterface
         public String customAjax(String method, String action, String user, String password, String headers, String form) { // TODO support enctype
             Log.d(TAG, "customAjax()");
-            if (method.toUpperCase().equals("GET")) {
+            if (method.toUpperCase().equals(METHOD_GET)) {
                 String url = null;
                 try {
                     url = new URL(new URL(base), action).toString();
@@ -196,7 +209,7 @@ public class WebViewCustom extends WebView {
                     logIO(url, e);
                 }
             }
-            if (method.toUpperCase().equals("POST")) {
+            if (method.toUpperCase().equals(METHOD_POST)) {
                 String url = null;
                 try {
                     url = new URL(new URL(base), action).toString();
@@ -335,7 +348,7 @@ public class WebViewCustom extends WebView {
             @TargetApi(Build.VERSION_CODES.LOLLIPOP)
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
-                if (request.getMethod().equals("POST")) // post requets come with not data in 'request', ignore at all.
+                if (request.getMethod().equals(METHOD_POST)) // post requets come with not data in 'request', ignore at all.
                     return null;
                 return WebViewCustom.this.shouldInterceptRequest(view, request.getUrl().toString());
             }
@@ -354,7 +367,7 @@ public class WebViewCustom extends WebView {
             Uri u = Uri.parse(url);
             int i = Integer.valueOf(u.getPath().substring(1));
             String js = injects.get(i);
-            return new HttpClient.DownloadResponse("text/javascript", Charset.defaultCharset().name(), js);
+            return new HttpClient.DownloadResponse(CONTENTTYPE_JAVASCRIPT, Charset.defaultCharset().name(), js);
         }
         return null;
     }
@@ -364,16 +377,16 @@ public class WebViewCustom extends WebView {
     }
 
     public void loadUrlJavaScript(String js) {
-        loadUrl("javascript:(function(){" + js + "})()");
+        loadUrl(SCHEME_JAVASCRIPT + ":(function(){" + js + "})()");
     }
 
     @Override
     public void loadUrl(final String url) {
-        if (url.startsWith("javascript")) {
+        if (url.startsWith(SCHEME_JAVASCRIPT)) {
             super.loadUrl(url);
             return;
         }
-        if (url.startsWith("data")) {
+        if (url.startsWith(SCHEME_DATA)) {
             super.loadUrl(url);
             return;
         }
@@ -430,7 +443,7 @@ public class WebViewCustom extends WebView {
 
     // if first load url call, get base html page
     public HttpClient.DownloadResponse getBase(String url) {
-        if (url.startsWith("data")) {
+        if (url.startsWith(SCHEME_DATA)) {
             return null;
         }
 
@@ -484,7 +497,7 @@ public class WebViewCustom extends WebView {
         String url = super.getOriginalUrl();
         if (url == null)
             return null;
-        if (url.startsWith("data:")) { // bug, it suppose to be normal url
+        if (url.startsWith(SCHEME_DATA)) { // bug, it suppose to be normal url
             return getUrl();
         }
         return url;
@@ -609,14 +622,14 @@ public class WebViewCustom extends WebView {
     }
 
     protected String loadBase(Document doc) {
-        Element head = doc.getElementsByTag("head").first();
+        Element head = doc.getElementsByTag(HTML_HEAD).first();
         if (head != null) {
             if (this.head != null)
                 head.prepend(this.head);
             head.prepend(addInject(inject));
         }
         if (js != null) {
-            Element body = doc.getElementsByTag("body").first();
+            Element body = doc.getElementsByTag(HTML_BODY).first();
             if (body != null)
                 body.append(addInject(js));
         }
@@ -624,13 +637,13 @@ public class WebViewCustom extends WebView {
     }
 
     protected String expandInject(String js) {
-        return "<script type='text/javascript'>\n" + js + "\n</script>";
+        return "<script type='" + CONTENTTYPE_JAVASCRIPT + "'>\n" + js + "\n</script>";
     }
 
     protected String addInject(String js) {
         int i = injects.size();
         injects.add(js);
-        return "<script type='text/javascript' src='" + INJECTS_URL + i + "?md5=" + MD5.digest(js) + "'/>";
+        return "<script type='" + CONTENTTYPE_JAVASCRIPT + "' src='" + INJECTS_URL + i + "?md5=" + MD5.digest(js) + "'/>";
     }
 
     @Override
@@ -853,11 +866,10 @@ public class WebViewCustom extends WebView {
             // we need to set expires, otherwise WebView will keep deleted cookies forever ("name=")
             String expires = "expires=Thu, 01 Jan 1970 03:00:00 GMT"; // # date -r 0 +%a,\ %d\ %b\ %Y\ %H:%M:%S\ GMT
 
-            SimpleDateFormat rfc1123 = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
-            rfc1123.setTimeZone(TimeZone.getTimeZone("GMT"));
+            RFC1123.setTimeZone(TimeZone.getTimeZone("GMT"));
             Calendar cal = Calendar.getInstance();
             cal.add(Calendar.MINUTE, 1);
-            expires = "expires=" + rfc1123.format(cal.getTime());
+            expires = "expires=" + RFC1123.format(cal.getTime());
 
             if (Build.VERSION.SDK_INT < 21) {
                 CookieSyncManager.createInstance(getContext());
@@ -877,7 +889,7 @@ public class WebViewCustom extends WebView {
                         path = "; path=" + p;
                     }
                     String cookie = vv[0].trim() + "=" + "; domain=" + uri.getAuthority() + path + "; " + expires;
-                    String u = new Uri.Builder().scheme("http").authority(domain).path(p).build().toString();
+                    String u = new Uri.Builder().scheme(SCHEME_HTTP).authority(domain).path(p).build().toString();
                     inst.setCookie(u, cookie);
                 }
             }
@@ -984,9 +996,9 @@ public class WebViewCustom extends WebView {
                 HttpCookie c = cookieStore.getCookie(i);
                 Uri.Builder b = new Uri.Builder();
                 if (c.getSecure())
-                    b.scheme("https");
+                    b.scheme(SCHEME_HTTPS);
                 else
-                    b.scheme("http");
+                    b.scheme(SCHEME_HTTP);
                 b.authority(c.getDomain());
                 if (c.getPath() != null) {
                     b.appendPath(c.getPath());

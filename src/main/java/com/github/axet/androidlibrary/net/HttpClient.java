@@ -8,7 +8,6 @@ import android.util.Log;
 import android.webkit.WebResourceResponse;
 
 import com.github.axet.androidlibrary.app.AlarmManager;
-import com.github.axet.androidlibrary.app.MainApplication;
 
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
@@ -83,7 +82,6 @@ import cz.msebera.android.httpclient.impl.client.HttpClientBuilder;
 import cz.msebera.android.httpclient.impl.client.LaxRedirectStrategy;
 import cz.msebera.android.httpclient.impl.cookie.BasicClientCookie;
 import cz.msebera.android.httpclient.message.BasicNameValuePair;
-import cz.msebera.android.httpclient.protocol.HTTP;
 import cz.msebera.android.httpclient.protocol.HttpContext;
 import cz.msebera.android.httpclient.protocol.HttpCoreContext;
 import cz.msebera.android.httpclient.protocol.HttpRequestExecutor;
@@ -97,7 +95,10 @@ public class HttpClient {
     public static final String TAG = HttpClient.class.getSimpleName();
 
     public static String USER_AGENT = "Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5 Build/MOB30Y) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.81 Mobile Safari/537.36";
+
     public static final String CONTENTTYPE_HTML = "text/html";
+    public static final String CONTENTTYPE_TEXT = "text/plain";
+    public static final String CONTENTTYPE_XBITTORRENT = "application/x-bittorrent";
 
     public static int CONNECTION_TIMEOUT = AlarmManager.SEC10;
 
@@ -158,7 +159,7 @@ public class HttpClient {
         Throwable e;
 
         public HttpError(String url, Throwable e) {
-            super("text/plain", Charset.defaultCharset().name(), (InputStream) null);
+            super(CONTENTTYPE_TEXT, Charset.defaultCharset().name(), (InputStream) null);
             this.e = e;
 
             Uri u = Uri.parse(url);
@@ -257,7 +258,7 @@ public class HttpClient {
         ContentType contentType;
 
         static boolean download(String mimetype) {
-            String[] types = new String[]{"application/x-bittorrent", "audio", "video"};
+            String[] types = new String[]{CONTENTTYPE_XBITTORRENT, "audio", "video"};
             for (String t : types) {
                 if (mimetype.startsWith(t))
                     return false;
