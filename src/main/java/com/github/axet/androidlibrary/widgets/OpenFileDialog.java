@@ -592,7 +592,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
         titlebar.addView(free);
         ImageView down = new ImageView(getContext());
         down.setImageResource(R.drawable.ic_expand_more_black_24dp);
-        down.setColorFilter(ThemeUtils.getThemeColor(getContext(), R.attr.colorAccent));
+        down.setColorFilter(ThemeUtils.getColor(getContext(), R.attr.colorAccent));
         lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         lp.gravity = Gravity.CENTER;
         down.setLayoutParams(lp);
@@ -900,7 +900,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
 
     Drawable getDrawable(int resid) {
         Drawable d = ContextCompat.getDrawable(getContext(), resid);
-        d.setColorFilter(ThemeUtils.getThemeColor(getContext(), android.R.attr.colorForeground), PorterDuff.Mode.SRC_ATOP);
+        d.setColorFilter(ThemeUtils.getColor(getContext(), android.R.attr.colorForeground), PorterDuff.Mode.SRC_ATOP);
         return d;
     }
 
