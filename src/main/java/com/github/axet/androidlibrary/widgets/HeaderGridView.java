@@ -429,7 +429,7 @@ public class HeaderGridView extends GridView {
 
     private void initHeaderGridView() {
         super.setClipChildren(false);
-        divider.setColor(ThemeUtils.getColor(getContext(), R.attr.colorButtonNormal));
+        divider.setColor(ThemeUtils.getThemeColor(getContext(), R.attr.colorButtonNormal));
         divider.setStrokeWidth(ThemeUtils.dp2px(getContext(), 2));
     }
 
