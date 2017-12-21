@@ -15,7 +15,7 @@ public class ThemeUtils {
         return ContextCompat.getColor(context, id);
     }
 
-    // get attrs.xml
+    // get attrs.xml / styles.xml
     public static int getThemeColor(Context context, int id) {
         TypedValue tv = new TypedValue();
         boolean found = context.getTheme().resolveAttribute(id, tv, true);
@@ -32,10 +32,5 @@ public class ThemeUtils {
         } else {
             throw new RuntimeException("not found");
         }
-//        TypedValue typedValue = new TypedValue();
-//        TypedArray a = context.obtainStyledAttributes(typedValue.data, new int[]{id});
-//        int color = a.getColor(0, 0);
-//        a.recycle();
-//        return color;
     }
 }
