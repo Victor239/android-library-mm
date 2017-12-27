@@ -43,7 +43,7 @@ public class SuperUser {
     public static final String BIN_SET = "set"; // build-in
 
     public static final String SETE = BIN_SET + " -e";
-    public static final String CAT_TO = BIN_CAT + " << EOF > {0}\n{1}\nEOF\n";
+    public static final String CAT_TO = BIN_CAT + " << EOF > {0}\n{1}\nEOF";
     public static final String REMOUNT_SYSTEM = BIN_MOUNT + " -o remount,rw " + SYSTEM;
     public static final String MKDIRS = BIN_MKDIR + " -p {0}";
     public static final String TOUCH = BIN_TOUCH + " -a {0}";
@@ -53,45 +53,93 @@ public class SuperUser {
     public static final String KILL_SELF = BIN_KILL + " -9 $$";
     public static final String SU1 = " || " + KILL_SELF; // some su does not return error codes for pipe scripts, kill it from inside pipe if script fails
 
-    public static class Result {
-        public int res;
-        public String msg;
-        public Exception e;
+    public static class Command {
+        public StringBuilder sb = new StringBuilder();
+        public boolean sete = true;
+        public boolean stdout = true;
+        public boolean stderr = true;
 
-        public Result(Process p) {
-            res = p.exitValue();
-            try {
-                msg = IOUtils.toString(p.getErrorStream(), Charset.defaultCharset());
-            } catch (IOException e) {
-                Log.d(TAG, "unable to get error", e);
-            }
+        public Command() {
         }
 
-        public Result(Process p, Exception e) {
+        public Command(String cmd) {
+            add(cmd);
+        }
+
+        public Command(String cmd, boolean o, boolean e) {
+            add(cmd);
+            stdout = o;
+            stderr = e;
+        }
+
+        public Command sete(boolean b) {
+            this.sete = b;
+            return this;
+        }
+
+        public Command add(String cmd) {
+            sb.append(cmd);
+            sb.append("\n");
+            return this;
+        }
+
+        public String cmds() {
+            return sb.toString();
+        }
+    }
+
+    public static class Result {
+        public int res;
+        public String stdout;
+        public String stderr;
+        public Exception e;
+
+        public Result(Command cmd, Process p) {
+            res = p.exitValue();
+            captureOutputs(cmd, p);
+        }
+
+        public Result(Command cmd, Process p, Exception e) {
             if (p == null) {
                 res = 1;
-                msg = e.toString();
+                this.e = e;
                 return;
             }
 
             res = p.exitValue();
-
-            try {
-                msg = IOUtils.toString(p.getErrorStream(), Charset.defaultCharset());
-            } catch (IOException e1) {
-                Log.d(TAG, "unable to get error", e1);
-            }
-
+            captureOutputs(cmd, p);
             this.e = e;
+        }
+
+        public void captureOutputs(Command cmd, Process p) {
+            if (cmd.stdout) {
+                try {
+                    stdout = IOUtils.toString(p.getInputStream(), Charset.defaultCharset());
+                } catch (IOException e1) {
+                    Log.d(TAG, "unable to get error", e1);
+                }
+            }
+            if (cmd.stderr) {
+                try {
+                    stderr = IOUtils.toString(p.getErrorStream(), Charset.defaultCharset());
+                } catch (IOException e) {
+                    Log.d(TAG, "unable to get error", e);
+                }
+            }
         }
 
         public boolean ok() {
             return res == 0;
         }
 
+        public void must() {
+            if (res != 0)
+                throw new RuntimeException(message());
+        }
+
         public String message() {
-            if (!msg.isEmpty())
-                return msg;
+            if (!stderr.isEmpty())
+                return stderr;
             if (e != null)
                 return e.toString();
             return "error: " + res;
@@ -169,23 +217,29 @@ public class SuperUser {
     }
 
     public static Result su(String cmd) {
+        return su(new Command(cmd));
+    }
+
+    public static Result su(Command cmd) {
         Process su = null;
         try {
             su = Runtime.getRuntime().exec(BIN_SU);
             DataOutputStream os = new DataOutputStream(su.getOutputStream());
-            os.writeBytes(SETE + "\n");
-            os.flush();
-            os.writeBytes(cmd + "\n");
+            if (cmd.sete) {
+                os.writeBytes(SETE + "\n");
+                os.flush();
+            }
+            os.writeBytes(cmd.cmds());
             os.flush();
             os.writeBytes(BIN_EXIT + "\n");
             os.flush();
             su.waitFor();
-            return new Result(su);
+            return new Result(cmd, su);
         } catch (IOException e) {
-            return new Result(su, e);
+            return new Result(cmd, su, e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            return new Result(su, e);
+            return new Result(cmd, su, e);
         }
     }
 
