@@ -2,10 +2,16 @@ package com.github.axet.androidlibrary.app;
 
 import android.content.ComponentName;
 import android.content.Intent;
+import android.util.Log;
+
+import org.apache.commons.io.IOUtils;
 
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.Charset;
 import java.text.MessageFormat;
 
 public class SuperUser {
@@ -18,6 +24,7 @@ public class SuperUser {
     public static final String SBIN = "/sbin";
     public static final String BIN = "/bin";
 
+    public static final String BIN_SH = which("sh");
     public static final String BIN_SU = which("su");
     public static final String BIN_TRUE = which("true");
     public static final String BIN_REBOOT = which("reboot");
@@ -33,7 +40,9 @@ public class SuperUser {
     public static final String BIN_KILL = which("kill");
     public static final String BIN_AM = which("am");
     public static final String BIN_EXIT = "exit"; // build-in
+    public static final String BIN_SET = "set"; // build-in
 
+    public static final String SETE = BIN_SET + " -e";
     public static final String CAT_TO = BIN_CAT + " << EOF > {0}\n{1}\nEOF\n";
     public static final String REMOUNT_SYSTEM = BIN_MOUNT + " -o remount,rw " + SYSTEM;
     public static final String MKDIRS = BIN_MKDIR + " -p {0}";
@@ -42,8 +51,52 @@ public class SuperUser {
     public static final String MV = BIN_MV + " {0} {1} || ( " + BIN_CP + " {0} {1} && " + BIN_RM + " {0} )";
 
     public static final String KILL_SELF = BIN_KILL + " -9 $$";
-    public static final String SU1 = " || " + KILL_SELF; // some su does not return error codes for scripts, kill it if script fails
+    public static final String SU1 = " || " + KILL_SELF; // some su does not return error codes for pipe scripts, kill it from inside pipe if script fails
 
+    public static class Result {
+        public int res;
+        public String msg;
+        public Exception e;
+
+        public Result(Process p) {
+            res = p.exitValue();
+            try {
+                msg = IOUtils.toString(p.getErrorStream(), Charset.defaultCharset());
+            } catch (IOException e) {
+                Log.d(TAG, "unable to get error", e);
+            }
+        }
+
+        public Result(Process p, Exception e) {
+            if (p == null) {
+                res = 1;
+                msg = e.toString();
+                return;
+            }
+
+            res = p.exitValue();
+
+            try {
+                msg = IOUtils.toString(p.getErrorStream(), Charset.defaultCharset());
+            } catch (IOException e1) {
+                Log.d(TAG, "unable to get error", e1);
+            }
+
+            this.e = e;
+        }
+
+        public boolean ok() {
+            return res == 0;
+        }
+
+        public String message() {
+            if (!msg.isEmpty())
+                return msg;
+            if (e != null)
+                return e.toString();
+            return "error: " + res;
+        }
+    }
 
     public static String which(String cmd) {
         for (String s : new String[]{SYSTEM + XBIN, SYSTEM + SBIN, SYSTEM + BIN,
@@ -111,34 +164,33 @@ public class SuperUser {
         return p;
     }
 
-    public static int su(String pattern, Object... args) {
-        return su1(MessageFormat.format(pattern, args));
+    public static Result su(String pattern, Object... args) {
+        return su(MessageFormat.format(pattern, args));
     }
 
-    public static int su1(String cmd) {
-        return su(cmd + SU1);
-    }
-
-    public static int su(String cmd) {
+    public static Result su(String cmd) {
+        Process su = null;
         try {
-            Process su = Runtime.getRuntime().exec(BIN_SU);
+            su = Runtime.getRuntime().exec(BIN_SU);
             DataOutputStream os = new DataOutputStream(su.getOutputStream());
+            os.writeBytes(SETE + "\n");
+            os.flush();
             os.writeBytes(cmd + "\n");
             os.flush();
             os.writeBytes(BIN_EXIT + "\n");
             os.flush();
             su.waitFor();
-            return su.exitValue();
+            return new Result(su);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            return new Result(su, e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+            return new Result(su, e);
         }
-        return -1;
     }
 
-    public static void reboot() {
-        su1(BIN_REBOOT);
+    public static Result reboot() {
+        return su(BIN_REBOOT);
     }
 
     public static boolean isRooted() {
@@ -148,7 +200,7 @@ public class SuperUser {
 
     public static boolean rootTest() {
         try {
-            su1(BIN_TRUE);
+            su(BIN_TRUE);
             return true;
         } catch (RuntimeException e) {
             return false;
@@ -160,7 +212,7 @@ public class SuperUser {
     }
 
     public static void startService(ComponentName name) {
-        su1(BIN_AM + " startservice -n " + name.flattenToShortString());
+        su(BIN_AM + " startservice -n " + name.flattenToShortString());
     }
 
     public static void stopService(Intent intent) {
@@ -168,7 +220,7 @@ public class SuperUser {
     }
 
     public static void stopService(ComponentName name) {
-        su1(BIN_AM + " stopservice -n " + name.flattenToShortString());
+        su(BIN_AM + " stopservice -n " + name.flattenToShortString());
     }
 
     public static boolean isReboot() {
@@ -176,22 +228,22 @@ public class SuperUser {
         return isRooted() && f2.exists();
     }
 
-    public static boolean touch(File f) {
+    public static Result touch(File f) {
         String p = f.getAbsolutePath();
-        return su(TOUCH, escape(p)) == 0;
+        return su(TOUCH, escape(p));
     }
 
-    public static boolean mkdirs(File f) {
+    public static Result mkdirs(File f) {
         String p = f.getAbsolutePath();
-        return su(MKDIRS, escape(p)) == 0;
+        return su(MKDIRS, escape(p));
     }
 
-    public static boolean delete(File f) {
+    public static Result delete(File f) {
         String p = f.getAbsolutePath();
-        return su(DELETE, escape(p)) == 0;
+        return su(DELETE, escape(p));
     }
 
-    public static boolean mv(File f, File to) {
-        return su(MV, escape(f.getAbsolutePath()), escape(to.getAbsolutePath())) == 0;
+    public static Result mv(File f, File to) {
+        return su(MV, escape(f.getAbsolutePath()), escape(to.getAbsolutePath()));
     }
 }
