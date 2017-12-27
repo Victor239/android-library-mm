@@ -32,16 +32,17 @@ public class SuperUser {
     public static final String BIN_CP = which("cp");
     public static final String BIN_KILL = which("kill");
     public static final String BIN_AM = which("am");
-    public static final String BIN_EXIT = "exit";
+    public static final String BIN_EXIT = "exit"; // buildin
 
-    public static final String CAT_TO = BIN_CAT + " << EOF > {0}\n{1}\nEOF";
+    public static final String CAT_TO = BIN_CAT + " << EOF > {0}\n{1}\nEOF\n";
     public static final String REMOUNT_SYSTEM = BIN_MOUNT + " -o remount,rw " + SYSTEM;
     public static final String MKDIRS = BIN_MKDIR + " -p {0}";
     public static final String TOUCH = BIN_TOUCH + " -a {0}";
     public static final String DELETE = BIN_RM + " -rf {0}";
     public static final String MV = BIN_MV + " {0} {1} || ( " + BIN_CP + " {0} {1} && " + BIN_RM + " {0} )";
 
-    public static final String KILL_SELF = BIN_KILL + " -9 $$"; // some su does not return error codes in scripts, kill it
+    public static final String KILL_SELF = BIN_KILL + " -9 $$";
+    public static final String SU1 = " || " + KILL_SELF;
 
     public static String which(String cmd) {
         for (String s : new String[]{SYSTEM + XBIN, SYSTEM + SBIN, SYSTEM + BIN,
@@ -104,14 +105,18 @@ public class SuperUser {
     }
 
     public static int su(String pattern, Object... args) {
-        return su(MessageFormat.format(pattern, args));
+        return su1(MessageFormat.format(pattern, args));
+    }
+
+    public static int su1(String cmd) {
+        return su(cmd + SU1);
     }
 
     public static int su(String cmd) {
         try {
             Process su = Runtime.getRuntime().exec(BIN_SU);
             DataOutputStream os = new DataOutputStream(su.getOutputStream());
-            os.writeBytes(cmd + " || " + KILL_SELF + "\n");
+            os.writeBytes(cmd + "\n");
             os.flush();
             os.writeBytes(BIN_EXIT + "\n");
             os.flush();
@@ -126,7 +131,7 @@ public class SuperUser {
     }
 
     public static void reboot() {
-        su(BIN_REBOOT);
+        su1(BIN_REBOOT);
     }
 
     public static boolean isRooted() {
@@ -136,7 +141,7 @@ public class SuperUser {
 
     public static boolean rootTest() {
         try {
-            su(BIN_TRUE);
+            su1(BIN_TRUE);
             return true;
         } catch (RuntimeException e) {
             return false;
@@ -148,7 +153,7 @@ public class SuperUser {
     }
 
     public static void startService(ComponentName name) {
-        su(BIN_AM + " startservice -n " + name.flattenToShortString());
+        su1(BIN_AM + " startservice -n " + name.flattenToShortString());
     }
 
     public static void stopService(Intent intent) {
@@ -156,7 +161,7 @@ public class SuperUser {
     }
 
     public static void stopService(ComponentName name) {
-        su(BIN_AM + " stopservice -n " + name.flattenToShortString());
+        su1(BIN_AM + " stopservice -n " + name.flattenToShortString());
     }
 
     public static boolean isReboot() {
