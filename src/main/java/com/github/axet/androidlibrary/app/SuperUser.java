@@ -14,6 +14,8 @@ public class SuperUser {
     public static final String SYSTEM = "/system";
     public static final String ETC = "/etc";
     public static final String USR = "/usr";
+    public static final String SBIN = "/sbin";
+    public static final String BIN = "/bin";
 
     public static final String BIN_SU = path("su");
     public static final String BIN_TRUE = path("true");
@@ -28,6 +30,7 @@ public class SuperUser {
     public static final String BIN_MV = path("mv");
     public static final String BIN_CP = path("cp");
     public static final String BIN_KILL = path("kill");
+    public static final String BIN_AM = path("am");
 
     public static final String SUCAT = BIN_CAT + " << EOF > {0}\n{1}\nEOF";
     public static final String MOUNT = BIN_MOUNT + " {0}";
@@ -40,13 +43,13 @@ public class SuperUser {
     public static final String MV = BIN_MV + " {0} {1} || ( " + BIN_CP + " {0} {1} && " + BIN_RM + " {0} )";
     public static final String EXIT = "exit";
 
-    public static final String KILL = " || " + BIN_KILL + " -9 $$"; // some su does not return error codes in scripts, kill it
+    public static final String KILL_SELF = BIN_KILL + " -9 $$"; // some su does not return error codes in scripts, kill it
 
     public static String path(String cmd) {
-        for (String s : new String[]{SYSTEM + "/xbin", SYSTEM + "/sbin", SYSTEM + "/bin",
-                SYSTEM + USR + "/sbin", SYSTEM + USR + "/bin",
-                USR + "/sbin", USR + "/bin",
-                "/sbin", "/bin"}) {
+        for (String s : new String[]{SYSTEM + "/xbin", SYSTEM + SBIN, SYSTEM + BIN,
+                SYSTEM + USR + SBIN, SYSTEM + USR + BIN,
+                USR + SBIN, USR + BIN,
+                SBIN, BIN}) {
             String f = find(s + "/" + cmd);
             if (f != null)
                 return f;
@@ -71,7 +74,7 @@ public class SuperUser {
         try {
             Process su = Runtime.getRuntime().exec(BIN_SU);
             DataOutputStream os = new DataOutputStream(su.getOutputStream());
-            os.writeBytes(cmd + KILL + "\n");
+            os.writeBytes(cmd + " || " + KILL_SELF + "\n");
             os.flush();
             os.writeBytes(EXIT + "\n");
             os.flush();
@@ -108,7 +111,7 @@ public class SuperUser {
     }
 
     public static void startService(ComponentName name) {
-        su("am startservice -n " + name.flattenToShortString());
+        su(BIN_AM + " startservice -n " + name.flattenToShortString());
     }
 
     public static void stopService(Intent intent) {
@@ -116,7 +119,7 @@ public class SuperUser {
     }
 
     public static void stopService(ComponentName name) {
-        su("am stopservice -n " + name.flattenToShortString());
+        su(BIN_AM + " stopservice -n " + name.flattenToShortString());
     }
 
     public static boolean isReboot() {
