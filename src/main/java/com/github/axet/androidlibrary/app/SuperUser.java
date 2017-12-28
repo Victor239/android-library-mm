@@ -9,8 +9,6 @@ import org.apache.commons.io.IOUtils;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.text.MessageFormat;
 
@@ -53,37 +51,43 @@ public class SuperUser {
     public static final String KILL_SELF = BIN_KILL + " -9 $$";
     public static final String SU1 = " || " + KILL_SELF; // some su does not return error codes for pipe scripts, kill it from inside pipe if script fails
 
-    public static class Command {
+    public static final String EOL = "\n";
+
+    public static class Commands {
         public StringBuilder sb = new StringBuilder();
         public boolean sete = true;
         public boolean stdout = true;
         public boolean stderr = true;
 
-        public Command() {
+        public Commands() {
         }
 
-        public Command(String cmd) {
+        public Commands(String cmd) {
             add(cmd);
         }
 
-        public Command(String cmd, boolean o, boolean e) {
-            add(cmd);
-            stdout = o;
-            stderr = e;
-        }
-
-        public Command sete(boolean b) {
+        public Commands sete(boolean b) {
             this.sete = b;
             return this;
         }
 
-        public Command add(String cmd) {
-            sb.append(cmd);
-            sb.append("\n");
+        public Commands stdout(boolean b) {
+            stdout = b;
             return this;
         }
 
-        public String cmds() {
+        public Commands stderr(boolean b) {
+            stderr = b;
+            return this;
+        }
+
+        public Commands add(String cmd) {
+            sb.append(cmd);
+            sb.append(EOL);
+            return this;
+        }
+
+        public String build() {
             return sb.toString();
         }
     }
@@ -92,26 +96,26 @@ public class SuperUser {
         public int res;
         public String stdout;
         public String stderr;
-        public Exception e;
+        public Throwable e;
 
-        public Result(Command cmd, Process p) {
+        public Result(Commands cmd, Process p) {
             res = p.exitValue();
             captureOutputs(cmd, p);
         }
 
-        public Result(Command cmd, Process p, Exception e) {
+        public Result(Commands cmd, Process p, Exception e) {
             if (p == null) {
-                res = 1;
+                this.res = 1;
                 this.e = e;
                 return;
             }
 
-            res = p.exitValue();
+            this.res = p.exitValue();
             captureOutputs(cmd, p);
             this.e = e;
         }
 
-        public void captureOutputs(Command cmd, Process p) {
+        public void captureOutputs(Commands cmd, Process p) {
             if (cmd.stdout) {
                 try {
                     stdout = IOUtils.toString(p.getInputStream(), Charset.defaultCharset());
@@ -129,19 +133,24 @@ public class SuperUser {
         }
 
         public boolean ok() {
-            return res == 0;
+            return res == 0 && e == null;
         }
 
         public void must() {
-            if (res != 0)
+            if (!ok())
                 throw new RuntimeException(message());
         }
 
         public String message() {
-            if (!stderr.isEmpty())
+            if (stderr != null && !stderr.isEmpty())
                 return stderr;
-            if (e != null)
-                return e.toString();
+            if (e != null) {
+                while (e.getCause() != null)
+                    e = e.getCause();
+                if (e.getMessage() == null)
+                    return e.getClass().getSimpleName();
+                return e.getMessage();
+            }
             return "error: " + res;
         }
     }
@@ -217,21 +226,21 @@ public class SuperUser {
     }
 
     public static Result su(String cmd) {
-        return su(new Command(cmd));
+        return su(new Commands(cmd));
     }
 
-    public static Result su(Command cmd) {
+    public static Result su(Commands cmd) {
         Process su = null;
         try {
             su = Runtime.getRuntime().exec(BIN_SU);
             DataOutputStream os = new DataOutputStream(su.getOutputStream());
             if (cmd.sete) {
-                os.writeBytes(SETE + "\n");
+                os.writeBytes(SETE + EOL);
                 os.flush();
             }
-            os.writeBytes(cmd.cmds());
+            os.writeBytes(cmd.build());
             os.flush();
-            os.writeBytes(BIN_EXIT + "\n");
+            os.writeBytes(BIN_EXIT + EOL);
             os.flush();
             su.waitFor();
             return new Result(cmd, su);
@@ -253,28 +262,24 @@ public class SuperUser {
     }
 
     public static boolean rootTest() {
-        try {
-            su(BIN_TRUE);
-            return true;
-        } catch (RuntimeException e) {
-            return false;
-        }
+        Result r = su(BIN_TRUE);
+        return r.ok();
     }
 
-    public static void startService(Intent intent) {
-        startService(intent.getComponent());
+    public static Result startService(Intent intent) {
+        return startService(intent.getComponent());
     }
 
-    public static void startService(ComponentName name) {
-        su(BIN_AM + " startservice -n " + name.flattenToShortString());
+    public static Result startService(ComponentName name) {
+        return su(BIN_AM + " startservice -n " + name.flattenToShortString());
     }
 
-    public static void stopService(Intent intent) {
-        stopService(intent.getComponent());
+    public static Result stopService(Intent intent) {
+        return stopService(intent.getComponent());
     }
 
-    public static void stopService(ComponentName name) {
-        su(BIN_AM + " stopservice -n " + name.flattenToShortString());
+    public static Result stopService(ComponentName name) {
+        return su(BIN_AM + " stopservice -n " + name.flattenToShortString());
     }
 
     public static boolean isReboot() {
