@@ -37,16 +37,16 @@ public class Bitcoin {
     ECGenParameterSpec ecGenSpec;
 
     // bouncycastle source
-    static EllipticCurve secp256k1 = new EllipticCurve(
+    public static final EllipticCurve SECP256K1 = new EllipticCurve(
             new ECFieldFp(new BigInteger("115792089237316195423570985008687907853269984665640564039457584007908834671663")),
             new BigInteger("0"),
             new BigInteger("7"));
 
-    BigInteger order = new BigInteger("115792089237316195423570985008687907852837564279074904382605163141518161494337");
-    ECPoint generator = new ECPoint(
+    public static final BigInteger ORDER = new BigInteger("115792089237316195423570985008687907852837564279074904382605163141518161494337");
+    public static final ECPoint GENERATOR = new ECPoint(
             new BigInteger("55066263022277343669578718895168534326250603453777594175500187360389116729240"),
             new BigInteger("32670510020758816978083085130507043184471273380659243275938904335757337482424"));
-    ECParameterSpec spec = new ECParameterSpec(secp256k1, generator, order, 1);
+    public static final ECParameterSpec SPEC = new ECParameterSpec(SECP256K1, GENERATOR, ORDER, 1);
 
     boolean noKey = false;
     int tagLength = 32;
@@ -91,16 +91,15 @@ public class Bitcoin {
         return res;
     }
 
-    public byte[] slice(byte[] b, int start, int end) {
+    public static byte[] slice(byte[] b, int start, int end) {
         byte[] res = new byte[end - start];
         System.arraycopy(b, start, res, 0, res.length);
         return res;
     }
 
-    public byte[] head(byte[] b, int len) {
+    public static byte[] head(byte[] b, int len) {
         return slice(b, 0, len);
     }
-
 
     public static ECPoint mult(ECPoint P, BigInteger k) {
 //        ECNamedCurveParameterSpec spec = ECNamedCurveTable.getParameterSpec("secp256k1");
@@ -108,17 +107,9 @@ public class Bitcoin {
 //        org.spongycastle.math.ec.ECPoint p = c.createPoint(P.getAffineX(), P.getAffineY());
 //        org.spongycastle.math.ec.ECPoint pp = p.multiply(k).normalize();
 //        return new ECPoint(pp.getXCoord().toBigInteger(), pp.getYCoord().toBigInteger());
-        ECPointArthimetic d = new ECPointArthimetic(secp256k1, P.getAffineX(), P.getAffineY(), null);
+        ECPointArthimetic d = new ECPointArthimetic(SECP256K1, P.getAffineX(), P.getAffineY(), null);
         d = d.multiply(k);
         return new ECPoint(d.getX(), d.getY());
-    }
-
-    public byte[] getKEKM() {
-        BigInteger bn = sec.getS();
-        ECPoint w = pub.getW();
-        byte[] buf = toBytes(mult(w, bn).getAffineX());
-        byte[] b32 = head(buf, 32);
-        return SHA512.digest(b32);
     }
 
     public static byte[] sha256hmac(byte[] key, byte[] data) throws Exception {
@@ -142,16 +133,26 @@ public class Bitcoin {
         }
     }
 
+    @RequiresApi(11)
     public Bitcoin(BigInteger d) {
         this();
         loadSec(d);
         loadPub(sec);
     }
 
+    @RequiresApi(11)
     public Bitcoin(String d) {
         this();
         loadSec(d);
         loadPub(sec);
+    }
+
+    public byte[] getKEKM() {
+        BigInteger bn = sec.getS();
+        ECPoint w = pub.getW();
+        byte[] buf = toBytes(mult(w, bn).getAffineX());
+        byte[] b32 = head(buf, 32);
+        return SHA512.digest(b32);
     }
 
     public void generate() {
@@ -217,7 +218,7 @@ public class Bitcoin {
 
     public void loadSec(BigInteger d) {
         try {
-            sec = (ECPrivateKey) f.generatePrivate(new ECPrivateKeySpec(d, spec));
+            sec = (ECPrivateKey) f.generatePrivate(new ECPrivateKeySpec(d, SPEC));
         } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {
@@ -238,8 +239,8 @@ public class Bitcoin {
 
     public void loadPub(ECPrivateKey key) {
         try {
-            ECPoint p = mult(generator, key.getS());
-            pub = (ECPublicKey) f.generatePublic(new ECPublicKeySpec(p, spec));
+            ECPoint p = mult(GENERATOR, key.getS());
+            pub = (ECPublicKey) f.generatePublic(new ECPublicKeySpec(p, SPEC));
         } catch (InvalidKeySpecException e) {
             throw new RuntimeException(e);
         }
@@ -251,7 +252,7 @@ public class Bitcoin {
             byte[] x = slice(buf, 1, 33);
             byte[] y = slice(buf, 33, 65);
             ECPoint p = new ECPoint(fromBytes(x), fromBytes(y));
-            pub = (ECPublicKey) f.generatePublic(new ECPublicKeySpec(p, spec));
+            pub = (ECPublicKey) f.generatePublic(new ECPublicKeySpec(p, SPEC));
         } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {
