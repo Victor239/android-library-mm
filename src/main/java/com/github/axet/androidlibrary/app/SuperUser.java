@@ -56,8 +56,8 @@ public class SuperUser {
     public static class Commands {
         public StringBuilder sb = new StringBuilder();
         public boolean sete = true;
-        public boolean stdout = true;
-        public boolean stderr = true;
+        public boolean stdout = false;
+        public Boolean stderr = null; // null means get error only on error
 
         public Commands() {
         }
@@ -111,8 +111,8 @@ public class SuperUser {
             }
 
             this.res = p.exitValue();
-            captureOutputs(cmd, p);
             this.e = e;
+            captureOutputs(cmd, p);
         }
 
         public void captureOutputs(Commands cmd, Process p) {
@@ -123,7 +123,7 @@ public class SuperUser {
                     Log.d(TAG, "unable to get error", e1);
                 }
             }
-            if (cmd.stderr) {
+            if ((cmd.stderr != null && cmd.stderr) || (cmd.stderr == null && !ok())) {
                 try {
                     stderr = IOUtils.toString(p.getErrorStream(), Charset.defaultCharset());
                 } catch (IOException e) {
@@ -142,8 +142,6 @@ public class SuperUser {
         }
 
         public String message() {
-            if (stderr != null && !stderr.isEmpty())
-                return stderr;
             if (e != null) {
                 while (e.getCause() != null)
                     e = e.getCause();
@@ -151,6 +149,8 @@ public class SuperUser {
                     return e.getClass().getSimpleName();
                 return e.getMessage();
             }
+            if (stderr != null && !stderr.isEmpty())
+                return stderr;
             return "error: " + res;
         }
     }
