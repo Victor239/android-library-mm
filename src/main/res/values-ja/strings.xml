@@ -13,6 +13,7 @@
     <string name="filedialog_selectfolder">フォルダーを選択してください</string>
 
     <string name="ShareAction">共有</string>
+    <string name="shared_via">"%1$s で共有しました"</string>
 
     <plurals name="days">
         <item quantity="one">%d 日</item>

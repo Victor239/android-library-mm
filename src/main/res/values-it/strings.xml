@@ -13,6 +13,7 @@
     <string name="filedialog_selectfolder">Per favore, seleziona una cartella</string>
 
     <string name="ShareAction">Condividi</string>
+    <string name="shared_via">"Condivisa tramite %1$s"</string>
 
     <plurals name="days">
         <item quantity="one">%d giorno</item>

@@ -13,6 +13,7 @@
     <string name="filedialog_selectfolder">Prosím, vyberte priečinok</string>
 
     <string name="ShareAction">Zdieľať</string>
+    <string name="shared_via">"Zdieľané cez %1$s"</string>
 
     <plurals name="days">
         <item quantity="one">%d deň</item>

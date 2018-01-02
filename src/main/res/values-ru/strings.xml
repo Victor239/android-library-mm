@@ -13,6 +13,7 @@
     <string name="filedialog_selectfolder">Выберите папку</string>
 
     <string name="ShareAction">Поделиться</string>
+    <string name="shared_via">"Создано с помощью: %1$s"</string>
 
     <plurals name="days">
         <item quantity="one">%d день</item>

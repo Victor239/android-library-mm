@@ -13,6 +13,7 @@
     <string name="filedialog_selectfolder">Por favor, selecione uma pasta</string>
 
     <string name="ShareAction">Compartilhar</string>
+    <string name="shared_via">"Compartilhado pelo %1$s"</string>
 
     <plurals name="days">
         <item quantity="one">%d dia</item>
