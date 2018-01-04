@@ -1,0 +1,55 @@
+<resources>
+    <!--OpenFileDialog-->
+    <string name="filedialog_rename">Yeniden Adlandır</string>
+    <string name="filedialog_delete">Sil</string>
+    <string name="filedialog_newfolder">Yeni Klasör</string>
+    <string name="filedialog_foldername">Klasör Adı</string>
+    <string name="filedialog_unablecreatefolder">Klasör oluşturulamıyor: \'%1$s\'</string>
+    <string name="filedialog_foldercreated">\'%1$s\' klasörü oluşturuldu</string>
+    <string name="filedialog_folderdeleted">Silindi: \'%1$s\'</string>
+    <string name="filedialog_renameto">Şöyle adlandırıldı: \'%1$s\'</string>
+    <string name="filedialog_empty">Boş Liste</string>
+    <string name="filedialog_readonly">Salt okunur dizin</string>
+    <string name="filedialog_selectfolder">Lütfen klasör seçin</string>
+
+    <string name="ShareAction">Paylaş</string>
+    <string name="shared_via">%1$s aracılığıyla paylaşıldı</string>
+
+    <plurals name="days">
+        <item quantity="one">%d gün</item>
+        <item quantity="other">%d gün</item>
+    </plurals>
+
+    <plurals name="hours">
+        <item quantity="one">%d saat</item>
+        <item quantity="other">%d saat</item>
+    </plurals>
+
+    <plurals name="minutes">
+        <item quantity="one">%d dakika</item>
+        <item quantity="other">%d dakika</item>
+    </plurals>
+
+    <plurals name="seconds">
+        <item quantity="one">%d saniye</item>
+        <item quantity="other">%d saniye</item>
+    </plurals>
+
+    <string name="days_symbol">"g"</string>
+
+    <string name="size_gb">%1$.1f GB</string>
+    <string name="size_mb">%1$.1f MB</string>
+    <string name="size_kb">%1$.1f kb</string>
+
+    <string name="optimization_dialog">İyileştirme Ayarları</string>
+    <string name="optimization_message">Bellekten silinmemesi için uygulamayı telefonun pil yöneticisinin beyaz listesine eklemeyi düşünün.</string>
+
+    <string name="menu_settings">Ayarlar</string>
+    <string name="menu_about">Hakkında</string>
+
+    <string name="open_browser">Tarayıcıyı Aç</string>
+    <string name="are_you_sure">Emin misiniz?</string>
+    <string name="default_folder">Öntanımlı</string>
+
+    <string name="not_permitted">İzin verilmedi</string>
+</resources>
