@@ -159,13 +159,20 @@ public class Storage {
             to.setLastModified(last);
             return to;
         }
+        copy(f, to);
+        delete(f);
+        return to;
+    }
+
+
+    public static File copy(File f, File to) {
+        long last = f.lastModified();
         try {
             InputStream in = new BufferedInputStream(new FileInputStream(f));
             OutputStream out = new BufferedOutputStream(new FileOutputStream(to));
             IOUtils.copy(in, out);
             in.close();
             out.close();
-            delete(f);
             to.setLastModified(last);
             return to;
         } catch (IOException e) {
