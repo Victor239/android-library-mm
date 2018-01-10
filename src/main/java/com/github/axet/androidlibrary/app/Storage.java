@@ -52,6 +52,11 @@ public class Storage {
 
     public final static String STORAGE_PRIMARY = "primary"; // sdcard name
 
+    public static final String CONTENTTYPE_OCTETSTREAM = "application/octet-stream";
+    public static final String CONTENTTYPE_OPUS = "audio/opus";
+    public static final String CONTENTTYPE_OGG = "audio/ogg";
+    public static final String CONTENTTYPE_FB2 = "application/x-fictionbook";
+
     protected Context context;
     protected ContentResolver resolver;
 
@@ -333,6 +338,26 @@ public class Storage {
         if (!f.exists() && p.exists() && p.getFreeSpace() > 0)
             return true;
         return false;
+    }
+
+    public static String getTypeByName(String fileName) {
+        String ext = Storage.getExt(fileName);
+        if (ext == null || ext.isEmpty()) {
+            return CONTENTTYPE_OCTETSTREAM; // replace 'null'
+        }
+        ext = ext.toLowerCase();
+        switch (ext) {
+            case "opus":
+                return CONTENTTYPE_OPUS; // android missing
+            case "ogg":
+                return CONTENTTYPE_OGG; // replace 'application/ogg'
+            case "fb2":
+                return CONTENTTYPE_FB2;
+        }
+        String type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext);
+        if (type == null)
+            return CONTENTTYPE_OCTETSTREAM;
+        return type;
     }
 
     public Storage(Context context) {
