@@ -11,7 +11,6 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AlertDialog;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -37,14 +36,12 @@ public class BrowserDialogFragment extends DialogFragment {
 
     public static final String ABOUT_HTML = "about:html";
 
-    public ViewPager pager;
     public View v;
     public Handler handler = new Handler();
     public ImageButton back;
     public ImageButton forward;
     public WebViewCustom web;
     public HttpClient http;
-    public Thread thread;
     public int load;
 
     public Result result = new Result();
@@ -220,21 +217,21 @@ public class BrowserDialogFragment extends DialogFragment {
                 if (logIgnore(msg))
                     return super.onConsoleMessage(msg, lineNumber, sourceID);
                 if (sourceID == null || sourceID.isEmpty() || sourceID.startsWith(INJECTS_URL)) {
-                    Post(msg + "\nLine:" + lineNumber + "\n" + formatInjectError(sourceID, lineNumber));
+                    onErrorMessage(msg + "\nLine:" + lineNumber + "\n" + formatInjectError(sourceID, lineNumber));
                 } else if (html != null && sourceID.equals(html_base)) { // we uploaded json, then html errors is our responsability
                     String[] lines = web.getHtml().split("\n");
                     int t = lineNumber - 1;
                     String line = "";
                     if (t > 0 && t < lines.length)
                         line = "\n" + lines[t];
-                    Post(msg + "\nLine:" + lineNumber + line);
+                    onErrorMessage(msg + "\nLine:" + lineNumber + line);
                 }
                 return super.onConsoleMessage(msg, lineNumber, sourceID);
             }
 
             @Override
             public boolean onJsAlert(WebView view, String url, final String message, JsResult result) {
-                Post(message);
+                onErrorMessage(message);
                 return super.onJsAlert(view, url, message, result);
             }
 
@@ -413,45 +410,6 @@ public class BrowserDialogFragment extends DialogFragment {
         return false;
     }
 
-    public String toString(Throwable e) {
-        while (e.getCause() != null)
-            e = e.getCause();
-        String msg = e.getMessage();
-        if (msg == null || msg.isEmpty())
-            msg = e.getClass().getSimpleName();
-        return msg;
-    }
-
-    public void Post(final Throwable e) {
-        Log.e(TAG, "Exception", e);
-        Post(toString(e));
-    }
-
-    public void Post(final String msg) {
-        handler.post(new Runnable() {
-            @Override
-            public void run() {
-                if (getActivity().isFinishing())
-                    return;
-                Error(msg);
-            }
-        });
-    }
-
-    public AlertDialog Error(Throwable e) {
-        Log.e(TAG, "Exception", e);
-        return Error(toString(e));
-    }
-
-    public AlertDialog Error(String err) {
-        return new AlertDialog.Builder(getContext())
-                .setTitle(android.R.string.dialog_alert_title)
-                .setMessage(err)
-                .setNeutralButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                    }
-                })
-                .setIcon(android.R.drawable.ic_dialog_alert)
-                .show();
+    public void onErrorMessage(String msg) {
     }
 }
