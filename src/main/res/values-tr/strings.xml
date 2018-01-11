@@ -52,4 +52,5 @@
     <string name="default_folder">Öntanımlı</string>
 
     <string name="not_permitted">İzin verilmedi</string>
+    <string name="close">Close</string>
 </resources>

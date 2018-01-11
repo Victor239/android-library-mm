@@ -399,6 +399,13 @@ public class HttpClient {
         public String getContentType() {
             return contentType.toString();
         }
+
+        public InputStream getInputStream() throws IOException {
+            if (entity != null)
+                return entity.getContent();
+            else
+                return null;
+        }
     }
 
     public HttpClient() {

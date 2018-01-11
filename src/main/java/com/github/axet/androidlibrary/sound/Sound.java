@@ -1,11 +1,14 @@
 package com.github.axet.androidlibrary.sound;
 
+import android.annotation.TargetApi;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.os.Build;
+import android.provider.Settings;
 
 import com.github.axet.androidlibrary.widgets.SilencePreferenceCompat;
 
@@ -17,6 +20,12 @@ public class Sound {
     public static final int DEFAULT_RATE = 16000;
 
     public static int[] RATES = new int[]{8000, 11025, 16000, 22050, 44100};
+
+    public static final String ZEN_MODE = "zen_mode";
+    public static final int ZEN_MODE_OFF = 0;
+    public static final int ZEN_MODE_IMPORTANT_INTERRUPTIONS = 1;
+    public static final int ZEN_MODE_NO_INTERRUPTIONS = 2;
+    public static final int ZEN_MODE_ALARMS = 3;
 
     public static int getValidRecordRate(int in, int rate) {
         int i = Arrays.binarySearch(RATES, rate);
@@ -103,4 +112,15 @@ public class Sound {
 
         this.soundMode = -1;
     }
+
+    @TargetApi(17)
+    public int getDNDMode() {
+        ContentResolver resolver = context.getContentResolver();
+        try {
+            return Settings.Global.getInt(resolver, ZEN_MODE);
+        } catch (Settings.SettingNotFoundException e) {
+            return ZEN_MODE_OFF;
+        }
+    }
+
 }

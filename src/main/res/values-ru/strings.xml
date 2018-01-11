@@ -56,4 +56,5 @@
     <string name="are_you_sure">Вы уверены?</string>
     <string name="default_folder">Default</string>
     <string name="not_permitted">Доступ запрещен</string>
+    <string name="close">Close</string>
 </resources>

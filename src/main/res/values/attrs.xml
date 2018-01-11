@@ -40,4 +40,7 @@
     <declare-styleable name="AboutPreferenceCompat">
         <attr name="html" format="reference" />
     </declare-styleable>
+
+    <attr name="progressbar_round" format="reference" />
+    <attr name="toolbar_icon_bg" format="reference" />
 </resources>

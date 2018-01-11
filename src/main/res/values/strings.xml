@@ -52,4 +52,5 @@
     <string name="default_folder">Default</string>
 
     <string name="not_permitted">Not permitted</string>
+    <string name="close">Close</string>
 </resources>

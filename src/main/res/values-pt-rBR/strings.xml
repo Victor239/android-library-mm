@@ -48,5 +48,6 @@
     <string name="are_you_sure">Tem certeza ?</string>
     <string name="default_folder">Default</string>
     <string name="not_permitted">Não permitido</string>
+    <string name="close">Close</string>
 </resources>
 
