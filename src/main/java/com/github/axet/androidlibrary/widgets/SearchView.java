@@ -22,6 +22,10 @@ import android.util.AttributeSet;
 //            android:name="android.app.searchable"
 //            android:resource="@xml/searchable" />
 //
+// proguard-rules.pro
+//
+// -keep class com.github.axet.androidlibrary.widgets.SearchView {*;}
+//
 public class SearchView extends android.support.v7.widget.SearchView {
     public OnCloseListener listener;
 
