@@ -9,18 +9,18 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public class Native {
-    public static String TAG = Native.class.getSimpleName();
+public class Natives {
+    public static String TAG = Natives.class.getSimpleName();
 
-    static String arch = Build.CPU_ABI;
+    public static String ARCH = Build.CPU_ABI;
 
     public static class ArchFirst implements Comparator<File> {
         @Override
         public int compare(File o1, File o2) {
             String p1 = o1.getPath();
             String p2 = o2.getPath();
-            boolean b1 = p1.contains(arch);
-            boolean b2 = p2.contains(arch);
+            boolean b1 = p1.contains(ARCH);
+            boolean b2 = p2.contains(ARCH);
             if (b1 && b2)
                 return p1.compareTo(p2);
             if (b1)
@@ -31,14 +31,14 @@ public class Native {
         }
     }
 
-    public static void loadLibraries(Context context, String[] libs) {
+    public static void loadLibraries(Context context, String... libs) {
         try {
             for (String l : libs) {
                 System.loadLibrary(l); // API16 failed to find dependencies
             }
         } catch (ExceptionInInitializerError | UnsatisfiedLinkError e) { // API15 crash
             for (String l : libs) {
-                Native.loadLibrary(context, l);
+                Natives.loadLibrary(context, l);
             }
         }
     }
@@ -57,9 +57,9 @@ public class Native {
         System.load(file);
     }
 
-    static String search(Context context, String filename) {
+    public static String search(Context context, String filename) {
         String dir = context.getApplicationInfo().nativeLibraryDir;
-        if (dir.endsWith(arch)) {
+        if (dir.endsWith(ARCH)) {
             File f = new File(dir);
             f = f.getParentFile();
             String lib = search(f, filename);
@@ -69,7 +69,7 @@ public class Native {
         return search(new File(dir), filename);
     }
 
-    static ArrayList<File> list(File f, String filename) {
+    public static ArrayList<File> list(File f, String filename) {
         ArrayList<File> ff = new ArrayList<>();
         File[] aa = f.listFiles();
         if (aa != null) {
@@ -85,7 +85,7 @@ public class Native {
         return ff;
     }
 
-    static String search(File f, String filename) {
+    public static String search(File f, String filename) {
         List<File> ff = list(f, filename);
         Collections.sort(ff, new ArchFirst());
         if (ff.size() == 0)

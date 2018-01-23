@@ -674,6 +674,14 @@ public class HttpClient {
     public static String safe(String url) {
         try {
             URL u = new URL(url);
+            String p = u.getPath();
+            if (p != null) {
+                try {
+                    p = URLDecoder.decode(p, Charset.defaultCharset().name());
+                } catch (UnsupportedEncodingException e) {
+                    throw new RuntimeException(e);
+                }
+            }
             String q = u.getQuery();
             if (q != null) {
                 try {
@@ -682,7 +690,7 @@ public class HttpClient {
                     throw new RuntimeException(e);
                 }
             }
-            URI uri = new URI(u.getProtocol(), u.getUserInfo(), u.getHost(), u.getPort(), u.getPath(), q, u.getRef());
+            URI uri = new URI(u.getProtocol(), u.getUserInfo(), u.getHost(), u.getPort(), p, q, u.getRef());
             return uri.toString();
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
