@@ -202,7 +202,6 @@ public class HttpClient {
             setTemplate(TextUtils.htmlEncode(str));
         }
 
-        @TargetApi(11)
         public void setTemplate(String str) {
             try {
                 String html = "<html>";
@@ -243,7 +242,7 @@ public class HttpClient {
         }
     }
 
-    @TargetApi(11)
+    @TargetApi(11) // WebResourceResponse API11+
     public static class DownloadResponse extends WebResourceResponse {
         public boolean downloaded;
 
@@ -257,7 +256,6 @@ public class HttpClient {
         HttpEntity entity;
         StatusLine status;
         ContentType contentType;
-        String mimetype;
 
         static boolean download(String mimetype) {
             String[] types = new String[]{CONTENTTYPE_XBITTORRENT, "audio", "video"};
@@ -283,24 +281,12 @@ public class HttpClient {
         public DownloadResponse(String mimeType, String encoding, InputStream data) {
             super(mimeType, encoding, data);
             downloaded = true;
-            mimetype = mimeType;
         }
 
         public DownloadResponse(String mimeType, String encoding, String data) {
             super(mimeType, encoding, null);
             setHtml(data);
             downloaded = true;
-            mimetype = mimeType;
-        }
-
-        @Override
-        public void setMimeType(String mimeType) {
-            super.setMimeType(mimeType);
-            mimetype = mimeType;
-        }
-
-        public String getMimeType() {  // getMimetype() API11+
-            return mimetype;
         }
 
         public String getUrl() {
