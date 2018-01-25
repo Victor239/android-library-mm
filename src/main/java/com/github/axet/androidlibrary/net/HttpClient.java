@@ -56,6 +56,7 @@ import cz.msebera.android.httpclient.HttpRequest;
 import cz.msebera.android.httpclient.HttpResponse;
 import cz.msebera.android.httpclient.NameValuePair;
 import cz.msebera.android.httpclient.ParseException;
+import cz.msebera.android.httpclient.ProtocolException;
 import cz.msebera.android.httpclient.StatusLine;
 import cz.msebera.android.httpclient.auth.AuthScope;
 import cz.msebera.android.httpclient.auth.UsernamePasswordCredentials;
@@ -402,7 +403,7 @@ public class HttpClient {
             if (entity != null)
                 return entity.getContent();
             else
-                return null;
+                return super.getData();
         }
     }
 
@@ -424,7 +425,12 @@ public class HttpClient {
         HttpClientBuilder builder = HttpClientBuilder.create();
         builder.setUserAgent(USER_AGENT);
         builder.setDefaultRequestConfig(build((RequestConfig) null));
-        builder.setRedirectStrategy(new LaxRedirectStrategy());
+        builder.setRedirectStrategy(new LaxRedirectStrategy() {
+            @Override
+            protected URI createLocationURI(String location) throws ProtocolException {
+                return super.createLocationURI(safe(location));
+            }
+        });
         builder.setDefaultCredentialsProvider(credsProvider);
         builder.setRequestExecutor(new HttpRequestExecutor() {
             @Override
