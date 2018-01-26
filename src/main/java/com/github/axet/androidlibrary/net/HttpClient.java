@@ -252,6 +252,7 @@ public class HttpClient {
         String url;
         byte[] buf;
 
+        HttpUriRequest request;
         CloseableHttpResponse response;
         HttpEntity entity;
         StatusLine status;
@@ -268,6 +269,7 @@ public class HttpClient {
 
         public DownloadResponse(HttpClientContext context, HttpUriRequest request, CloseableHttpResponse response) {
             super(null, null, null);
+            this.request = request;
             this.response = response;
             entity = response.getEntity();
             contentType = ContentType.getOrDefault(entity);
@@ -403,6 +405,14 @@ public class HttpClient {
                 return entity.getContent();
             else
                 return super.getData();
+        }
+
+        public HttpUriRequest getRequest() {
+            return request;
+        }
+
+        public CloseableHttpResponse getResponse() {
+            return response;
         }
     }
 
