@@ -72,6 +72,7 @@ import cz.msebera.android.httpclient.client.methods.HttpPost;
 import cz.msebera.android.httpclient.client.methods.HttpRequestBase;
 import cz.msebera.android.httpclient.client.methods.HttpUriRequest;
 import cz.msebera.android.httpclient.client.protocol.HttpClientContext;
+import cz.msebera.android.httpclient.client.utils.URIUtils;
 import cz.msebera.android.httpclient.conn.ConnectTimeoutException;
 import cz.msebera.android.httpclient.conn.ssl.SSLConnectionSocketFactory;
 import cz.msebera.android.httpclient.cookie.Cookie;
@@ -86,6 +87,7 @@ import cz.msebera.android.httpclient.message.BasicNameValuePair;
 import cz.msebera.android.httpclient.protocol.HttpContext;
 import cz.msebera.android.httpclient.protocol.HttpCoreContext;
 import cz.msebera.android.httpclient.protocol.HttpRequestExecutor;
+import cz.msebera.android.httpclient.util.Asserts;
 import cz.msebera.android.httpclient.util.EntityUtils;
 
 // cz.msebera.android.httpclient recommended by apache
@@ -435,9 +437,29 @@ public class HttpClient {
         builder.setUserAgent(USER_AGENT);
         builder.setDefaultRequestConfig(build((RequestConfig) null));
         builder.setRedirectStrategy(new LaxRedirectStrategy() {
+            URL absoluteRequestURI;
+
+            @Override
+            public URI getLocationURI(HttpRequest request, HttpResponse response, HttpContext context) throws ProtocolException {
+                try {
+                    final HttpClientContext clientContext = HttpClientContext.adapt(context);
+                    final HttpHost target = clientContext.getTargetHost();
+                    Asserts.notNull(target, "Target host");
+                    final URI requestURI = new URI(request.getRequestLine().getUri());
+                    absoluteRequestURI = URIUtils.rewriteURI(requestURI, target, false).toURL();
+                    return super.getLocationURI(request, response, context);
+                } catch (URISyntaxException | MalformedURLException ex) {
+                    throw new ProtocolException(ex.getMessage(), ex);
+                }
+            }
+
             @Override
             protected URI createLocationURI(String location) throws ProtocolException {
-                return super.createLocationURI(safe(location));
+                try {
+                    return super.createLocationURI(safe(new URL(absoluteRequestURI, location)));
+                } catch (MalformedURLException ex) {
+                    throw new ProtocolException(ex.getMessage(), ex);
+                }
             }
         });
         builder.setDefaultCredentialsProvider(credsProvider);
@@ -687,6 +709,14 @@ public class HttpClient {
     public static String safe(String url) {
         try {
             URL u = new URL(url);
+            return safe(u);
+        } catch (MalformedURLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static String safe(URL u) {
+        try {
             String p = u.getPath();
             if (p != null) {
                 try {
@@ -705,8 +735,6 @@ public class HttpClient {
             }
             URI uri = new URI(u.getProtocol(), u.getUserInfo(), u.getHost(), u.getPort(), p, q, u.getRef());
             return uri.toString();
-        } catch (MalformedURLException e) {
-            throw new RuntimeException(e);
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
