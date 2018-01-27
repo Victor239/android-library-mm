@@ -246,12 +246,12 @@ public class HttpClient {
 
     @TargetApi(11) // WebResourceResponse API11+
     public static class DownloadResponse extends WebResourceResponse {
-        public boolean downloaded;
+        public boolean downloaded; // isAttachment
 
         public String userAgent;
         public String contentDisposition;
         public long contentLength;
-        String url;
+        public String url;
         byte[] buf;
 
         HttpUriRequest request;
@@ -260,26 +260,22 @@ public class HttpClient {
         StatusLine status;
         ContentType contentType;
 
-        static boolean download(String mimetype) {
-            String[] types = new String[]{CONTENTTYPE_XBITTORRENT, "audio", "video"};
-            for (String t : types) {
-                if (mimetype.startsWith(t))
-                    return false;
-            }
-            return true;
-        }
-
         public DownloadResponse(HttpClientContext context, HttpUriRequest request, CloseableHttpResponse response) {
             super(null, null, null);
             this.request = request;
             this.response = response;
             entity = response.getEntity();
-            contentType = ContentType.getOrDefault(entity);
+            contentType = ContentType.get(entity);
+            if (contentType == null)
+                contentType = ContentType.DEFAULT_BINARY;
             url = HttpClient.getUrl(context);
             if (url == null)
                 url = request.getURI().toString();
             status = response.getStatusLine();
             setMimeType(contentType.getMimeType());
+            Header ct = response.getFirstHeader("Content-Disposition");
+            if (ct != null)
+                contentDisposition = ct.getValue();
         }
 
         public DownloadResponse(String mimeType, String encoding, InputStream data) {
@@ -359,19 +355,27 @@ public class HttpClient {
             }
         }
 
+        public boolean isAttachment() {
+            if (contentDisposition != null)
+                return true;
+            String[] types = new String[]{CONTENTTYPE_XBITTORRENT, "audio", "video"};
+            for (String t : types) {
+                if (contentType.getMimeType().startsWith(t))
+                    return true;
+            }
+            return false;
+        }
+
         public void downloadText() {
-            if (download(contentType.getMimeType())) {
-                download();
-            } else {
+            if (isAttachment()) {
                 attachment();
+            } else {
+                download();
             }
         }
 
         public void attachment() {
             try {
-                Header ct = response.getFirstHeader("Content-Disposition");
-                if (ct != null)
-                    contentDisposition = ct.getValue();
                 if (entity != null) // old phones it can be null
                     contentLength = entity.getContentLength();
                 userAgent = USER_AGENT;
