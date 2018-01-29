@@ -63,6 +63,7 @@ import cz.msebera.android.httpclient.auth.UsernamePasswordCredentials;
 import cz.msebera.android.httpclient.client.CookieStore;
 import cz.msebera.android.httpclient.client.CredentialsProvider;
 import cz.msebera.android.httpclient.client.RedirectException;
+import cz.msebera.android.httpclient.client.config.CookieSpecs;
 import cz.msebera.android.httpclient.client.config.RequestConfig;
 import cz.msebera.android.httpclient.client.entity.UrlEncodedFormEntity;
 import cz.msebera.android.httpclient.client.methods.AbstractExecutionAwareRequest;
@@ -102,6 +103,9 @@ public class HttpClient {
     public static final String CONTENTTYPE_HTML = "text/html";
     public static final String CONTENTTYPE_TEXT = "text/plain";
     public static final String CONTENTTYPE_XBITTORRENT = "application/x-bittorrent";
+    public static final String CONTENTTYPE_JAVASCRIPT = "application/javascript";
+    public static final String CONTENTTYPE_XJAVASCRIPT = "application/x-javascript";
+    public static final String CONTENTTYPE_JSON = "application/json";
 
     public static int CONNECTION_TIMEOUT = AlarmManager.SEC10;
 
@@ -110,6 +114,28 @@ public class HttpClient {
     protected AbstractExecutionAwareRequest request;
     protected HttpHost proxy;
     protected CredentialsProvider credsProvider;
+
+    public static String formatCookie(Cookie c) {
+        StringBuilder result = new StringBuilder()
+                .append(c.getName())
+                .append("=")
+                .append("\"")
+                .append(c.getValue())
+                .append("\"");
+        appendAttribute(result, "Path", c.getPath());
+        appendAttribute(result, "Domain", c.getDomain());
+        return result.toString();
+    }
+
+    public static void appendAttribute(StringBuilder builder, String name, String value) {
+        if (value != null && builder != null) {
+            builder.append("; ");
+            builder.append(name);
+            builder.append("=\"");
+            builder.append(value);
+            builder.append("\"");
+        }
+    }
 
     public static HttpCookie from(Cookie c) {
         HttpCookie cookie = new HttpCookie(c.getName(), c.getValue());
@@ -246,7 +272,7 @@ public class HttpClient {
 
     @TargetApi(11) // WebResourceResponse API11+
     public static class DownloadResponse extends WebResourceResponse {
-        public boolean downloaded; // isAttachment
+        public boolean downloaded; // or isAttachment
 
         public String userAgent;
         public String contentDisposition;
@@ -358,7 +384,7 @@ public class HttpClient {
         public boolean isAttachment() {
             if (contentDisposition != null)
                 return true;
-            String[] tt = new String[]{"text", "application/javascript", "application/x-javascript", "application/json", "image", "font"};
+            String[] tt = new String[]{"text", "image", "font", CONTENTTYPE_JAVASCRIPT, CONTENTTYPE_XJAVASCRIPT, CONTENTTYPE_JSON};
             for (String t : tt) {
                 if (contentType.getMimeType().startsWith(t))
                     return false;
@@ -528,6 +554,7 @@ public class HttpClient {
         builder.setConnectTimeout(CONNECTION_TIMEOUT);
         builder.setConnectionRequestTimeout(CONNECTION_TIMEOUT);
         builder.setProxy(proxy);
+        builder.setCookieSpec(CookieSpecs.STANDARD); // DEFAULT fails with NetscapeDraftSpec.EXPIRES_PATTERN date format
         return builder.build();
     }
 
@@ -609,31 +636,14 @@ public class HttpClient {
         for (int i = 0; i < list.size(); i++) {
             Cookie c = list.get(i);
 
-            StringBuilder result = new StringBuilder()
-                    .append(c.getName())
-                    .append("=")
-                    .append("\"")
-                    .append(c.getValue())
-                    .append("\"");
-            appendAttribute(result, "path", c.getPath());
-            appendAttribute(result, "domain", c.getDomain());
+            String result = formatCookie(c);
 
             if (!str.isEmpty())
                 str += "\n";
             str += "Set-Cookie: ";
-            str += result.toString();
+            str += result;
         }
         return str;
-    }
-
-    private void appendAttribute(StringBuilder builder, String name, String value) {
-        if (value != null && builder != null) {
-            builder.append(";");
-            builder.append(name);
-            builder.append("=\"");
-            builder.append(value);
-            builder.append("\"");
-        }
     }
 
     public void clearCookies() {
