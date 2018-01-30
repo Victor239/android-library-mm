@@ -4,7 +4,7 @@
     <string name="filedialog_delete">हटाउनुहोस्</string>
     <string name="filedialog_newfolder">नयाँ फोल्डर</string>
     <string name="filedialog_foldername">फोल्डरको नाम</string>
-    <string name="filedialog_unablecreatefolder">फोल्डर बनाउन सकिएन: \'%1$s\'</string>
+    <string name="filedialog_unablecreatefolder">फोल्डर \'%1$s\' बनाउन सकिएन:  </string>
     <string name="filedialog_foldercreated">फोल्डर \'%1$s\' सृजना भयो</string>
     <string name="filedialog_folderdeleted">हटाइयो: \'%1$s\'</string>
     <string name="filedialog_renameto">यस नाममा पुनः नामाकरण गरियो: \'%1$s\'</string>

@@ -14,10 +14,10 @@ import android.util.AttributeSet;
 //
 // AndroidManifest.xml
 //
-//    <application
+//    <application>
 //            ...
-//            <activity
-//            ....
+//            <activity>
+//            ...
 //            <meta-data
 //            android:name="android.app.searchable"
 //            android:resource="@xml/searchable" />
@@ -49,6 +49,7 @@ public class SearchView extends android.support.v7.widget.SearchView {
     @Override
     public void onActionViewCollapsed() {
         super.onActionViewCollapsed();
-        listener.onClose();
+        if (listener != null)
+            listener.onClose();
     }
 }
