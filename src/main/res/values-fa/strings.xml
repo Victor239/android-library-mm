@@ -1,0 +1,56 @@
+<resources>
+    <!--OpenFileDialog-->
+    <string name="filedialog_rename">تغییر نام</string>
+    <string name="filedialog_delete">حذف</string>
+    <string name="filedialog_newfolder">پوشه جدید</string>
+    <string name="filedialog_foldername">نام پوشه</string>
+    <string name="filedialog_unablecreatefolder">\'%1$s\' نمیتوان این پوشه را ایجاد کرد:</string>
+    <string name="filedialog_foldercreated"> \'%1$s\' پوشه ایجاد شد:</string>
+    <string name="filedialog_folderdeleted"> \'%1$s\' حذف شد</string>
+    <string name="filedialog_renameto"> \'%1$s\' نام تغییر کرد:</string>
+    <string name="filedialog_empty">لیست خالی</string>
+    <string name="filedialog_readonly">مسیر فقط خواندنی</string>
+    <string name="filedialog_selectfolder">لطفا یک پوشه انتخاب کنید</string>
+
+    <string name="ShareAction">اشتراک</string>
+    <string name="shared_via">: %1$s اشتراک با: </string>
+
+    <plurals name="days">
+        <item quantity="one">روز %d </item>
+        <item quantity="other">روز %d </item>
+    </plurals>
+
+    <plurals name="hours">
+        <item quantity="one"> ساعت %d</item>
+        <item quantity="other"> ساعت %d</item>
+    </plurals>
+
+    <plurals name="minutes">
+        <item quantity="one"> دقیقه %d</item>
+        <item quantity="other"> دقیقه %d</item>
+    </plurals>
+
+    <plurals name="seconds">
+        <item quantity="one"> ثانیه %d</item>
+        <item quantity="other">ثانیه %d</item>
+    </plurals>
+
+    <string name="days_symbol">"d"</string>
+
+    <string name="size_gb">%1$.1f GB</string>
+    <string name="size_mb">%1$.1f MB</string>
+    <string name="size_kb">%1$.1f kb</string>
+
+    <string name="optimization_dialog">بهینه سازی تنظیمات</string>
+    <string name="optimization_message">در حال اضافه کردن برنامه به لیست سفید مدیر باتری تلفن تا برنامه را هنگام پاک کردن حافظه نادیده بگیرد.</string>
+
+    <string name="menu_settings">تنظیمات</string>
+    <string name="menu_about">درباره</string>
+
+    <string name="open_browser">باز کردن مرورگر</string>
+    <string name="are_you_sure">آیا مطمئنید؟</string>
+    <string name="default_folder">پیشفرض</string>
+
+    <string name="not_permitted">اجازه ندارد</string>
+    <string name="close">بستن</string>
+</resources>
