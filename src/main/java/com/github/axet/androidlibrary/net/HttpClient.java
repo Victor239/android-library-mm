@@ -22,6 +22,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpCookie;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
 import java.net.URI;
@@ -114,6 +115,39 @@ public class HttpClient {
     protected AbstractExecutionAwareRequest request;
     protected HttpHost proxy;
     protected CredentialsProvider credsProvider;
+
+    public static HttpURLConnection openConnection(Uri uri) {
+        try {
+            URL url = new URL(uri.toString());
+            return openConnection(0, url);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static HttpURLConnection openConnection(int i, URL url) {
+        try {
+            if (i > 5)
+                throw new RuntimeException("Circular redirect exception");
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setConnectTimeout(HttpClient.CONNECTION_TIMEOUT);
+            conn.setReadTimeout(HttpClient.CONNECTION_TIMEOUT);
+            conn.setInstanceFollowRedirects(false);
+            switch (conn.getResponseCode()) {
+                case HttpURLConnection.HTTP_MOVED_PERM:
+                case HttpURLConnection.HTTP_MOVED_TEMP:
+                    String location = conn.getHeaderField("Location");
+                    location = URLDecoder.decode(location, Charset.defaultCharset().name());
+                    URL base = url;
+                    url = new URL(base, location);  // Deal with relative URLs
+                    return openConnection(i + 1, url);
+
+            }
+            return conn;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     public static String formatCookie(Cookie c) {
         StringBuilder result = new StringBuilder()
