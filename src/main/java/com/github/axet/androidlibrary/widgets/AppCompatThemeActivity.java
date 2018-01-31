@@ -3,7 +3,9 @@ package com.github.axet.androidlibrary.widgets;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 
 public abstract class AppCompatThemeActivity extends AppCompatActivity {
     public int themeId;
@@ -43,5 +45,11 @@ public abstract class AppCompatThemeActivity extends AppCompatActivity {
         finish();
         startActivity(new Intent(this, getClass()));
         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+    }
+
+    @Override
+    public void setSupportActionBar(@Nullable Toolbar toolbar) {
+        super.setSupportActionBar(toolbar);
+        toolbar.setPopupTheme(getAppTheme());
     }
 }
