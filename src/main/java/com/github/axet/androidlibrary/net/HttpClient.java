@@ -117,15 +117,19 @@ public class HttpClient {
     protected CredentialsProvider credsProvider;
 
     public static HttpURLConnection openConnection(Uri uri) {
+        return openConnection(uri, null);
+    }
+
+    public static HttpURLConnection openConnection(Uri uri, String useragent) {
         try {
             URL url = new URL(uri.toString());
-            return openConnection(0, url);
+            return openConnection(0, url, useragent);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public static HttpURLConnection openConnection(int i, URL url) {
+    public static HttpURLConnection openConnection(int i, URL url, String useragent) {
         try {
             if (i > 5)
                 throw new RuntimeException("Circular redirect exception");
@@ -133,6 +137,8 @@ public class HttpClient {
             conn.setConnectTimeout(HttpClient.CONNECTION_TIMEOUT);
             conn.setReadTimeout(HttpClient.CONNECTION_TIMEOUT);
             conn.setInstanceFollowRedirects(false);
+            if (useragent != null)
+                conn.setRequestProperty("User-Agent", useragent);
             switch (conn.getResponseCode()) {
                 case HttpURLConnection.HTTP_MOVED_PERM:
                 case HttpURLConnection.HTTP_MOVED_TEMP:
@@ -140,7 +146,7 @@ public class HttpClient {
                     location = URLDecoder.decode(location, Charset.defaultCharset().name());
                     URL base = url;
                     url = new URL(base, location);  // Deal with relative URLs
-                    return openConnection(i + 1, url);
+                    return openConnection(i + 1, url, useragent);
 
             }
             return conn;
