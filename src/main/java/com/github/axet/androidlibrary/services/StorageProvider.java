@@ -117,29 +117,10 @@ public class StorageProvider extends ContentProvider {
         return OptimizationPreferenceCompat.isCallable(context, intent);
     }
 
-    public static String toHex(byte[] in) {
-        final StringBuilder builder = new StringBuilder();
-        for (byte b : in) {
-            builder.append(String.format("%02x", b));
-        }
-        return builder.toString();
-    }
-
-    public static String md5(String str) {
-        try {
-            byte[] bytesOfMessage = str.getBytes(Charset.defaultCharset());
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            byte[] digest = md.digest(bytesOfMessage);
-            return toHex(digest);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public static Uri share(Context context, Uri u) { // original uri -> hased uri
         long now = System.currentTimeMillis();
         uris.put(u, now);
-        String hash = md5(u.toString());
+        String hash = Storage.md5(u.toString());
         hashs.put(hash, u);
 
         String name;
@@ -182,7 +163,7 @@ public class StorageProvider extends ContentProvider {
             long l = uris.get(p);
             if (l + TIMEOUT < now) {
                 uris.remove(p);
-                String hash = md5(p.toString());
+                String hash = Storage.md5(p.toString());
                 hashs.remove(hash);
             }
         }

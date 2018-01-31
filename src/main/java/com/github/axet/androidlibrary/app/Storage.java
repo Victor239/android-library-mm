@@ -38,6 +38,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
+import java.security.MessageDigest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -59,6 +61,64 @@ public class Storage {
 
     protected Context context;
     protected ContentResolver resolver;
+
+    public static String toHex(byte[] in) {
+        final StringBuilder builder = new StringBuilder();
+        for (byte b : in) {
+            builder.append(String.format("%02x", b));
+        }
+        return builder.toString();
+    }
+
+    public static String md5(String str) {
+        try {
+            byte[] bytesOfMessage = str.getBytes(Charset.defaultCharset());
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] digest = md.digest(bytesOfMessage);
+            return toHex(digest);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    // https://stackoverflow.com/questions/28734455/java-converting-file-pattern-to-regular-expression-pattern
+    public static String wildcard(String wildcard) {
+        StringBuilder s = new StringBuilder(wildcard.length());
+        s.append('^');
+        for (int i = 0, is = wildcard.length(); i < is; i++) {
+            char c = wildcard.charAt(i);
+            switch (c) {
+                case '*':
+                    s.append(".*");
+                    break;
+                case '?':
+                    s.append(".");
+                    break;
+                case '^': // escape character in cmd.exe
+                    s.append("\\");
+                    break;
+                // escape special regexp-characters
+                case '(':
+                case ')':
+                case '[':
+                case ']':
+                case '$':
+                case '.':
+                case '{':
+                case '}':
+                case '|':
+                case '\\':
+                    s.append("\\");
+                    s.append(c);
+                    break;
+                default:
+                    s.append(c);
+                    break;
+            }
+        }
+        s.append('$');
+        return (s.toString());
+    }
 
     public static long getFree(File f) {
         while (!f.exists())
