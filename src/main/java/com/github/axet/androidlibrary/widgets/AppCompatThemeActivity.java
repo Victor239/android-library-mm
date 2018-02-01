@@ -6,8 +6,11 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 
 public abstract class AppCompatThemeActivity extends AppCompatActivity {
+    public static String TAG = AppCompatThemeActivity.class.getSimpleName();
+    
     public int themeId;
 
     public void setAppTheme(int id) {
@@ -18,6 +21,7 @@ public abstract class AppCompatThemeActivity extends AppCompatActivity {
     public abstract int getAppTheme();
 
     public int getAppThemePopup() {
+        Log.d(TAG, "Implement getAppThemePopup() when setSupportActionBar is called");
         return getAppTheme();
     }
 
