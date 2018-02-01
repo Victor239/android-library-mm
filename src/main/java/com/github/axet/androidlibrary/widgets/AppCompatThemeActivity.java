@@ -17,6 +17,10 @@ public abstract class AppCompatThemeActivity extends AppCompatActivity {
 
     public abstract int getAppTheme();
 
+    public int getAppThemePopup() {
+        return getAppTheme();
+    }
+
     @Override
     protected void attachBaseContext(Context newBase) {
         super.attachBaseContext(newBase);
@@ -50,6 +54,6 @@ public abstract class AppCompatThemeActivity extends AppCompatActivity {
     @Override
     public void setSupportActionBar(@Nullable Toolbar toolbar) {
         super.setSupportActionBar(toolbar);
-        toolbar.setPopupTheme(getAppTheme());
+        toolbar.setPopupTheme(getAppThemePopup());
     }
 }
