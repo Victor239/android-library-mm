@@ -58,9 +58,6 @@ public abstract class AppCompatThemeActivity extends AppCompatActivity {
     @Override
     public void setSupportActionBar(@Nullable Toolbar toolbar) {
         super.setSupportActionBar(toolbar);
-        Context theme = getSupportActionBar().getThemedContext();
-        if (theme != null)
-            theme.setTheme(getAppTheme());
         toolbar.setPopupTheme(getAppThemePopup());
     }
 }
