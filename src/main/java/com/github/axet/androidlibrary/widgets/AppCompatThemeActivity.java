@@ -10,7 +10,7 @@ import android.util.Log;
 
 public abstract class AppCompatThemeActivity extends AppCompatActivity {
     public static String TAG = AppCompatThemeActivity.class.getSimpleName();
-    
+
     public int themeId;
 
     public void setAppTheme(int id) {
@@ -58,6 +58,9 @@ public abstract class AppCompatThemeActivity extends AppCompatActivity {
     @Override
     public void setSupportActionBar(@Nullable Toolbar toolbar) {
         super.setSupportActionBar(toolbar);
+        Context theme = getSupportActionBar().getThemedContext();
+        if (theme != null)
+            theme.setTheme(getAppTheme());
         toolbar.setPopupTheme(getAppThemePopup());
     }
 }
