@@ -20,6 +20,10 @@ public abstract class AppCompatThemeActivity extends AppCompatActivity {
 
     public abstract int getAppTheme();
 
+    public int getAppThemeBar() {
+        return 0;
+    }
+
     public int getAppThemePopup() {
         Log.d(TAG, "Implement getAppThemePopup() when setSupportActionBar is called");
         return getAppTheme();
@@ -59,8 +63,8 @@ public abstract class AppCompatThemeActivity extends AppCompatActivity {
     public void setSupportActionBar(@Nullable Toolbar toolbar) {
         super.setSupportActionBar(toolbar);
         Context theme = getSupportActionBar().getThemedContext();
-        if (theme != null)
-            theme.setTheme(getAppTheme());
+        if (theme != null && getAppThemeBar() != 0)
+            theme.setTheme(getAppThemeBar());
         toolbar.setPopupTheme(getAppThemePopup());
     }
 }
