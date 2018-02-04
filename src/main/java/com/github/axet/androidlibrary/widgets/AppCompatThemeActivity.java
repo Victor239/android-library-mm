@@ -2,6 +2,7 @@ package com.github.axet.androidlibrary.widgets;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.KeyguardManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -16,6 +17,8 @@ import android.util.Log;
 import android.view.ContextThemeWrapper;
 import android.view.ViewGroup;
 import android.view.ViewParent;
+import android.view.Window;
+import android.view.WindowManager;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -24,6 +27,23 @@ public abstract class AppCompatThemeActivity extends AppCompatActivity {
     public static String TAG = AppCompatThemeActivity.class.getSimpleName();
 
     public int themeId;
+
+    public static void showLocked(Window w) {
+        w.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
+        // enable popup keyboard when locked
+        w.addFlags(android.view.WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
+        w.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+    }
+
+    public static void showDialogLocked(Window w) {
+        w.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
+        Context context = w.getContext();
+        KeyguardManager myKM = (KeyguardManager) context.getSystemService(Context.KEYGUARD_SERVICE);
+        if (myKM.inKeyguardRestrictedInputMode()) {
+            w.addFlags(android.view.WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
+            w.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+        }
+    }
 
     public static class ScreenReceiver extends BroadcastReceiver {
         public Activity a;
@@ -44,12 +64,16 @@ public abstract class AppCompatThemeActivity extends AppCompatActivity {
                 };
             }
         };
+        IntentFilter screenfilter = new IntentFilter();
 
         public ScreenReceiver(Activity a) {
             this.a = a;
-            IntentFilter screenfilter = new IntentFilter();
             screenfilter.addAction(Intent.ACTION_SCREEN_ON);
             screenfilter.addAction(Intent.ACTION_SCREEN_OFF);
+            registerReceiver();
+        }
+
+        public void registerReceiver() {
             a.registerReceiver(this, screenfilter);
         }
 
