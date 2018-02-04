@@ -1,8 +1,11 @@
 package com.github.axet.androidlibrary.widgets;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -21,6 +24,53 @@ public abstract class AppCompatThemeActivity extends AppCompatActivity {
     public static String TAG = AppCompatThemeActivity.class.getSimpleName();
 
     public int themeId;
+
+    public static class ScreenReceiver extends BroadcastReceiver {
+        public Activity a;
+        public Runnable off = new Runnable() {
+            @Override
+            public void run() { // call once after boot (some phones ignores moveTaskToBack first call after boot)
+                Intent main = new Intent(Intent.ACTION_MAIN);
+                main.addCategory(Intent.CATEGORY_HOME);
+                main.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                a.startActivity(main);
+                a.overridePendingTransition(0, 0);
+                off = new Runnable() {
+                    @Override
+                    public void run() {
+                        a.moveTaskToBack(true);
+                        a.overridePendingTransition(0, 0);
+                    }
+                };
+            }
+        };
+
+        public ScreenReceiver(Activity a) {
+            this.a = a;
+            IntentFilter screenfilter = new IntentFilter();
+            screenfilter.addAction(Intent.ACTION_SCREEN_ON);
+            screenfilter.addAction(Intent.ACTION_SCREEN_OFF);
+            a.registerReceiver(this, screenfilter);
+        }
+
+        public void close() {
+            a.unregisterReceiver(this);
+        }
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String a = intent.getAction();
+            if (a == null)
+                return;
+            if (a.equals(Intent.ACTION_SCREEN_OFF)) {
+                moveTaskToBack();
+            }
+        }
+
+        public void moveTaskToBack() {
+            off.run();
+        }
+    }
 
     public void setAppTheme(int id) {
         super.setTheme(id);
