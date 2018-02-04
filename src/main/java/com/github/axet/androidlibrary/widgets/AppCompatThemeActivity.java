@@ -64,7 +64,7 @@ public abstract class AppCompatThemeActivity extends AppCompatActivity {
                 };
             }
         };
-        IntentFilter screenfilter = new IntentFilter();
+        public IntentFilter screenfilter = new IntentFilter();
 
         public ScreenReceiver(Activity a) {
             this.a = a;
