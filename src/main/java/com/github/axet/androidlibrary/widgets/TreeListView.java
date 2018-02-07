@@ -2,13 +2,11 @@ package com.github.axet.androidlibrary.widgets;
 
 import android.annotation.TargetApi;
 import android.content.Context;
-import android.database.DataSetObserver;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ListAdapter;
+import android.widget.BaseAdapter;
 import android.widget.ListView;
 
 import java.util.ArrayList;
@@ -18,21 +16,32 @@ public class TreeListView extends ListView {
     public OnToggleListener toggleListener;
 
     public static class TreeNode {
+        public TreeNode parent;
         public boolean selected = false;
         public boolean expanded = false;
         public Object tag;
+        public int level;
         public ArrayList<TreeNode> nodes = new ArrayList<>();
 
         public TreeNode() {
         }
 
+        public TreeNode(TreeNode p) {
+            parent = p;
+            level = p.level + 1;
+        }
+
         public TreeNode(Object tag) {
+            this.tag = tag;
+        }
+
+        public TreeNode(TreeNode p, Object tag) {
+            this.parent = p;
             this.tag = tag;
         }
     }
 
-    public static class TreeAdapter implements ListAdapter {
-        public DataSetObserver listener;
+    public static class TreeAdapter extends BaseAdapter {
         public TreeNode root = new TreeNode();
         public ArrayList<TreeNode> items = new ArrayList<>();
 
@@ -51,32 +60,6 @@ public class TreeListView extends ListView {
                 if (t.expanded)
                     load(t);
             }
-        }
-
-        void notifyDataSetChanged() {
-            if (listener == null)
-                return;
-            listener.onChanged();
-        }
-
-        @Override
-        public boolean areAllItemsEnabled() {
-            return true;
-        }
-
-        @Override
-        public boolean isEnabled(int position) {
-            return true;
-        }
-
-        @Override
-        public void registerDataSetObserver(DataSetObserver observer) {
-            listener = observer;
-        }
-
-        @Override
-        public void unregisterDataSetObserver(DataSetObserver observer) {
-            listener = null;
         }
 
         @Override
@@ -102,21 +85,6 @@ public class TreeListView extends ListView {
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
             return null;
-        }
-
-        @Override
-        public int getItemViewType(int position) {
-            return 1;
-        }
-
-        @Override
-        public int getViewTypeCount() {
-            return 1;
-        }
-
-        @Override
-        public boolean isEmpty() {
-            return items.isEmpty();
         }
     }
 
