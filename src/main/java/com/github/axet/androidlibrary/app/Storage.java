@@ -238,7 +238,8 @@ public class Storage {
             IOUtils.copy(in, out);
             in.close();
             out.close();
-            to.setLastModified(last);
+            if (last > 0)
+                to.setLastModified(last);
             return to;
         } catch (IOException e) {
             throw new RuntimeException(e);
