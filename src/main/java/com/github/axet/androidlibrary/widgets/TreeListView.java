@@ -4,6 +4,7 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -14,6 +15,7 @@ import java.util.ArrayList;
 public class TreeListView extends ListView {
 
     public OnToggleListener toggleListener;
+    public MotionEvent last;
 
     public static class TreeNode {
         public TreeNode parent;
@@ -24,6 +26,7 @@ public class TreeListView extends ListView {
         public ArrayList<TreeNode> nodes = new ArrayList<>();
 
         public TreeNode() {
+            level = -1;
         }
 
         public TreeNode(TreeNode p) {
@@ -129,5 +132,29 @@ public class TreeListView extends ListView {
                 toggleListener.onItemToggled(view, position, id);
         }
         return super.performItemClick(view, position, id);
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent ev) {
+        boolean b = super.onTouchEvent(ev);
+        switch (ev.getActionMasked()) {
+            case MotionEvent.ACTION_DOWN:
+                last = MotionEvent.obtain(ev);
+                break;
+            case MotionEvent.ACTION_MOVE:
+                break;
+            case MotionEvent.ACTION_UP:
+                if (ev.getX() == last.getX() && ev.getY() == last.getY()) {
+                    int first = getFirstVisiblePosition();
+                    int motionPosition = pointToPosition((int) ev.getX(), (int) ev.getY());
+                    View child = getChildAt(motionPosition - first);
+                    if (child != null && child.hasFocusable()) {
+                        if (performItemClick(child, motionPosition, getAdapter().getItemId(motionPosition)))
+                            return true;
+                    }
+                }
+                break;
+        }
+        return b;
     }
 }
