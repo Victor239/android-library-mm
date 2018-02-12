@@ -536,7 +536,7 @@ public class WebViewCustom extends WebView {
                 // so getBase() works fine. only postUrl() sholud do the trick.
                 url = ABOUT_ERROR;
                 // keep history url points to original url, so WebView.reload() keep working properly
-            } else if (r.getBuf().length == 0) { // inside page post's do not reload page
+            } else if (r.getBuf() == null || r.getBuf().length == 0) { // inside page post's do not reload page
                 return;
             }
 
