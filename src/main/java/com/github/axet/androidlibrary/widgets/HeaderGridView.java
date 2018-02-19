@@ -138,6 +138,10 @@ public class HeaderGridView extends GridView {
             }
         }
 
+        public int getNumColumns() {
+            return mNumColumns;
+        }
+
         private boolean areAllListInfosSelectable(ArrayList<FixedViewInfo> infos) {
             if (infos != null) {
                 for (FixedViewInfo info : infos) {
