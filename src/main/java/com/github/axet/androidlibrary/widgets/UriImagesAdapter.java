@@ -263,12 +263,12 @@ public abstract class UriImagesAdapter extends ThreadPoolExecutor implements Lis
     }
 
     public void updateView(DownloadImageTask task, ImageView image, ProgressBar progress) {
-        if (task.bm != null) {
+        if (task != null && task.bm != null) {
             image.setImageBitmap(task.bm);
         } else {
             image.setImageResource(R.drawable.ic_image_black_24dp);
         }
-        progress.setVisibility(task.done ? View.GONE : View.VISIBLE);
+        progress.setVisibility((task == null || task.done) ? View.GONE : View.VISIBLE);
     }
 
     public Bitmap downloadImageTask(DownloadImageTask task) {
