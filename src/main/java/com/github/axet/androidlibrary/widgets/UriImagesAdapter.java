@@ -48,26 +48,27 @@ public abstract class UriImagesAdapter extends ThreadPoolExecutor implements Lis
         }
     };
 
-    public Map<Uri, DownloadImageTask> views = new TreeMap<>();
-    public Map<ImageView, DownloadImageTask> images = new HashMap<>();
+    public Map<Object, DownloadImageTask> downloadViews = new HashMap<>();
+    public Map<Object, DownloadImageTask> downloadItems = new HashMap<>();
     public DataSetObserver listener;
     public Context context;
     public Map<DownloadImageTask, Runnable> tasks = new ConcurrentHashMap<>();
     public Map<Runnable, DownloadImageTask> runs = new ConcurrentHashMap<>();
     protected DownloadImageTask current;
 
-    public static class DownloadImageTask extends AsyncTask<Uri, Void, Bitmap> {
+    public static class DownloadImageTask extends AsyncTask<Object, Void, Bitmap> {
+        public final Object lock = new Object();
         public Bitmap bm;
-        public HashSet<ImageView> views = new HashSet<>(); // one task can set multiple ImageView's, except reused ones;
-        public HashSet<ProgressBar> progress = new HashSet<>();
-        public boolean done;
-        public boolean start;
-        public Uri cover;
+        public Object item;
+        public HashSet<Object> views = new HashSet<>(); // one task can set multiple ImageView's, except reused ones;
+        public boolean start; // start download thread
+        public boolean done; // done downloading (may be failed)
+        UriImagesAdapter p;
 
-        public DownloadImageTask(ProgressBar p, ImageView i, Uri c) {
-            progress.add(p);
-            views.add(i);
-            cover = c;
+        public DownloadImageTask(UriImagesAdapter p, Object item, Object v) {
+            this.p = p;
+            this.item = item;
+            views.add(v);
         }
 
         @Override
@@ -75,31 +76,15 @@ public abstract class UriImagesAdapter extends ThreadPoolExecutor implements Lis
             super.onPreExecute();
         }
 
-        protected Bitmap doInBackground(Uri... urls) {
-            Bitmap bm = null;
-            try {
-                String s = cover.getScheme();
-                if (s.startsWith(WebViewCustom.SCHEME_HTTP)) {
-                    InputStream in = new URL(cover.toString()).openStream();
-                    bm = BitmapFactory.decodeStream(in);
-                } else {
-                    bm = BitmapFactory.decodeFile(cover.getPath());
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "broken download", e);
-            }
-            return bm;
+        protected Bitmap doInBackground(Object... urls) {
+            return p.downloadImageTask(this);
         }
 
         protected void onPostExecute(Bitmap result) {
             done = true;
-            for (ProgressBar p : progress)
-                p.setVisibility(View.GONE);
-            bm = result;
-            if (bm == null)
-                return;
-            for (ImageView v : views)
-                v.setImageBitmap(bm);
+            if (result != null)
+                bm = result;
+            p.downloadTaskDone(this);
         }
     }
 
@@ -125,8 +110,11 @@ public abstract class UriImagesAdapter extends ThreadPoolExecutor implements Lis
     protected void beforeExecute(Thread t, Runnable r) {
         super.beforeExecute(t, r);
         DownloadImageTask task = runs.get(r);
-        if (task != null)
-            task.start = true;
+        if (task != null) {
+            synchronized (task.lock) {
+                task.start = true;
+            }
+        }
     }
 
     @Override
@@ -197,41 +185,33 @@ public abstract class UriImagesAdapter extends ThreadPoolExecutor implements Lis
         return null;
     }
 
-    public View getView(Uri cover, View convertView, ImageView image, ProgressBar progress) {
-        progress.setVisibility(View.GONE);
-
-        if (cover != null) {
-            DownloadImageTask task = images.get(image);
-            if (task != null) { // reuse image
-                task.views.remove(image);
-                task.progress.remove(progress);
-                if (!task.start) {
+    public void getView(Object item, Object view) {
+        DownloadImageTask task = downloadViews.get(view);
+        if (task != null) { // reuse image
+            task.views.remove(view);
+            synchronized (task.lock) {
+                if (!task.start && task.views.size() == 0 && !task.done) {
                     cancel(task);
-                    views.remove(task.cover);
+                    downloadViews.remove(view);
+                    downloadItems.remove(task.item);
                 }
             }
-            task = views.get(cover);
-            if (task != null) { // add new ImageView to populate on finish
-                task.views.add(image);
-                task.progress.add(progress);
-            }
-            if (task == null) {
-                task = new DownloadImageTask(progress, image, cover);
-                views.put(cover, task);
-                images.put(image, task);
-                execute(task);
-            }
-            if (task.bm != null) {
-                image.setImageBitmap(task.bm);
-            } else {
-                image.setImageResource(R.drawable.ic_image_black_24dp);
-            }
-            for (ProgressBar p : task.progress) {
-                p.setVisibility(task.done ? View.GONE : View.VISIBLE);
-            }
         }
-
-        return convertView;
+        task = downloadItems.get(item);
+        if (task != null) { // add new ImageView to populate on finish
+            if (task.done) {
+                updateView(task, item, view);
+                return;
+            }
+            task.views.add(view);
+        }
+        if (task == null) {
+            task = new DownloadImageTask(this, item, view);
+            downloadViews.put(view, task);
+            downloadItems.put(item, task);
+            execute(task);
+        }
+        updateView(task, item, view);
     }
 
     @Override
@@ -250,18 +230,56 @@ public abstract class UriImagesAdapter extends ThreadPoolExecutor implements Lis
     }
 
     public void clearTasks() {
-        for (Uri item : views.keySet()) {
-            DownloadImageTask t = views.get(item);
-            t.cancel(true);
+        for (Object item : downloadViews.keySet()) {
+            DownloadImageTask t = downloadViews.get(item);
+            cancel(t);
         }
-        views.clear();
-        for (ImageView item : images.keySet()) {
-            DownloadImageTask t = images.get(item);
-            t.cancel(true);
+        downloadViews.clear();
+
+        for (Object item : downloadItems.keySet()) {
+            DownloadImageTask t = downloadItems.get(item);
+            cancel(t);
         }
-        images.clear();
+        downloadItems.clear();
 
         tasks.clear();
         runs.clear();
+    }
+
+    public Bitmap downloadImage(Uri cover) {
+        Bitmap bm = null;
+        try {
+            String s = cover.getScheme();
+            if (s.startsWith(WebViewCustom.SCHEME_HTTP)) {
+                InputStream in = new URL(cover.toString()).openStream();
+                bm = BitmapFactory.decodeStream(in);
+            } else {
+                bm = BitmapFactory.decodeFile(cover.getPath());
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "broken download", e);
+        }
+        return bm;
+    }
+
+    public void updateView(DownloadImageTask task, ImageView image, ProgressBar progress) {
+        if (task.bm != null) {
+            image.setImageBitmap(task.bm);
+        } else {
+            image.setImageResource(R.drawable.ic_image_black_24dp);
+        }
+        progress.setVisibility(task.done ? View.GONE : View.VISIBLE);
+    }
+
+    public Bitmap downloadImageTask(DownloadImageTask task) {
+        return null;
+    }
+
+    public void downloadTaskDone(DownloadImageTask task) {
+        for (Object o : task.views)
+            updateView(task, task.item, o);
+    }
+
+    public void updateView(DownloadImageTask task, Object item, Object view) {
     }
 }
