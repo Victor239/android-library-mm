@@ -121,8 +121,11 @@ public class Storage {
     }
 
     public static long getFree(File f) {
-        while (!f.exists())
+        while (!f.exists()) {
             f = f.getParentFile();
+            if (f == null)
+                return 0;
+        }
         StatFs fsi = new StatFs(f.getPath());
         if (Build.VERSION.SDK_INT < 18)
             return fsi.getBlockSize() * (long) fsi.getAvailableBlocks();
