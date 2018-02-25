@@ -1,5 +1,6 @@
 package com.github.axet.androidlibrary.widgets;
 
+import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.ContentResolver;
@@ -127,6 +128,10 @@ public class OpenChoicer {
         this.readonly = readonly;
     }
 
+    public void setContext(Context context) {
+        this.context = context;
+    }
+
     public void setPermissionsDialog(Fragment f, String[] ss, int code) {
         activityCheck(f.getActivity());
         this.context = f.getContext();
@@ -171,6 +176,16 @@ public class OpenChoicer {
         }
         if (f != null) {
             if (Storage.permitted(f, perms, permsresult))
+                fileDialog();
+            return; // perms shown
+        }
+        if (context != null) {
+            String[] pp;
+            if (readonly)
+                pp = new String[]{Manifest.permission.READ_EXTERNAL_STORAGE};
+            else
+                pp = new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
+            if (Storage.permitted(context, pp))
                 fileDialog();
             return; // perms shown
         }

@@ -46,6 +46,7 @@ public class StoragePathPreferenceCompat extends EditTextPreference {
         };
         choicer.def = def;
         choicer.setTitle(getTitle().toString());
+        choicer.setContext(getContext());
     }
 
     @Override
