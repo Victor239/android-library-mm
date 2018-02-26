@@ -52,31 +52,47 @@ public abstract class AppCompatThemeActivity extends AppCompatActivity {
         public Runnable off = new Runnable() {
             @Override
             public void run() { // call once after boot (some phones ignores moveTaskToBack first call after boot)
-                Intent main = new Intent(Intent.ACTION_MAIN);
-                main.addCategory(Intent.CATEGORY_HOME);
-                main.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                a.startActivity(main);
-                a.overridePendingTransition(0, 0);
+                try {
+                    startHome();
+                } catch (SecurityException e) { // hueway phones
+                    Log.d(TAG, "startHome failed", e);
+                }
                 off = new Runnable() {
                     @Override
                     public void run() {
-                        a.moveTaskToBack(true);
-                        a.overridePendingTransition(0, 0);
+                        try {
+                            moveTaskToBack();
+                        } catch (Exception e) { // NullPointerException on some 7.0 phones
+                            Log.d(TAG, "moveTaskToBack failed", e);
+                            startHome();
+                        }
                     }
                 };
             }
         };
-        public IntentFilter screenfilter = new IntentFilter();
+        public IntentFilter filter = new IntentFilter();
 
-        public ScreenReceiver(Activity a) {
-            this.a = a;
-            screenfilter.addAction(Intent.ACTION_SCREEN_ON);
-            screenfilter.addAction(Intent.ACTION_SCREEN_OFF);
-            registerReceiver();
+        public ScreenReceiver() {
+            filter.addAction(Intent.ACTION_SCREEN_ON);
+            filter.addAction(Intent.ACTION_SCREEN_OFF);
         }
 
-        public void registerReceiver() {
-            a.registerReceiver(this, screenfilter);
+        public void registerReceiver(Activity a) {
+            this.a = a;
+            this.a.registerReceiver(this, filter);
+        }
+
+        public void startHome() {
+            Intent main = new Intent(Intent.ACTION_MAIN);
+            main.addCategory(Intent.CATEGORY_HOME);
+            main.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            a.startActivity(main);
+            a.overridePendingTransition(0, 0);
+        }
+
+        public void moveTaskToBack() {
+            a.moveTaskToBack(true);
+            a.overridePendingTransition(0, 0);
         }
 
         public void close() {
@@ -89,12 +105,8 @@ public abstract class AppCompatThemeActivity extends AppCompatActivity {
             if (a == null)
                 return;
             if (a.equals(Intent.ACTION_SCREEN_OFF)) {
-                moveTaskToBack();
+                off.run();
             }
-        }
-
-        public void moveTaskToBack() {
-            off.run();
         }
     }
 

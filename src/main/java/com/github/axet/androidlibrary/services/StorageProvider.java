@@ -140,6 +140,8 @@ public class StorageProvider extends ContentProvider {
     }
 
     public static String getAuthority() {
+        if (info == null)
+            return null; // service never been initalized (low api?)
         return info.authority;
     }
 
