@@ -56,6 +56,7 @@ public abstract class AppCompatThemeActivity extends AppCompatActivity {
                     startHome();
                 } catch (SecurityException e) { // hueway phones
                     Log.d(TAG, "startHome failed", e);
+                    moveTaskToBack();
                 }
                 off = new Runnable() {
                     @Override
