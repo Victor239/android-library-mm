@@ -49,6 +49,7 @@ public class Storage {
     protected static boolean permittedForce = false; // bugged phones has no PackageManager.ACTION_REQUEST_PERMISSIONS acitivty allow it all
 
     public static final String PATH_TREE = "tree";
+    public static final String[] PERMISSIONS_RO = new String[]{Manifest.permission.READ_EXTERNAL_STORAGE};
     public static final String[] PERMISSIONS_RW = new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
     public static final String SAF = "com.android.externalstorage";
 

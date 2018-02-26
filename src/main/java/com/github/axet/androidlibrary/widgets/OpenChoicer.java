@@ -180,15 +180,11 @@ public class OpenChoicer {
             return; // perms shown
         }
         if (context != null) {
-            String[] pp;
-            if (readonly)
-                pp = new String[]{Manifest.permission.READ_EXTERNAL_STORAGE};
-            else
-                pp = new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
-            if (Storage.permitted(context, pp))
+            if (Storage.permitted(context, readonly ? Storage.PERMISSIONS_RO : Storage.PERMISSIONS_RW))
                 fileDialog();
             return; // perms shown
         }
+        Log.e(TAG, "Not setStorageAccessFramework or setPermissionsDialog called");
         onDismiss(); // all failed, dismissed
     }
 
