@@ -53,4 +53,15 @@
 
     <string name="not_permitted">İzin verilmedi</string>
     <string name="close">Close</string>
+
+    <string-array name="screen_lock_text">
+        <item>System Default</item>
+        <item>Keep On</item>
+        <item>Off after 30 sec</item>
+        <item>Off after 1 min</item>
+        <item>Off after 5 min</item>
+        <item>Off after 30 min</item>
+    </string-array>
+    <string name="pref_screenlock_summary">Keep screen on or off while app active</string>
+    <string name="pref_screenlock_title">Keep Screen On</string>
 </resources>
