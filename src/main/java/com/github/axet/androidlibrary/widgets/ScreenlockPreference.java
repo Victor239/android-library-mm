@@ -15,10 +15,9 @@ import android.view.WindowManager;
 public class ScreenlockPreference extends ListPreference {
     public static Handler handler = new Handler(Looper.getMainLooper());
 
-    public static void showLocked(Context context, Window window, String key) {
-        window.addFlags(WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD |
-                WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
-                WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
+    public static void showLocked(Window window, String key) {
+        Context context = window.getContext();
+        window.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
         SharedPreferences shared = PreferenceManager.getDefaultSharedPreferences(context);
         int sec = Integer.parseInt(shared.getString(key, "0"));
         switch (sec) {

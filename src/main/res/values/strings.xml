@@ -71,7 +71,5 @@
         <item>300</item>
         <item>1800</item>
     </string-array>
-
-    <string name="pref_screenlock_summary">Keep screen on or off while app active</string>
     <string name="pref_screenlock_title">Keep Screen On</string>
 </resources>
