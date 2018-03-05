@@ -21,9 +21,9 @@ public class ScreenlockPreference extends ListPreference {
         SharedPreferences shared = PreferenceManager.getDefaultSharedPreferences(context);
         int sec = Integer.parseInt(shared.getString(key, "0"));
         switch (sec) {
-            case -1:
+            case -1: // no need to keep on
                 break;
-            case 0:
+            case 0: // no need for delay handler call
                 keepScreenOn(true, window, key);
                 break;
         }

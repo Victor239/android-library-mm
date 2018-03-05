@@ -144,7 +144,7 @@ public class TreeListView extends ListView {
             case MotionEvent.ACTION_MOVE:
                 break;
             case MotionEvent.ACTION_UP:
-                if (ev.getX() == last.getX() && ev.getY() == last.getY()) {
+                if (last != null && ev.getX() == last.getX() && ev.getY() == last.getY()) {
                     int first = getFirstVisiblePosition();
                     int motionPosition = pointToPosition((int) ev.getX(), (int) ev.getY());
                     View child = getChildAt(motionPosition - first);
