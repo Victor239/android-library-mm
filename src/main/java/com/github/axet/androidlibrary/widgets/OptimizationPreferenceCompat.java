@@ -1,5 +1,6 @@
 package com.github.axet.androidlibrary.widgets;
 
+import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.Service;
 import android.content.BroadcastReceiver;
@@ -21,6 +22,7 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.preference.Preference;
 import android.support.v7.preference.SwitchPreferenceCompat;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.github.axet.androidlibrary.R;
@@ -37,18 +39,20 @@ import java.util.List;
  * &lt;uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" /&gt;
  */
 public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
+    public static String TAG = OptimizationPreferenceCompat.class.getSimpleName();
+
     // http://stackoverflow.com/questions/31638986/protected-apps-setting-on-huawei-phones-and-how-to-handle-it/35220476
-    static Intent huawei = IntentClassName("com.huawei.systemmanager", "com.huawei.systemmanager.optimize.process.ProtectActivity");
+    public static Intent huawei = IntentClassName("com.huawei.systemmanager", "com.huawei.systemmanager.optimize.process.ProtectActivity");
     // http://stackoverflow.com/questions/37205106/how-do-i-avoid-that-my-app-enters-optimization-on-samsung-devices
     // http://stackoverflow.com/questions/34074955/android-exact-alarm-is-always-3-minutes-off/34085645#34085645
-    static Intent samsung = IntentClassName("com.samsung.android.sm", "com.samsung.android.sm.ui.battery.BatteryActivity");
+    public static Intent samsung = IntentClassName("com.samsung.android.sm", "com.samsung.android.sm.ui.battery.BatteryActivity");
     // http://www.ithao123.cn/content-11070929.html
-    static Intent miui = IntentClassName("com.miui.securitycenter", "com.miui.permcenter.autostart.AutoStartManagementActivity");
-    static Intent vivo = IntentClassName("com.iqoo.secure", "com.iqoo.secure.ui.phoneoptimize.AddWhiteListActivity");
-    static Intent oppo = IntentClassName("com.coloros.oppoguardelf", "com.coloros.powermanager.fuelgaue.PowerUsageModelActivity");
+    public static Intent miui = IntentClassName("com.miui.securitycenter", "com.miui.permcenter.autostart.AutoStartManagementActivity");
+    public static Intent vivo = IntentClassName("com.iqoo.secure", "com.iqoo.secure.ui.phoneoptimize.AddWhiteListActivity");
+    public static Intent oppo = IntentClassName("com.coloros.oppoguardelf", "com.coloros.powermanager.fuelgaue.PowerUsageModelActivity");
 
-    static Intent[] ALL = new Intent[]{huawei, samsung, miui, vivo, oppo};
-    static Intent[] COMMON = new Intent[]{miui, vivo, oppo};
+    public static Intent[] ALL = new Intent[]{huawei, samsung, miui, vivo, oppo};
+    public static Intent[] COMMON = new Intent[]{miui, vivo, oppo};
 
     public static int REFRESH = AlarmManager.MIN15;
     public static int CHECK_DELAY = AlarmManager.MIN5;
@@ -415,6 +419,8 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
             Intent intent = new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
             startActivity(context, intent);
         } else {
+            if (context.getPackageManager().checkPermission(Manifest.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, context.getPackageName()) != PackageManager.PERMISSION_GRANTED)
+                Log.e(TAG, "Permission not granted: " + Manifest.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
             Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
             intent.setData(Uri.parse("package:" + n));
             if (!startActivity(context, intent)) { // some samsung phones does not have this
