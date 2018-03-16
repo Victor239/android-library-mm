@@ -49,7 +49,7 @@
 
     <string name="open_browser">ब्राउजर खोल्नुहोस</string>
     <string name="are_you_sure">के तपाईँ निश्चित हुनुहुन्छ?</string>
-    <string name="default_folder">पूर्वनिर्धारित</string>
+    <string name="default_button">पूर्वनिर्धारित</string>
 
     <string name="not_permitted">अनुमति छैन</string>
     <string name="close">बन्द गर्नुहोस्</string>

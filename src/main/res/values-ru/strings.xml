@@ -54,7 +54,7 @@
     <string name="menu_about">О программе</string>
     <string name="open_browser">Открыть браузер</string>
     <string name="are_you_sure">Вы уверены?</string>
-    <string name="default_folder">Default</string>
+    <string name="default_button">Default</string>
     <string name="not_permitted">Доступ запрещен</string>
     <string name="close">Close</string>
 

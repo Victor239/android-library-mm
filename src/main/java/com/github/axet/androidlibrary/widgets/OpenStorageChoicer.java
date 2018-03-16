@@ -40,7 +40,7 @@ public class OpenStorageChoicer extends OpenChoicer {
         final OpenFileDialog d = super.fileDialogBuild();
 
         if (def != null) {
-            d.setNeutralButton(R.string.default_folder, new DialogInterface.OnClickListener() {
+            d.setNeutralButton(R.string.default_button, new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     File path = new File(getDefault(), def);

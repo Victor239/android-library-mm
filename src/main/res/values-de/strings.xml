@@ -49,7 +49,7 @@
 
     <string name="open_browser">Webbrowser öffnen</string>
     <string name="are_you_sure">Bist du sicher?</string>
-    <string name="default_folder">Standard</string>
+    <string name="default_button">Standard</string>
     <string name="not_permitted">Nicht erlaubt</string>
     <string name="close">Schließen</string>
 

@@ -49,7 +49,7 @@
 
     <string name="open_browser">Άνοιγμα Φυλλομετρητή</string>
     <string name="are_you_sure">Είσαι σίγουρος?</string>
-    <string name="default_folder">Προεπιλογή</string>
+    <string name="default_button">Προεπιλογή</string>
 
     <string name="not_permitted">Δεν επιτρέπεται</string>
     <string name="close">Κλείσιμο</string>

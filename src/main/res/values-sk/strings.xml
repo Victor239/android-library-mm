@@ -50,7 +50,7 @@
     <string name="menu_about">O programe</string>
     <string name="open_browser">Otvoriť prehliadač</string>
     <string name="are_you_sure">Ste si istí?</string>
-    <string name="default_folder">Default</string>
+    <string name="default_button">Default</string>
     <string name="not_permitted">Nepovolené</string>
     <string name="close">Close</string>
 

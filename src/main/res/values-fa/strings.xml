@@ -49,7 +49,7 @@
 
     <string name="open_browser">باز کردن مرورگر</string>
     <string name="are_you_sure">آیا مطمئنید؟</string>
-    <string name="default_folder">پیشفرض</string>
+    <string name="default_button">پیشفرض</string>
 
     <string name="not_permitted">اجازه ندارد</string>
     <string name="close">بستن</string>

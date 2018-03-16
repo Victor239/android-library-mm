@@ -49,7 +49,7 @@
 
     <string name="open_browser">Tarayıcıyı Aç</string>
     <string name="are_you_sure">Emin misiniz?</string>
-    <string name="default_folder">Öntanımlı</string>
+    <string name="default_button">Öntanımlı</string>
 
     <string name="not_permitted">İzin verilmedi</string>
     <string name="close">Close</string>
