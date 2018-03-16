@@ -2,6 +2,7 @@ package com.github.axet.androidlibrary.widgets;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Color;
@@ -12,7 +13,10 @@ import android.support.v4.app.Fragment;
 import android.support.v4.content.SharedPreferencesCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.preference.DialogPreference;
+import android.support.v7.preference.ListPreference;
+import android.support.v7.preference.Preference;
 import android.support.v7.preference.PreferenceDialogFragmentCompat;
+import android.support.v7.preference.PreferenceManager;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -24,18 +28,19 @@ import android.widget.TextView;
 public class SeekBarPreference extends DialogPreference {
     private float value = 0;
 
+    public static void show(Fragment f, String key) {
+        SeekBarPreferenceDialogFragment d = SeekBarPreferenceDialogFragment.newInstance(key);
+        d.setTargetFragment(f, 0);
+        d.show(f.getFragmentManager(), "android.support.v7.preference.PreferenceFragment.DIALOG");
+    }
+
     public static class SeekBarPreferenceDialogFragment extends PreferenceDialogFragmentCompat {
         private boolean mPreferenceChanged;
 
         float value;
+        TextView valueText;
 
         public SeekBarPreferenceDialogFragment() {
-        }
-
-        public static void show(Fragment f, String key) {
-            SeekBarPreferenceDialogFragment d = SeekBarPreferenceDialogFragment.newInstance(key);
-            d.setTargetFragment(f, 0);
-            d.show(f.getFragmentManager(), "android.support.v7.preference.PreferenceFragment.DIALOG");
         }
 
         public static SeekBarPreferenceDialogFragment newInstance(String key) {
@@ -99,8 +104,8 @@ public class SeekBarPreference extends DialogPreference {
 
             lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             lp.gravity = Gravity.CENTER;
-            final TextView valueText = new TextView(context);
-            valueText.setText("" + value);
+            valueText = new TextView(context);
+            updateText();
             valueText.setTextColor(getThemeColor(android.R.attr.textColorSecondary));
             layout.addView(valueText, lp);
 
@@ -109,7 +114,7 @@ public class SeekBarPreference extends DialogPreference {
                 public void onProgressChanged(SeekBar seekBar, int newValue, boolean fromUser) {
                     mPreferenceChanged = true;
                     value = newValue / 100f;
-                    valueText.setText(String.valueOf((int) (value * 100)) + " %");
+                    updateText();
                 }
 
                 @Override
@@ -125,6 +130,11 @@ public class SeekBarPreference extends DialogPreference {
             seekBar.setProgress((int) (value * 100));
 
             builder.setView(layout);
+        }
+
+        void updateText() {
+            SeekBarPreference preference = (SeekBarPreference) getPreference();
+            valueText.setText(preference.format(value));
         }
 
         @Override
@@ -152,7 +162,6 @@ public class SeekBarPreference extends DialogPreference {
 
     public void setValue(float f) {
         this.value = f;
-
         if (this.shouldPersist()) {
             SharedPreferences.Editor editor = this.getPreferenceManager().getSharedPreferences().edit();
             editor.putFloat(this.getKey(), value);
@@ -174,6 +183,14 @@ public class SeekBarPreference extends DialogPreference {
             value = (Float) defaultValue;
             persistFloat(value);
         }
+    }
+
+    public void updateSummary() {
+        setSummary(format(value));
+    }
+
+    public String format(float value) {
+        return String.valueOf((int) (value * 100)) + " %";
     }
 
     @Override
