@@ -26,7 +26,7 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 public class SeekBarPreference extends DialogPreference {
-    private float value = 0;
+    public float value = 0;
 
     public static void show(Fragment f, String key) {
         SeekBarPreferenceDialogFragment d = SeekBarPreferenceDialogFragment.newInstance(key);
@@ -35,10 +35,11 @@ public class SeekBarPreference extends DialogPreference {
     }
 
     public static class SeekBarPreferenceDialogFragment extends PreferenceDialogFragmentCompat {
-        private boolean mPreferenceChanged;
+        public boolean mPreferenceChanged;
 
-        float value;
-        TextView valueText;
+        public float value;
+        public TextView valueText;
+        public SeekBar seekBar;
 
         public SeekBarPreferenceDialogFragment() {
         }
@@ -66,7 +67,6 @@ public class SeekBarPreference extends DialogPreference {
         @Override
         public void onSaveInstanceState(@NonNull Bundle outState) {
             super.onSaveInstanceState(outState);
-
             outState.putFloat("value", value);
             outState.putBoolean("changed", mPreferenceChanged);
         }
@@ -96,8 +96,6 @@ public class SeekBarPreference extends DialogPreference {
 
             LinearLayout.LayoutParams lp;
 
-            SeekBar seekBar = null;
-
             lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             seekBar = new SeekBar(context);
             layout.addView(seekBar, lp);
@@ -112,6 +110,8 @@ public class SeekBarPreference extends DialogPreference {
             seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
                 @Override
                 public void onProgressChanged(SeekBar seekBar, int newValue, boolean fromUser) {
+                    if (!fromUser)
+                        return;
                     mPreferenceChanged = true;
                     value = newValue / 100f;
                     updateText();
@@ -132,7 +132,7 @@ public class SeekBarPreference extends DialogPreference {
             builder.setView(layout);
         }
 
-        void updateText() {
+        public void updateText() {
             SeekBarPreference preference = (SeekBarPreference) getPreference();
             valueText.setText(preference.format(value));
         }
@@ -145,7 +145,6 @@ public class SeekBarPreference extends DialogPreference {
                     preference.setValue(value);
                 }
             }
-
             this.mPreferenceChanged = false;
         }
     }
