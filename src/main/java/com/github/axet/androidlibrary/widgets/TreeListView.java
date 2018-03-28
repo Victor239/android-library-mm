@@ -3,6 +3,7 @@ package com.github.axet.androidlibrary.widgets;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.support.annotation.Nullable;
+import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
@@ -44,6 +45,14 @@ public class TreeListView extends ListView {
         public TreeNode(TreeNode p, Object tag) {
             this(p);
             this.tag = tag;
+        }
+    }
+
+    public static class TreeHolder {
+        public View itemView;
+
+        public TreeHolder(View itemView) {
+            this.itemView = itemView;
         }
     }
 
