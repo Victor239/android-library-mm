@@ -64,7 +64,7 @@ public class HeaderRecyclerAdapter extends RecyclerView.Adapter implements Wrapp
         notifyDataSetChanged();
     }
 
-    void setGridHeaderFooter(RecyclerView.LayoutManager layoutManager) {
+    void updateGridHeaderFooter(RecyclerView.LayoutManager layoutManager) {
         if (layoutManager instanceof GridLayoutManager) {
             final GridLayoutManager gridLayoutManager = (GridLayoutManager) layoutManager;
             gridLayoutManager.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
@@ -93,7 +93,7 @@ public class HeaderRecyclerAdapter extends RecyclerView.Adapter implements Wrapp
     public void onAttachedToRecyclerView(RecyclerView recyclerView) {
         super.onAttachedToRecyclerView(recyclerView);
         layoutManager = recyclerView.getLayoutManager();
-        setGridHeaderFooter(layoutManager);
+        updateGridHeaderFooter(layoutManager);
     }
 
     @Override
@@ -142,6 +142,9 @@ public class HeaderRecyclerAdapter extends RecyclerView.Adapter implements Wrapp
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
         if (getItemViewType(position) == TYPE_HEADER || getItemViewType(position) == TYPE_FOOTER) {
             return;
+        }
+        if (holder instanceof WrapperRecyclerAdapter.ViewHolder) {
+            ((WrapperRecyclerAdapter.ViewHolder) holder).adapter = this;
         }
         wrapped.onBindViewHolder(holder, hasHeader() ? position - 1 : position);
     }

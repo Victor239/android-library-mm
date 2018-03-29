@@ -11,13 +11,13 @@ import android.view.ViewGroup;
 
 import java.util.ArrayList;
 
-public class TreeRecyclerView extends RecyclerView {
+public class TreeRecyclerView extends HeaderRecyclerView {
 
     public OnToggleListener toggleListener;
     public MotionEvent last;
     public LinearLayoutManager layout;
 
-    public static class TreeHolder extends ViewHolder {
+    public static class TreeHolder extends WrapperRecyclerAdapter.ViewHolder {
         public TreeHolder(View itemView) {
             super(itemView);
         }
