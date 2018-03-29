@@ -1,5 +1,6 @@
 package com.github.axet.androidlibrary.widgets;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
@@ -11,9 +12,18 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 
 import com.github.axet.androidlibrary.R;
+import com.github.axet.androidlibrary.crypto.MD5;
 
+import org.apache.commons.io.IOUtils;
+
+import java.io.File;
+import java.io.FileDescriptor;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URL;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -25,8 +35,10 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class UriImagesAdapter {
-    public static final String TAG = UriImagesAdapter.class.getSimpleName();
+public class CacheImagesAdapter {
+    public static final String TAG = CacheImagesAdapter.class.getSimpleName();
+
+    public static int CACHE_DAYS = 30;
 
     public static final int CPU_COUNT = Runtime.getRuntime().availableProcessors();
     public static final int CORE_POOL_SIZE = Math.max(2, Math.min(CPU_COUNT - 1, 4));
@@ -43,6 +55,8 @@ public class UriImagesAdapter {
         }
     };
 
+    public Context context;
+    public File cache;
     public Map<Object, DownloadImageTask> downloadViews = new HashMap<>();
     public Map<Object, DownloadImageTask> downloadItems = new HashMap<>();
     public Map<DownloadImageTask, Runnable> tasks = new ConcurrentHashMap<>();
@@ -108,9 +122,9 @@ public class UriImagesAdapter {
         public HashSet<Object> views = new HashSet<>(); // one task can set multiple ImageView's, except reused ones;
         public boolean start; // start download thread
         public boolean done; // done downloading (may be failed)
-        UriImagesAdapter a;
+        CacheImagesAdapter a;
 
-        public DownloadImageTask(UriImagesAdapter a, Object item, Object v) {
+        public DownloadImageTask(CacheImagesAdapter a, Object item, Object v) {
             this.a = a;
             this.item = item;
             views.add(v);
@@ -135,7 +149,37 @@ public class UriImagesAdapter {
         }
     }
 
-    public UriImagesAdapter() {
+    public CacheImagesAdapter(Context context) {
+        cache = new File(context.getCacheDir(), "images");
+        if (!cache.exists() && !cache.mkdirs())
+            throw new RuntimeException("unable to create cache");
+        cacheClear();
+    }
+
+    public File cacheUri(Uri u) {
+        return new File(cache, MD5.digest(u.toString()));
+    }
+
+    public void cacheClear() {
+        File[] ff = cache.listFiles();
+        if (ff == null)
+            return;
+        Calendar c = Calendar.getInstance();
+        c.add(Calendar.DAY_OF_MONTH, -CACHE_DAYS);
+        for (File f : ff) {
+            long last = f.lastModified();
+            if (last < c.getTimeInMillis())
+                f.delete();
+        }
+    }
+
+    public void cachePurge() {
+        File[] ff = cache.listFiles();
+        if (ff == null)
+            return;
+        for (File f : ff) {
+            f.delete();
+        }
     }
 
     public void refresh() {
@@ -205,19 +249,31 @@ public class UriImagesAdapter {
     }
 
     public Bitmap downloadImage(Uri cover) {
-        Bitmap bm = null;
         try {
             String s = cover.getScheme();
             if (s.startsWith(WebViewCustom.SCHEME_HTTP)) {
+                File f = cacheUri(cover);
+                if (f.length() > 0) {
+                    try {
+                        return BitmapFactory.decodeStream(new FileInputStream(f));
+                    } catch (Exception e) {
+                        Log.d(TAG, "unable to read cache", e);
+                        f.delete();
+                    }
+                }
                 InputStream in = new URL(cover.toString()).openStream();
-                bm = BitmapFactory.decodeStream(in);
+                FileOutputStream out = new FileOutputStream(f);
+                IOUtils.copy(in, out);
+                in.close();
+                out.close();
+                return BitmapFactory.decodeStream(new FileInputStream(f));
             } else {
-                bm = BitmapFactory.decodeFile(cover.getPath());
+                return BitmapFactory.decodeFile(cover.getPath());
             }
         } catch (Exception e) {
             Log.e(TAG, "broken download", e);
         }
-        return bm;
+        return null;
     }
 
     public void updateView(DownloadImageTask task, ImageView image, ProgressBar progress) {
