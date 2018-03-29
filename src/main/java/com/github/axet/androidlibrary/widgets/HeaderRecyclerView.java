@@ -22,8 +22,11 @@ public class HeaderRecyclerView extends RecyclerView {
     public void setLayoutManager(LayoutManager layout) {
         super.setLayoutManager(layout);
         Adapter a = getAdapter();
-        if (a instanceof HeaderRecyclerAdapter) {
-            ((HeaderRecyclerAdapter) a).setGridHeaderFooter(layout);
+        while (a instanceof WrapperRecyclerAdapter) {
+            if (a instanceof HeaderRecyclerAdapter) {
+                ((HeaderRecyclerAdapter) a).updateGridHeaderFooter(layout);
+            }
+            a = ((WrapperRecyclerAdapter) a).getWrappedAdapter();
         }
     }
 }
