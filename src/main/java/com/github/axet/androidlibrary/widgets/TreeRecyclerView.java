@@ -15,6 +15,7 @@ public class TreeRecyclerView extends RecyclerView {
 
     public OnToggleListener toggleListener;
     public MotionEvent last;
+    public LinearLayoutManager layout;
 
     public static class TreeHolder extends ViewHolder {
         public TreeHolder(View itemView) {
@@ -113,7 +114,8 @@ public class TreeRecyclerView extends RecyclerView {
     }
 
     public void create() {
-        setLayoutManager(new LinearLayoutManager(getContext()));
+        layout = new LinearLayoutManager(getContext());
+        setLayoutManager(layout);
     }
 
     public void setOnToggleListener(OnToggleListener l) {
@@ -231,5 +233,9 @@ public class TreeRecyclerView extends RecyclerView {
                 break;
         }
         return super.onTouchEvent(e);
+    }
+
+    public void setSelection(int pos) { // like ListView.setSelection
+        layout.scrollToPositionWithOffset(pos, 0);
     }
 }
