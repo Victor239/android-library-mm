@@ -47,6 +47,10 @@ public abstract class CacheImagesRecyclerAdapter<T extends RecyclerView.ViewHold
         return adapter.cacheUri(u);
     }
 
+    public void cacheClear() {
+        adapter.cacheClear();
+    }
+
     public Context getContext() {
         return adapter.context;
     }

@@ -47,6 +47,10 @@ public abstract class CacheImagesListAdapter extends BaseAdapter {
         return adapter.cacheUri(u);
     }
 
+    public void cacheClear() {
+        adapter.cacheClear();
+    }
+
     public Context getContext() {
         return adapter.context;
     }
