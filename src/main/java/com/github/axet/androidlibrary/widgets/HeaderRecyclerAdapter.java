@@ -146,7 +146,7 @@ public class HeaderRecyclerAdapter extends RecyclerView.Adapter implements Wrapp
         if (holder instanceof WrapperRecyclerAdapter.ViewHolder) {
             ((WrapperRecyclerAdapter.ViewHolder) holder).adapter = this;
         }
-        wrapped.onBindViewHolder(holder, hasHeader() ? position - 1 : position);
+        wrapped.onBindViewHolder(holder, getWrappedPosition(position));
     }
 
     @Override
