@@ -66,7 +66,7 @@ public class HeaderRecyclerAdapter extends RecyclerView.Adapter implements Wrapp
     void updateEmpty() {
         if (empty == null)
             return;
-        if (getItemCount() == 0)
+        if (wrapped.getItemCount() == 0)
             empty.setVisibility(View.VISIBLE);
         else
             empty.setVisibility(View.GONE);
