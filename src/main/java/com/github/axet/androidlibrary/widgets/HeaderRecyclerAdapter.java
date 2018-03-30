@@ -14,12 +14,14 @@ public class HeaderRecyclerAdapter extends RecyclerView.Adapter implements Wrapp
     protected RecyclerView.LayoutManager layoutManager;
     protected final RecyclerView.Adapter wrapped;
     protected View headerView, footerView;
+    protected View empty;
 
     public HeaderRecyclerAdapter(@NonNull RecyclerView.Adapter wrapped) {
         this.wrapped = wrapped;
         this.wrapped.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
             public void onChanged() {
                 notifyDataSetChanged();
+                updateEmpty();
             }
 
             public void onItemRangeChanged(int positionStart, int itemCount) {
@@ -30,11 +32,13 @@ public class HeaderRecyclerAdapter extends RecyclerView.Adapter implements Wrapp
             public void onItemRangeInserted(int positionStart, int itemCount) {
                 int start = hasHeader() ? 1 : 0;
                 notifyItemRangeInserted(positionStart + start, itemCount);
+                updateEmpty();
             }
 
             public void onItemRangeRemoved(int positionStart, int itemCount) {
                 int start = hasHeader() ? 1 : 0;
                 notifyItemRangeRemoved(positionStart + start, itemCount);
+                updateEmpty();
             }
 
             public void onItemRangeMoved(int fromPosition, int toPosition, int itemCount) {
@@ -49,19 +53,23 @@ public class HeaderRecyclerAdapter extends RecyclerView.Adapter implements Wrapp
         notifyDataSetChanged();
     }
 
-    public void removeHeaderView() {
-        headerView = null;
-        notifyDataSetChanged();
-    }
-
     public void setFooterView(View view) {
         footerView = view;
         notifyDataSetChanged();
     }
 
-    public void removeFooterView() {
-        footerView = null;
-        notifyDataSetChanged();
+    public void setEmptyView(View v) {
+        empty = v;
+        updateEmpty();
+    }
+
+    void updateEmpty() {
+        if (empty == null)
+            return;
+        if (getItemCount() == 0)
+            empty.setVisibility(View.VISIBLE);
+        else
+            empty.setVisibility(View.GONE);
     }
 
     void updateGridHeaderFooter(RecyclerView.LayoutManager layoutManager) {
