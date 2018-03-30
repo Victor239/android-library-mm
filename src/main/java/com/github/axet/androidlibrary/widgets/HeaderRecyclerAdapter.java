@@ -109,7 +109,7 @@ public class HeaderRecyclerAdapter extends RecyclerView.Adapter implements Wrapp
         if (hasFooter() && position == getItemCount() - 1) {
             return TYPE_FOOTER;
         }
-        return wrapped.getItemViewType(hasHeader() ? position - 1 : position);
+        return wrapped.getItemViewType(getWrappedPosition(position));
     }
 
     @Override
