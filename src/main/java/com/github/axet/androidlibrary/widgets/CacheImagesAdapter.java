@@ -12,6 +12,7 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 
 import com.github.axet.androidlibrary.R;
+import com.github.axet.androidlibrary.app.Storage;
 import com.github.axet.androidlibrary.crypto.MD5;
 
 import org.apache.commons.io.IOUtils;
@@ -42,6 +43,7 @@ public class CacheImagesAdapter {
 
     public static int CACHE_MB = 30;
     public static int CACHE_DAYS = 30;
+    public static String CACHE_NAME = "cacheimages";
 
     public static final int CPU_COUNT = Runtime.getRuntime().availableProcessors();
     public static final int CORE_POOL_SIZE = Math.max(2, Math.min(CPU_COUNT - 1, 4));
@@ -66,7 +68,6 @@ public class CacheImagesAdapter {
     };
 
     public Context context;
-    public File cache;
     public Map<Object, DownloadImageTask> downloadViews = new HashMap<>();
     public Map<Object, DownloadImageTask> downloadItems = new HashMap<>();
     public Map<DownloadImageTask, Runnable> tasks = new ConcurrentHashMap<>();
@@ -161,21 +162,29 @@ public class CacheImagesAdapter {
 
     public CacheImagesAdapter(Context context) {
         this.context = context;
-        cache = new File(context.getCacheDir(), "images");
-        if (!cache.exists() && !cache.mkdirs())
-            throw new RuntimeException("unable to create cache");
-        cacheClear();
     }
 
     public Context getContext() {
         return context;
     }
 
+    public File getCache() {
+        File cache = context.getExternalCacheDir();
+        if (cache == null || !Storage.canWrite(cache))
+            cache = context.getCacheDir();
+        cache = new File(cache, CACHE_NAME);
+        if (!cache.exists() && !cache.mkdirs())
+            throw new RuntimeException("unable to create cache");
+        return cache;
+    }
+
     public File cacheUri(Uri u) {
+        File cache = getCache();
         return new File(cache, MD5.digest(u.toString()));
     }
 
     synchronized public void cacheClear() {
+        File cache = getCache();
         File[] ff = cache.listFiles();
         if (ff == null)
             return;
@@ -200,6 +209,7 @@ public class CacheImagesAdapter {
     }
 
     public void cachePurge() {
+        File cache = getCache();
         File[] ff = cache.listFiles();
         if (ff == null)
             return;
