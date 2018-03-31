@@ -3,8 +3,9 @@ package com.github.axet.androidlibrary.widgets;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.support.annotation.Nullable;
-import android.support.v7.widget.RecyclerView;
+import android.support.v4.view.GestureDetectorCompat;
 import android.util.AttributeSet;
+import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,14 +13,13 @@ import android.widget.Adapter;
 import android.widget.BaseAdapter;
 import android.widget.HeaderViewListAdapter;
 import android.widget.ListView;
-import android.widget.WrapperListAdapter;
 
 import java.util.ArrayList;
 
 public class TreeListView extends ListView {
 
     public OnToggleListener toggleListener;
-    public MotionEvent last;
+    public GestureDetectorCompat gestures;
 
     public static class TreeNode {
         public TreeNode parent;
@@ -109,6 +109,42 @@ public class TreeListView extends ListView {
 
     public TreeListView(Context context) {
         super(context);
+        gestures = new GestureDetectorCompat(context, new GestureDetector.OnGestureListener() {
+            @Override
+            public boolean onDown(MotionEvent e) {
+                return false;
+            }
+
+            @Override
+            public void onShowPress(MotionEvent e) {
+            }
+
+            @Override
+            public boolean onSingleTapUp(MotionEvent e) {
+                int first = getFirstVisiblePosition();
+                int motionPosition = pointToPosition((int) e.getX(), (int) e.getY());
+                View child = getChildAt(motionPosition - first);
+                if (child != null && child.hasFocusable()) {
+                    if (performItemClick(child, motionPosition, getAdapter().getItemId(motionPosition)))
+                        return true;
+                }
+                return false;
+            }
+
+            @Override
+            public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+                return false;
+            }
+
+            @Override
+            public void onLongPress(MotionEvent e) {
+            }
+
+            @Override
+            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+                return false;
+            }
+        });
     }
 
     public TreeListView(Context context, AttributeSet attrs) {
@@ -159,25 +195,8 @@ public class TreeListView extends ListView {
 
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
-        boolean b = super.onTouchEvent(ev);
-        switch (ev.getActionMasked()) {
-            case MotionEvent.ACTION_DOWN:
-                last = MotionEvent.obtain(ev);
-                break;
-            case MotionEvent.ACTION_MOVE:
-                break;
-            case MotionEvent.ACTION_UP:
-                if (last != null && ev.getX() == last.getX() && ev.getY() == last.getY()) {
-                    int first = getFirstVisiblePosition();
-                    int motionPosition = pointToPosition((int) ev.getX(), (int) ev.getY());
-                    View child = getChildAt(motionPosition - first);
-                    if (child != null && child.hasFocusable()) {
-                        if (performItemClick(child, motionPosition, getAdapter().getItemId(motionPosition)))
-                            return true;
-                    }
-                }
-                break;
-        }
-        return b;
+        if (gestures.onTouchEvent(ev))
+            return true;
+        return super.onTouchEvent(ev);
     }
 }

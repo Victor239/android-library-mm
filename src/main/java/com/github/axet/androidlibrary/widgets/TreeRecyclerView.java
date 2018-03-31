@@ -1,10 +1,11 @@
 package com.github.axet.androidlibrary.widgets;
 
 import android.content.Context;
+import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.ViewCompat;
 import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
+import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,7 +15,7 @@ import java.util.ArrayList;
 public class TreeRecyclerView extends HeaderRecyclerView {
 
     public OnToggleListener toggleListener;
-    public MotionEvent last;
+    public GestureDetectorCompat gestures;
     public LinearLayoutManager layout;
 
     public static class TreeHolder extends WrapperRecyclerAdapter.ViewHolder {
@@ -114,6 +115,42 @@ public class TreeRecyclerView extends HeaderRecyclerView {
     }
 
     public void create() {
+        gestures = new GestureDetectorCompat(getContext(), new GestureDetector.OnGestureListener() {
+            @Override
+            public boolean onDown(MotionEvent e) {
+                return false;
+            }
+
+            @Override
+            public void onShowPress(MotionEvent e) {
+            }
+
+            @Override
+            public boolean onSingleTapUp(MotionEvent e) {
+                ViewHolder h = findChildHolderUnder(e.getX(), e.getY());
+                if (h != null) {
+                    if (hasFocusable(h.itemView, e.getX(), e.getY()))
+                        return false; // pass touch event to the checkboxes
+                    performItemClick(h);
+                    return true;
+                }
+                return false;
+            }
+
+            @Override
+            public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+                return false;
+            }
+
+            @Override
+            public void onLongPress(MotionEvent e) {
+            }
+
+            @Override
+            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+                return false;
+            }
+        });
         layout = new LinearLayoutManager(getContext());
         setLayoutManager(layout);
     }
@@ -125,9 +162,9 @@ public class TreeRecyclerView extends HeaderRecyclerView {
     public boolean performItemClick(ViewHolder h) {
         Adapter a = getAdapter();
         int pos = h.getAdapterPosition();
-        if (a instanceof HeaderRecyclerAdapter) {
-            pos = ((HeaderRecyclerAdapter) a).getWrappedPosition(pos);
-            a = ((HeaderRecyclerAdapter) a).getWrappedAdapter();
+        if (a instanceof WrapperRecyclerAdapter) {
+            pos = ((WrapperRecyclerAdapter) a).getWrappedPosition(pos);
+            a = ((WrapperRecyclerAdapter) a).getWrappedAdapter();
         }
         if (pos < 0)
             return false;
@@ -197,8 +234,8 @@ public class TreeRecyclerView extends HeaderRecyclerView {
                 return false; // pass touch events to the checkboxes
             int pos = h.getAdapterPosition();
             Adapter a = getAdapter();
-            if (a instanceof HeaderRecyclerAdapter) {
-                HeaderRecyclerAdapter s = (HeaderRecyclerAdapter) a;
+            if (a instanceof WrapperRecyclerAdapter) {
+                WrapperRecyclerAdapter s = (WrapperRecyclerAdapter) a;
                 pos = s.getWrappedPosition(pos);
                 a = s.getWrappedAdapter();
             }
@@ -214,24 +251,8 @@ public class TreeRecyclerView extends HeaderRecyclerView {
 
     @Override
     public boolean onTouchEvent(MotionEvent e) {
-        switch (e.getActionMasked()) {
-            case MotionEvent.ACTION_DOWN:
-                last = MotionEvent.obtain(e);
-                break;
-            case MotionEvent.ACTION_MOVE:
-                break;
-            case MotionEvent.ACTION_UP:
-                if (last != null && e.getX() == last.getX() && e.getY() == last.getY()) {
-                    ViewHolder h = findChildHolderUnder(e.getX(), e.getY());
-                    if (h != null) {
-                        if (hasFocusable(h.itemView, e.getX(), e.getY()))
-                            return false; // pass touch event to the checkboxes
-                        performItemClick(h);
-                        return true;
-                    }
-                }
-                break;
-        }
+        if (gestures.onTouchEvent(e))
+            return true;
         return super.onTouchEvent(e);
     }
 
