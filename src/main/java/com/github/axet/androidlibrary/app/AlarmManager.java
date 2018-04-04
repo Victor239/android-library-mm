@@ -3,6 +3,7 @@ package com.github.axet.androidlibrary.app;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
@@ -45,11 +46,15 @@ public class AlarmManager {
 
     public static PendingIntent createPendingIntent(Context context, Intent intent) {
         try {
-            Class<?> klass = Class.forName(intent.getComponent().getClassName());
+            int flags = PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_ONE_SHOT;
+            ComponentName c = intent.getComponent();
+            if (c == null) // broadcast
+                return PendingIntent.getBroadcast(context, 0, intent, flags);
+            Class<?> klass = Class.forName(c.getClassName());
             if (Service.class.isAssignableFrom(klass)) {
-                return PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_ONE_SHOT);
+                return PendingIntent.getService(context, 0, intent, flags);
             } else if (Activity.class.isAssignableFrom(klass)) {
-                return PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_ONE_SHOT);
+                return PendingIntent.getActivity(context, 0, intent, flags);
             } else {
                 throw new RuntimeException("Unknown PenedingIntent type");
             }
