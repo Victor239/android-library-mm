@@ -2,6 +2,7 @@ package com.github.axet.androidlibrary.services;
 
 import android.app.ActivityManager;
 import android.app.IntentService;
+import android.app.Service;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -11,6 +12,7 @@ import android.net.DhcpInfo;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
 import android.os.Build;
+import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
@@ -28,12 +30,11 @@ import java.net.UnknownHostException;
  * &lt;uses-permission android:name="android.permission.CHANGE_WIFI_STATE" /&gt;
  * &lt;uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" /&gt;
  */
-public class WifiKeepService extends IntentService {
+public class WifiKeepService extends Service {
 
     public static String TAG = WifiKeepService.class.getSimpleName();
 
     public static final String WIFI = WifiKeepService.class.getCanonicalName() + ".WIFI";
-    public static final String OFF = WifiKeepService.class.getCanonicalName() + ".OFF";
 
     public static final String BIN_PING = SuperUser.which("ping");
 
@@ -55,8 +56,7 @@ public class WifiKeepService extends IntentService {
     public static void stopService(Context context) {
         Intent intent = new Intent(context, WifiKeepService.class);
         intent.setPackage(context.getPackageName());
-        intent.setAction(OFF);
-        context.startService(intent); // startService cause it is IntentService
+        context.stopService(intent);
     }
 
     public static void wifi(final Context context, boolean keep) {
@@ -154,21 +154,26 @@ public class WifiKeepService extends IntentService {
         }
     }
 
-    public WifiKeepService() {
-        super(WifiKeepService.class.getSimpleName());
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        String action = intent.getAction();
+        if (action != null) {
+            if (action.equals(WIFI)) {
+                wifi(this, true);
+            }
+        }
+        return super.onStartCommand(intent, flags, startId);
     }
 
     @Override
-    protected void onHandleIntent(@Nullable Intent intent) {
-        final String action = intent.getAction();
-        Log.d(TAG, intent.toString() + " " + action);
-        if (action == null)
-            return;
-        if (action.equals(WIFI)) {
-            wifi(this, true);
-        }
-        if (action.equals(OFF)) {
-            wifi(this, false);
-        }
+    public void onDestroy() {
+        super.onDestroy();
+        wifi(this, false);
+    }
+
+    @Nullable
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
     }
 }
