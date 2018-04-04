@@ -30,7 +30,7 @@ public abstract class WifiKeepReceiver extends BroadcastReceiver {
 
     public static String TAG = WifiKeepReceiver.class.getSimpleName();
 
-    public final String WIFI = getClass().getCanonicalName() + ".WIFI"; // superclass prefix
+    public final String WIFI = getClass().getName() + ".WIFI"; // superclass prefix
 
     public static final String BIN_PING = SuperUser.which("ping");
 
