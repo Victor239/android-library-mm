@@ -47,12 +47,14 @@ public class WifiKeepService extends IntentService {
 
     public static void startService(Context context) {
         Intent intent = new Intent(context, WifiKeepService.class);
+        intent.setPackage(context.getPackageName());
         intent.setAction(WIFI);
         context.startService(intent);
     }
 
     public static void stopService(Context context) {
         Intent intent = new Intent(context, WifiKeepService.class);
+        intent.setPackage(context.getPackageName());
         intent.setAction(OFF);
         context.startService(intent); // startService cause it is IntentService
     }
