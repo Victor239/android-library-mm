@@ -60,7 +60,7 @@ public class WifiKeepService extends IntentService {
     }
 
     public static void wifi(final Context context, boolean keep) {
-        Intent intent = new Intent();
+        Intent intent = new Intent(context, WifiKeepService.class);
         intent.setPackage(context.getPackageName());
         intent.setAction(WIFI);
         if (keep) {
