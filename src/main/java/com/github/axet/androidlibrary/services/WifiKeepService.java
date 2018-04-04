@@ -38,6 +38,8 @@ public class WifiKeepService extends Service {
 
     public static final String BIN_PING = SuperUser.which("ping");
 
+    Thread t;
+
     public static void startIfEnabled(Context context, boolean b) {
         if (b) {
             startService(context);
@@ -59,7 +61,7 @@ public class WifiKeepService extends Service {
         context.stopService(intent);
     }
 
-    public static void wifi(final Context context, boolean keep) {
+    public static Thread wifi(final Context context, boolean keep) {
         Intent intent = new Intent(context, WifiKeepService.class);
         intent.setPackage(context.getPackageName());
         intent.setAction(WIFI);
@@ -67,7 +69,7 @@ public class WifiKeepService extends Service {
             long inSeconds = 1 * 60;
             final long next = System.currentTimeMillis() + (inSeconds * 1000l);
             AlarmManager.set(context, next, intent);
-            Thread t = new Thread() { // network on main thread
+            Thread t = new Thread() { // ping can lag app
                 @Override
                 public void run() {
                     ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -101,8 +103,10 @@ public class WifiKeepService extends Service {
                 }
             };
             t.start();
+            return t;
         } else {
             AlarmManager.cancel(context, intent);
+            return null;
         }
     }
 
@@ -159,7 +163,7 @@ public class WifiKeepService extends Service {
         String action = intent.getAction();
         if (action != null) {
             if (action.equals(WIFI)) {
-                wifi(this, true);
+                t = wifi(this, true);
             }
         }
         return super.onStartCommand(intent, flags, startId);
@@ -168,7 +172,7 @@ public class WifiKeepService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        wifi(this, false);
+        t = wifi(this, false);
     }
 
     @Nullable
