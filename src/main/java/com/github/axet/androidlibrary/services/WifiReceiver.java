@@ -41,8 +41,14 @@ public abstract class WifiReceiver extends BroadcastReceiver {
 
     public void create() {
         context.registerReceiver(this, filter);
-        if (getOnly() && !WifiReceiver.isConnectedWifi(context)) {
-            pause();
+        if (getWifi()) {
+            if (isConnectedWifi(context)) {
+                resume();
+            } else {
+                pause();
+            }
+        } else {
+            resume();
         }
     }
 
@@ -56,7 +62,7 @@ public abstract class WifiReceiver extends BroadcastReceiver {
         Log.d(TAG, intent.toString() + " " + action);
         if (action == null)
             return;
-        boolean wifi = getOnly();
+        boolean wifi = getWifi();
         if (action.equals(WifiManager.SUPPLICANT_STATE_CHANGED_ACTION)) {
             SupplicantState state = intent.getParcelableExtra(WifiManager.EXTRA_NEW_STATE);
             Log.d(TAG, state.toString());
@@ -111,5 +117,5 @@ public abstract class WifiReceiver extends BroadcastReceiver {
 
     public abstract void pause();
 
-    public abstract boolean getOnly();
+    public abstract boolean getWifi();
 }
