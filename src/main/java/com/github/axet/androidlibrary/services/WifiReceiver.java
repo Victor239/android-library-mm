@@ -22,9 +22,9 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 /**
- *     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
- *     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
- *     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+ *     &lt;uses-permission android:name="android.permission.ACCESS_WIFI_STATE" /&gt;
+ *     &lt;uses-permission android:name="android.permission.CHANGE_WIFI_STATE" /&gt;
+ *     &lt;uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" /&gt;
  */
 public class WifiReceiver extends BroadcastReceiver {
 
