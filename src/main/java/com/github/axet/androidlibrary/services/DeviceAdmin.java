@@ -1,12 +1,14 @@
 package com.github.axet.androidlibrary.services;
 
 import android.annotation.TargetApi;
+import android.app.Activity;
 import android.app.admin.DeviceAdminReceiver;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
+import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -91,7 +93,7 @@ public class DeviceAdmin extends DeviceAdminReceiver {
         if (a.equals(Intent.ACTION_REBOOT)) {
             reboot(context);
         }
-        if(a.equals(ACTION_DEVICE_ADMIN_DISABLE_REQUESTED)) {
+        if (a.equals(ACTION_DEVICE_ADMIN_DISABLE_REQUESTED)) {
             removeDeviceOwner(context);
         }
     }
