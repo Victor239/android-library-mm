@@ -80,10 +80,10 @@ public class PopupWindowCompat {
     }
 
     public static void showAsTooltip(PopupWindow p, View anchor, int gravity) {
-        showAsTooltip(p, anchor, gravity, ThemeUtils.getColor(anchor.getContext(), R.color.button_material_light));
+        showAsTooltip(p, anchor, gravity, ThemeUtils.getColor(anchor.getContext(), R.color.button_material_light), -1);
     }
 
-    public static void showAsTooltip(final PopupWindow p, View anchor, int gravity, int background) {
+    public static void showAsTooltip(final PopupWindow p, View anchor, int gravity, int background, int maxwidth) {
         Context context = anchor.getContext();
 
         final View v = p.getContentView();
@@ -138,6 +138,8 @@ public class PopupWindowCompat {
         int mh = View.MeasureSpec.AT_MOST;
         if (lp.height == ViewGroup.LayoutParams.MATCH_PARENT)
             mh = View.MeasureSpec.EXACTLY;
+        if (maxwidth > 0)
+            w = maxwidth;
         tooltip.measure(View.MeasureSpec.makeMeasureSpec(w, mw), View.MeasureSpec.makeMeasureSpec(h, mh));
         h = tooltip.getMeasuredHeight();
         w = tooltip.getMeasuredWidth();
