@@ -2,7 +2,10 @@ package com.github.axet.androidlibrary.widgets;
 
 import android.content.Context;
 import android.content.res.Resources;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.graphics.Rect;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.support.graphics.drawable.VectorDrawableCompat;
 import android.support.v4.graphics.drawable.DrawableCompat;
@@ -80,7 +83,7 @@ public class PopupWindowCompat {
         showAsTooltip(p, anchor, gravity, ThemeUtils.getColor(anchor.getContext(), R.color.button_material_light));
     }
 
-    public static void showAsTooltip(PopupWindow p, View anchor, int gravity, int background) {
+    public static void showAsTooltip(final PopupWindow p, View anchor, int gravity, int background) {
         Context context = anchor.getContext();
 
         final View v = p.getContentView();
@@ -99,7 +102,12 @@ public class PopupWindowCompat {
 
         final FrameLayout content = new FrameLayout(context);
         content.setBackgroundResource(R.drawable.popup_round);
-        tooltip.addView(content, new LinearLayout.LayoutParams(lp.width, lp.height));
+        LinearLayout.LayoutParams clp;
+        if (lp.height == ViewGroup.LayoutParams.MATCH_PARENT)
+            clp = new LinearLayout.LayoutParams(lp.width, 0, 1);
+        else
+            clp = new LinearLayout.LayoutParams(lp.width, lp.height);
+        tooltip.addView(content, clp);
 
         AppCompatImageView down = new AppCompatImageView(context);
         down.setImageResource(R.drawable.popup_triangle);
@@ -176,10 +184,10 @@ public class PopupWindowCompat {
                 break;
         }
 
-        VectorDrawableCompat triangle = (VectorDrawableCompat) arrow.getDrawable();
-        DrawableCompat.setTint(triangle, background);
-        Drawable round = content.getBackground();
-        DrawableCompat.setTint(round, background);
+        Drawable triangle = DrawableCompat.wrap(arrow.getDrawable());
+        DrawableCompat.setTint(triangle.mutate(), background);
+        Drawable round = DrawableCompat.wrap(content.getBackground());
+        DrawableCompat.setTint(round.mutate(), background);
 
         int l = rect.centerX() - x - arrow.getMeasuredWidth() / 2;
         int ll = ThemeUtils.dp2px(context, 10); // round background range left
@@ -191,6 +199,8 @@ public class PopupWindowCompat {
         ((LinearLayout.LayoutParams) arrow.getLayoutParams()).leftMargin = l;
 
         p.setFocusable(true);
+        p.setOutsideTouchable(true);
+        p.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         p.showAtLocation(anchor, Gravity.NO_GRAVITY, x, y);
         p.setOnDismissListener(new PopupWindow.OnDismissListener() {
             @Override
