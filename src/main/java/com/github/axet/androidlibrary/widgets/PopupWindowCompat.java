@@ -1,13 +1,16 @@
 package com.github.axet.androidlibrary.widgets;
 
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.support.graphics.drawable.VectorDrawableCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v4.view.ViewCompat;
 import android.support.v7.widget.AppCompatImageView;
@@ -45,6 +48,14 @@ public class PopupWindowCompat {
         } else {
             throw new RuntimeException("not found");
         }
+    }
+
+    public static void setTintCompat(Drawable d, int color) {
+        d = DrawableCompat.wrap(d);
+        if (Build.VERSION.SDK_INT >= 11)
+            DrawableCompat.setTint(d.mutate(), color); // missing api 10 support, even it has BaseDrawableImpl
+        else
+            d.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
     }
 
     public static void showAsDropDown(PopupWindow p, View anchor, int gravity) {
@@ -139,7 +150,7 @@ public class PopupWindowCompat {
         if (lp.height == ViewGroup.LayoutParams.MATCH_PARENT)
             mh = View.MeasureSpec.EXACTLY;
         if (maxwidth > 0)
-            w = maxwidth;
+            w = Math.min(maxwidth, w);
         tooltip.measure(View.MeasureSpec.makeMeasureSpec(w, mw), View.MeasureSpec.makeMeasureSpec(h, mh));
         h = tooltip.getMeasuredHeight();
         w = tooltip.getMeasuredWidth();
@@ -186,10 +197,11 @@ public class PopupWindowCompat {
                 break;
         }
 
-        Drawable triangle = DrawableCompat.wrap(arrow.getDrawable());
-        DrawableCompat.setTint(triangle.mutate(), background);
-        Drawable round = DrawableCompat.wrap(content.getBackground());
-        DrawableCompat.setTint(round.mutate(), background);
+        Drawable triangle = arrow.getDrawable();
+        setTintCompat(triangle, background);
+        Drawable round = content.getBackground();
+        setTintCompat(round, background);
+
 
         int l = rect.centerX() - x - arrow.getMeasuredWidth() / 2;
         int ll = ThemeUtils.dp2px(context, 10); // round background range left
