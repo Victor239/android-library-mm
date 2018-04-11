@@ -456,18 +456,24 @@ public class Storage {
         if (s.equals(ContentResolver.SCHEME_CONTENT))
             return false;
         if (s.equals(ContentResolver.SCHEME_FILE)) {
-            File f = getFile(u);
-            File internal = getLocalInternal();
-
-            File external = getLocalExternal();
-            if (external != null) // some old phones <15API with disabled sdcard return null
-                if (external.equals(f))
-                    return true;
-
-            return internal.equals(f);
+            return isLocalStorage(getFile(u));
         } else {
             throw new RuntimeException("unknown uri");
         }
+    }
+
+    public boolean isLocalStorage(File f) {
+        if (f.getPath().startsWith(context.getApplicationInfo().dataDir))
+            return true;
+
+        File internal = getLocalInternal();
+
+        File external = getLocalExternal();
+        if (external != null) // some old phones <15API with disabled sdcard return null
+            if (external.equals(f))
+                return true;
+
+        return internal.equals(f);
     }
 
     public File getLocalStorage() {
