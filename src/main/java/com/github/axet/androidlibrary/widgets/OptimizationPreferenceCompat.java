@@ -557,9 +557,9 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
             return false; // no missed alarm
         if (next > time)
             return false; // alarm in the future
-        long boot = SystemClock.elapsedRealtime(); // milliseconds since boot, including time spent in sleep
-        long last = time - boot; // boot time
-        if (next < last)
+        long uptime = SystemClock.elapsedRealtime(); // milliseconds since boot, including time spent in sleep
+        long boot = time - uptime; // boot time
+        if (next < boot)
             return false; // we did reboot device recently, skip warning
         return true;
     }
