@@ -463,17 +463,18 @@ public class Storage {
     }
 
     public boolean isLocalStorage(File f) {
-        if (f.getPath().startsWith(context.getApplicationInfo().dataDir))
+        String path = f.getPath();
+        if (path.startsWith(context.getApplicationInfo().dataDir))
             return true;
 
         File internal = getLocalInternal();
 
         File external = getLocalExternal();
         if (external != null) // some old phones <15API with disabled sdcard return null
-            if (external.equals(f))
+            if (path.startsWith(external.getPath()))
                 return true;
 
-        return internal.equals(f);
+        return path.startsWith(internal.getPath());
     }
 
     public File getLocalStorage() {

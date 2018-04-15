@@ -33,11 +33,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
 
-/**
- * Add users permission to app manifest:
- * <p>
- * &lt;uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" /&gt;
- */
+// Add users permission to app manifest:
+// <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
     public static String TAG = OptimizationPreferenceCompat.class.getSimpleName();
 
@@ -58,8 +55,6 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
     public static int CHECK_DELAY = AlarmManager.MIN5;
 
     // checkbox for old phones, which fires 15 minutes event
-    public static final String PREFERENCE_OPTIMIZATION_SERVICE = OptimizationPreferenceCompat.class.getCanonicalName() + ".SERVICE";
-    public static final String PREFERENCE_OPTIMIZATION_WARNING = OptimizationPreferenceCompat.class.getCanonicalName() + ".WARNING";
     public static final String PING = OptimizationPreferenceCompat.class.getCanonicalName() + ".PING";
     public static final String PONG = OptimizationPreferenceCompat.class.getCanonicalName() + ".PONG";
     public static final String SERVICE_CHECK = OptimizationPreferenceCompat.class.getCanonicalName() + ".SERVICE_CHECK";
@@ -84,7 +79,8 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
     }
 
     // all service related code, for old phones, where AlarmManager will be used to keep app running
-    Class<? extends Service> service;
+    protected Class<? extends Service> service;
+    protected String warning;
 
     public static class ApplicationReceiver extends BroadcastReceiver {
         protected Context context;
@@ -114,6 +110,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
 
     public static class ServiceReceiver extends BroadcastReceiver {
         protected Context context;
+        protected String key;
         protected Handler handler = new Handler();
         protected Class<? extends Service> service;
         protected long next;
@@ -126,7 +123,8 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
             }
         };
 
-        public ServiceReceiver(final Context context, final Class<? extends Service> service) {
+        public ServiceReceiver(final Context context, final Class<? extends Service> service, String key) {
+            this.key = key;
             this.context = context;
             this.service = service;
             disableKill(context, service);
@@ -177,7 +175,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
                 }
             } else {
                 final SharedPreferences shared = PreferenceManager.getDefaultSharedPreferences(context);
-                boolean b = shared.getBoolean(PREFERENCE_OPTIMIZATION_SERVICE, false);
+                boolean b = shared.getBoolean(key, false);
                 if (!b) {
                     unregister();
                     return;
@@ -231,7 +229,6 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
     }
 
     public void create() {
-        onResume();
     }
 
     @TargetApi(19)
@@ -316,7 +313,6 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
 
     public void enable(Class<? extends Service> service) {
         this.service = service;
-        onResume();
     }
 
     @TargetApi(23)
@@ -326,14 +322,14 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         return pm.isIgnoringBatteryOptimizations(n);
     }
 
-    public void onResume() {
+    public void onResume(final String warning) {
         if (Build.VERSION.SDK_INT < 23) {
             for (Intent intent : ALL) {
                 if (isCallable(getContext(), intent)) {
                     setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
                         @Override
                         public boolean onPreferenceChange(Preference preference, Object newValue) {
-                            showWarning(getContext()); // show commons
+                            showWarning(getContext(), warning); // show commons
                             return false;
                         }
                     });
@@ -343,7 +339,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
             }
             if (service != null) {
                 final SharedPreferences shared = PreferenceManager.getDefaultSharedPreferences(getContext());
-                boolean b = shared.getBoolean(PREFERENCE_OPTIMIZATION_SERVICE, false);
+                boolean b = shared.getBoolean(getKey(), false);
                 setChecked(b);
                 setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
                     @Override
@@ -357,17 +353,17 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
                                     enable(getContext(), System.currentTimeMillis(), service);
                                     final SharedPreferences shared = PreferenceManager.getDefaultSharedPreferences(getContext());
                                     SharedPreferences.Editor edit = shared.edit();
-                                    edit.putBoolean(PREFERENCE_OPTIMIZATION_SERVICE, true);
+                                    edit.putBoolean(getKey(), true);
                                     edit.commit();
                                     setChecked(true);
                                 }
                             });
-                            showWarning(getContext(), builder); // show commons
+                            showWarning(getContext(), builder, warning); // show commons
                         } else {
                             disable(getContext(), service);
                             final SharedPreferences shared = PreferenceManager.getDefaultSharedPreferences(getContext());
                             SharedPreferences.Editor edit = shared.edit();
-                            edit.putBoolean(PREFERENCE_OPTIMIZATION_SERVICE, false);
+                            edit.putBoolean(getKey(), false);
                             edit.commit();
                             setChecked(false);
                         }
@@ -393,7 +389,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
                 @TargetApi(23)
                 public boolean onPreferenceChange(Preference preference, Object o) {
                     AlertDialog.Builder builder = buildWarning(getContext(), !isIgnoringBatteryOptimizations(getContext()));  // hide commons
-                    showWarning(getContext(), builder);
+                    showWarning(getContext(), builder, warning);
                     return false;
                 }
             });
@@ -430,9 +426,9 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         }
     }
 
-    public static boolean needWarning(Context context) { // first start warning dialog
+    public static boolean needWarning(Context context, String key) { // first start warning dialog
         final SharedPreferences shared = PreferenceManager.getDefaultSharedPreferences(context);
-        boolean b = shared.getBoolean(PREFERENCE_OPTIMIZATION_WARNING, true);
+        boolean b = shared.getBoolean(key, true);
         if (b) {
             for (Intent intent : ALL) {
                 if (isCallable(context, intent))
@@ -463,6 +459,12 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         } else {
             builder.setPositiveButton(android.R.string.yes, click);
         }
+    }
+
+    public static AlertDialog.Builder buildKilledWarning(final Context context, boolean showCommons) {
+        AlertDialog.Builder b = buildWarning(context, showCommons);
+        b.setMessage(R.string.optimization_killed);
+        return b;
     }
 
     public static AlertDialog.Builder buildWarning(final Context context, boolean showCommons) {
@@ -512,22 +514,22 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         }
     }
 
-    public static void showWarning(Context context) {
+    public static void showWarning(Context context, String key) {
         AlertDialog.Builder builder = buildWarning(context, true);
-        showWarning(context, builder);
+        showWarning(context, builder, key);
     }
 
-    public static void showWarning(Context context, AlertDialog.Builder builder) {
+    public static void showWarning(Context context, AlertDialog.Builder builder, String key) {
         if (builder != null)
-            showWarning(context, builder.create());
+            showWarning(context, builder.create(), key);
         else
-            showWarning(context, (AlertDialog) null);
+            showWarning(context, (AlertDialog) null, key);
     }
 
-    public static void showWarning(Context context, AlertDialog d) {
+    public static void showWarning(Context context, AlertDialog d, String key) {
         final SharedPreferences shared = PreferenceManager.getDefaultSharedPreferences(context);
         SharedPreferences.Editor edit = shared.edit();
-        edit.putBoolean(PREFERENCE_OPTIMIZATION_WARNING, false);
+        edit.putBoolean(key, false);
         edit.commit();
         if (d != null) {
             d.show();
@@ -536,5 +538,23 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         if (Build.VERSION.SDK_INT >= 23) {
             showOptimization(context);
         }
+    }
+
+
+    public static void setKillCheck(Context context, long time, String key) {
+        SharedPreferences shared = PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences.Editor edit = shared.edit();
+        edit.putLong(key, time);
+        edit.commit();
+    }
+
+    public static boolean needKillWarning(Context context, String key) { // true - need show warning dialog
+        SharedPreferences shared = android.support.v7.preference.PreferenceManager.getDefaultSharedPreferences(context);
+        long next = shared.getLong(key, 0);
+        long time = System.currentTimeMillis();
+        if (next != 0 && next < time) {
+            return true;
+        }
+        return false;
     }
 }
