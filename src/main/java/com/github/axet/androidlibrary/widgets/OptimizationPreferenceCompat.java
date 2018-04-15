@@ -541,14 +541,14 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
     }
 
 
-    public static void setCheck(Context context, long time, String key) {
+    public static void setKillCheck(Context context, long time, String key) {
         SharedPreferences shared = PreferenceManager.getDefaultSharedPreferences(context);
         SharedPreferences.Editor edit = shared.edit();
         edit.putLong(key, time);
         edit.commit();
     }
 
-    public static boolean getCheck(Context context, String key) {
+    public static boolean needKillWarning(Context context, String key) { // true - need show warning dialog
         SharedPreferences shared = android.support.v7.preference.PreferenceManager.getDefaultSharedPreferences(context);
         long next = shared.getLong(key, 0);
         long time = System.currentTimeMillis();
