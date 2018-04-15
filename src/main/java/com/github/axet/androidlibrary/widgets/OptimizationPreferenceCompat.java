@@ -552,9 +552,9 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
     public static boolean needKillWarning(Context context, String key) { // true - need show warning dialog
         SharedPreferences shared = android.support.v7.preference.PreferenceManager.getDefaultSharedPreferences(context);
         long next = shared.getLong(key, 0);
-        long time = System.currentTimeMillis();
         if (next == 0)
             return false; // no missed alarm
+        long time = System.currentTimeMillis();
         if (next > time)
             return false; // alarm in the future
         long uptime = SystemClock.elapsedRealtime(); // milliseconds since boot, including time spent in sleep
