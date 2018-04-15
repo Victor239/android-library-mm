@@ -40,8 +40,11 @@
     <string name="size_gb">%1$.1f GB</string>
     <string name="size_mb">%1$.1f MB</string>
     <string name="size_kb">%1$.1f kb</string>
+
     <string name="optimization_dialog">最適化設定</string>
     <string name="optimization_message">アプリケーションがメモリから削除されないように、電話のバッテリー管理ホワイトリストにアプリケーションを追加することを検討してください。</string>
+    <string name="optimization_killed">Application were removed from background by OS. Consider adding application to whitelist.</string>
+
     <string name="menu_settings">設定</string>
     <string name="menu_about">About</string>
     <string name="open_browser">Open Browser</string>

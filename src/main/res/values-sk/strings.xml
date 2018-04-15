@@ -44,8 +44,11 @@
     <string name="size_gb">%1$.1f GB</string>
     <string name="size_mb">%1$.1f MB</string>
     <string name="size_kb">%1$.1f kb</string>
+
     <string name="optimization_dialog">Nastavenia optimalizácie</string>
     <string name="optimization_message">Pridajte aplikáciu v nastavení šetrenia batérie, čím určíte že spotreba tejto aplikácie sa nebude optimalizovať a aplikácia môže bežať bez prerušenia.</string>
+    <string name="optimization_killed">Application were removed from background by OS. Consider adding application to whitelist.</string>
+
     <string name="menu_settings">Nastavenia</string>
     <string name="menu_about">O programe</string>
     <string name="open_browser">Otvoriť prehliadač</string>

@@ -43,6 +43,7 @@
 
     <string name="optimization_dialog">بهینه سازی تنظیمات</string>
     <string name="optimization_message">در حال اضافه کردن برنامه به لیست سفید مدیر باتری تلفن تا برنامه را هنگام پاک کردن حافظه نادیده بگیرد.</string>
+    <string name="optimization_killed">Application were removed from background by OS. Consider adding application to whitelist.</string>
 
     <string name="menu_settings">تنظیمات</string>
     <string name="menu_about">درباره</string>

@@ -43,6 +43,7 @@
 
     <string name="optimization_dialog">Paramètres d\'optimisation de la batterie</string>
     <string name="optimization_message">Ajouter l\'appilication aux exceptions d\'optimisation de batterie pour éviter que ces données en mémoire ne soit supprimées</string>
+    <string name="optimization_killed">Application were removed from background by OS. Consider adding application to whitelist.</string>
 
     <string name="menu_settings">Paramétres</string>
     <string name="menu_about">About</string>

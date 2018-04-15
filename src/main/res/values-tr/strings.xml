@@ -43,6 +43,7 @@
 
     <string name="optimization_dialog">İyileştirme Ayarları</string>
     <string name="optimization_message">Bellekten silinmemesi için uygulamayı telefonun pil yöneticisinin beyaz listesine eklemeyi düşünün.</string>
+    <string name="optimization_killed">Application were removed from background by OS. Consider adding application to whitelist.</string>
 
     <string name="menu_settings">Ayarlar</string>
     <string name="menu_about">Hakkında</string>
