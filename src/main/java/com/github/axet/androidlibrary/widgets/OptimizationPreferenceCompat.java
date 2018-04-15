@@ -322,10 +322,6 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         return pm.isIgnoringBatteryOptimizations(n);
     }
 
-    public void onCreate(final String warning) {
-        onResume(warning);
-    }
-
     public void onResume(final String warning) {
         if (Build.VERSION.SDK_INT < 23) {
             for (Intent intent : ALL) {
