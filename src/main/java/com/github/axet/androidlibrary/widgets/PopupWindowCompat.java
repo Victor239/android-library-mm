@@ -19,6 +19,7 @@ import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -123,6 +124,11 @@ public class PopupWindowCompat {
         AppCompatImageView down = new AppCompatImageView(context);
         down.setImageResource(R.drawable.popup_triangle);
         tooltip.addView(down, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        ViewParent parent = v.getParent();
+        if (parent instanceof ViewGroup) {
+            ((ViewGroup) parent).removeView(v);
+        }
 
         content.addView(v);
         p.setContentView(tooltip);

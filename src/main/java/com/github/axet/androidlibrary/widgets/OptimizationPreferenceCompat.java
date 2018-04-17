@@ -144,7 +144,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         public boolean onStartCommand(Intent intent, int flags, int startId) {
             register();
             if (intent == null)
-                return true;
+                return true; // null if service were restarted by system after crash / low memory
             String a = intent.getAction();
             if (a == null)
                 return false;
@@ -157,7 +157,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
             return false;
         }
 
-        public void check() {
+        public void check() { // disable when here is no ApplicationReceiver
             handler.postDelayed(check, CHECK_DELAY);
             Intent i = new Intent(service.getCanonicalName() + PING);
             context.sendBroadcast(i);
@@ -552,14 +552,14 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
     public static boolean needKillWarning(Context context, String key) { // true - need show warning dialog
         SharedPreferences shared = android.support.v7.preference.PreferenceManager.getDefaultSharedPreferences(context);
         long next = shared.getLong(key, 0);
-        long time = System.currentTimeMillis();
         if (next == 0)
             return false; // no missed alarm
+        long time = System.currentTimeMillis();
         if (next > time)
             return false; // alarm in the future
-        long boot = SystemClock.elapsedRealtime(); // milliseconds since boot, including time spent in sleep
-        long last = time - boot; // boot time
-        if (next < last)
+        long uptime = SystemClock.elapsedRealtime(); // milliseconds since boot, including time spent in sleep
+        long boot = time - uptime; // boot time
+        if (next < boot)
             return false; // we did reboot device recently, skip warning
         return true;
     }
