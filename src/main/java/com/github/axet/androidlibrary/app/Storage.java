@@ -99,6 +99,7 @@ public class Storage {
                     s.append("\\");
                     break;
                 // escape special regexp-characters
+                case '+':
                 case '(':
                 case ')':
                 case '[':
