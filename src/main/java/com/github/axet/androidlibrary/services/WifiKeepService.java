@@ -34,6 +34,8 @@ public class WifiKeepService extends Service {
 
     public static String TAG = WifiKeepService.class.getSimpleName();
 
+    public static int REFRESH = 1 * 60 * 1000; // check every ms
+
     public static final String WIFI = WifiKeepService.class.getCanonicalName() + ".WIFI";
 
     public static final String BIN_PING = SuperUser.which("ping");
@@ -61,45 +63,48 @@ public class WifiKeepService extends Service {
         context.stopService(intent);
     }
 
+    public static void wifi(final Context context) {
+        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+
+        boolean isConnected = false;
+        boolean isWiFi = false;
+        if (activeNetwork != null) {
+            isConnected = activeNetwork.isConnected();
+            isWiFi = activeNetwork.getType() == ConnectivityManager.TYPE_WIFI;
+        }
+
+        WifiManager w = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+        DhcpInfo d = w.getDhcpInfo();
+
+        if (!isWiFi || !isConnected || !ping(d.gateway) || !dns()) {
+            w.setWifiEnabled(false);
+            w.setWifiEnabled(true);
+        }
+
+        if (Build.VERSION.SDK_INT <= 18 && SuperUser.isRooted()) {
+            gtalk(context);
+        }
+
+        if (isWiFi && isConnected) {
+            Intent gt = new Intent("com.google.android.intent.action.GTALK_HEARTBEAT");
+            context.sendBroadcast(gt);
+            Intent mcs = new Intent("com.google.android.intent.action.MCS_HEARTBEAT");
+            context.sendBroadcast(mcs);
+        }
+    }
+
     public static Thread wifi(final Context context, boolean keep) {
         Intent intent = new Intent(context, WifiKeepService.class);
         intent.setPackage(context.getPackageName());
         intent.setAction(WIFI);
         if (keep) {
-            long inSeconds = 1 * 60;
-            final long next = System.currentTimeMillis() + (inSeconds * 1000l);
+            final long next = System.currentTimeMillis() + REFRESH;
             AlarmManager.set(context, next, intent);
             Thread t = new Thread() { // ping can lag app
                 @Override
                 public void run() {
-                    ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-                    NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
-
-                    boolean isConnected = false;
-                    boolean isWiFi = false;
-                    if (activeNetwork != null) {
-                        isConnected = activeNetwork.isConnected();
-                        isWiFi = activeNetwork.getType() == ConnectivityManager.TYPE_WIFI;
-                    }
-
-                    WifiManager w = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
-                    DhcpInfo d = w.getDhcpInfo();
-
-                    if (!isWiFi || !isConnected || !ping(d.gateway) || !dns()) {
-                        w.setWifiEnabled(false);
-                        w.setWifiEnabled(true);
-                    }
-
-                    if (Build.VERSION.SDK_INT <= 18 && SuperUser.isRooted()) {
-                        gtalk(context);
-                    }
-
-                    if (isWiFi && isConnected) {
-                        Intent gt = new Intent("com.google.android.intent.action.GTALK_HEARTBEAT");
-                        context.sendBroadcast(gt);
-                        Intent mcs = new Intent("com.google.android.intent.action.MCS_HEARTBEAT");
-                        context.sendBroadcast(mcs);
-                    }
+                    wifi(context);
                 }
             };
             t.start();
