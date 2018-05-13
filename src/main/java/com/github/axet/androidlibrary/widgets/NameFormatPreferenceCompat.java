@@ -198,4 +198,9 @@ public class NameFormatPreferenceCompat extends ListPreference {
     public String getFormatted(String str) {
         return str;
     }
+
+    @Override
+    public CharSequence getSummary() { // crash on some devices while parsing %.. formatting strings
+        return getFormatted(getValue());
+    }
 }

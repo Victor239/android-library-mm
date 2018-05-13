@@ -43,7 +43,7 @@
 
     <string name="optimization_dialog">最適化設定</string>
     <string name="optimization_message">アプリケーションがメモリから削除されないように、電話のバッテリー管理ホワイトリストにアプリケーションを追加することを検討してください。</string>
-    <string name="optimization_killed">Application were removed from background by OS. Consider adding application to whitelist.</string>
+    <string name="optimization_killed">Application were killed by OS. Consider adding application to whitelist.</string>
 
     <string name="menu_settings">設定</string>
     <string name="menu_about">About</string>

@@ -43,7 +43,7 @@
 
     <string name="optimization_dialog">Impostazioni di ottimizzazione della batteria</string>
     <string name="optimization_message">Valuta di aggiungere questa applicazione alle eccezioni tra le  impostazioni di gestione della batteria del telefono al fine di evitare che l\'applicazione sia rimossa dalla memoria volatile.</string>
-    <string name="optimization_killed">Application were removed from background by OS. Consider adding application to whitelist.</string>
+    <string name="optimization_killed">Application were killed by OS. Consider adding application to whitelist.</string>
 
     <string name="menu_settings">Impostazioni</string>
     <string name="menu_about">About</string>

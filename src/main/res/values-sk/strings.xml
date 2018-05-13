@@ -1,7 +1,7 @@
 <resources>
     <!--OpenFileDialog-->
     <string name="filedialog_rename">Premenovať</string>
-    <string name="filedialog_delete">Odstrániť</string>
+    <string name="filedialog_delete">Vymazať</string>
     <string name="filedialog_newfolder">Nový priečinok</string>
     <string name="filedialog_foldername">Názov priečinka</string>
     <string name="filedialog_unablecreatefolder">Nie je možné vytvoriť priečinok: \'%1$s\'</string>
@@ -47,23 +47,25 @@
 
     <string name="optimization_dialog">Nastavenia optimalizácie</string>
     <string name="optimization_message">Pridajte aplikáciu v nastavení šetrenia batérie, čím určíte že spotreba tejto aplikácie sa nebude optimalizovať a aplikácia môže bežať bez prerušenia.</string>
-    <string name="optimization_killed">Application were removed from background by OS. Consider adding application to whitelist.</string>
+    <string name="optimization_killed">Spustenie tejto aplikácii na pozadí bolo zakázané operačným  systémom. Mali by ste ju pridať do zoznamu výnimiek.</string>
 
     <string name="menu_settings">Nastavenia</string>
     <string name="menu_about">O programe</string>
+
     <string name="open_browser">Otvoriť prehliadač</string>
     <string name="are_you_sure">Ste si istí?</string>
-    <string name="default_button">Default</string>
+    <string name="default_button">Predvolené</string>
+
     <string name="not_permitted">Nepovolené</string>
-    <string name="close">Close</string>
+    <string name="close">Zatvoriť</string>
 
     <string-array name="screen_lock_text">
-        <item>System Default</item>
-        <item>Keep On</item>
-        <item>Off after 30 sec</item>
-        <item>Off after 1 min</item>
-        <item>Off after 5 min</item>
-        <item>Off after 30 min</item>
+        <item>Predvolené nastavenie systému</item>
+        <item>Ponechať zapnutú</item>
+        <item>Vypnúť po 30 sek</item>
+        <item>Vypnúť po 1 min</item>
+        <item>Vypnúť po 5 min</item>
+        <item>Vypnúť po 30 min</item>
     </string-array>
-    <string name="pref_screenlock_title">Keep Screen On</string>
+    <string name="pref_screenlock_title">Časový limit vypnutia obrazovky</string>
 </resources>

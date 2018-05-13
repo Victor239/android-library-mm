@@ -43,7 +43,7 @@
 
     <string name="optimization_dialog">Configurações de Otimização</string>
     <string name="optimization_message">Por favor, considere adicionar este aplicativo na lista-branca do seu gerenciador de bateria (se você tiver um) para impedir que ele seja removido da memória.</string>
-    <string name="optimization_killed">Application were removed from background by OS. Consider adding application to whitelist.</string>
+    <string name="optimization_killed">Application were killed by OS. Consider adding application to whitelist.</string>
 
     <string name="menu_settings">Configurações</string>
     <string name="menu_about">About</string>

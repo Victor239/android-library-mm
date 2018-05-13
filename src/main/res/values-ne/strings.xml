@@ -43,7 +43,7 @@
 
     <string name="optimization_dialog">अनुकुल सेटिङ्ग</string>
     <string name="optimization_message">यस एपलाई फोन मेमोरीबाट हट्न नदिन कृपया बेटरी म्यानेजरको whitelistमा राख्नुहोस् ।</string>
-    <string name="optimization_killed">Application were removed from background by OS. Consider adding application to whitelist.</string>
+    <string name="optimization_killed">Application were killed by OS. Consider adding application to whitelist.</string>
 
     <string name="menu_settings">सेटिङ्ग</string>
     <string name="menu_about">यस एपको बारेमा</string>

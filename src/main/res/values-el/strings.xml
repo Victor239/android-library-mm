@@ -43,7 +43,7 @@
 
     <string name="optimization_dialog">Ρυθμίσεις Βελτιστοποίησης</string>
     <string name="optimization_message">Σκέψου να προσθέσεις την εφαρμογή στην λευκή λίστα του διαχειριστή μπαταρίας του τηλεφώνου για να αποτραπεί η αφαίρεση της εφαρμογής από τη μνήμη.</string>
-    <string name="optimization_killed">Application were removed from background by OS. Consider adding application to whitelist.</string>
+    <string name="optimization_killed">Application were killed by OS. Consider adding application to whitelist.</string>
 
     <string name="menu_settings">Ρυθμίσεις</string>
     <string name="menu_about">Περί</string>

@@ -43,7 +43,7 @@
 
     <string name="optimization_dialog">Optimization Settings</string>
     <string name="optimization_message">Consider adding application to phone battery manager whitelist to prevent application to be removed from memory.</string>
-    <string name="optimization_killed">Application were removed from background by OS. Consider adding application to whitelist.</string>
+    <string name="optimization_killed">Application were killed by OS. Consider adding application to whitelist.</string>
 
     <string name="menu_settings">Settings</string>
     <string name="menu_about">About</string>
