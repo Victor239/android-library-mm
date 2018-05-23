@@ -20,14 +20,8 @@ public class AlarmManager {
     public static final String TAG = AlarmManager.class.getSimpleName();
 
     public static final int SEC1 = 1000;
-    public static final int SEC3 = 3 * SEC1;
-    public static final int SEC10 = 10 * SEC1;
     public static final int MIN1 = 60 * SEC1;
-    public static final int MIN2 = 2 * MIN1;
-    public static final int MIN5 = 5 * MIN1;
-    public static final int MIN15 = 15 * MIN1;
     public static final int HOUR1 = 60 * MIN1;
-    public static final int HOUR12 = 12 * HOUR1;
     public static final int DAY1 = 24 * HOUR1;
 
     Context context;
@@ -40,7 +34,6 @@ public class AlarmManager {
 
     static public String formatDuration(Context context, long diff) {
         int diffMilliseconds = (int) (diff % 1000);
-
         return MainApplication.formatDuration(context, diff) + "." + diffMilliseconds;
     }
 
@@ -233,21 +226,21 @@ public class AlarmManager {
         long diffSeconds = (cur / 1000 % 60) * 1000;
         if (delay <= SEC1) {
             ; // nothing
-        } else if (delay <= SEC10) {
+        } else if (delay <= 10 * SEC1) {
             long step = SEC1;
             delay = step - diffMilliseconds;
         } else if (delay <= MIN1) {
-            long step = SEC10;
+            long step = 10 * SEC1;
             if (delay - step < step) // if 0:11, make step 00:01
                 step = delay - step + diffMilliseconds;
             delay = step - diffMilliseconds;
-        } else if (delay <= MIN5) {
+        } else if (delay <= 5 * MIN1) {
             long step = MIN1;
             if (delay - step < step) // if 1:30, make step 00:30
                 step = delay - step + diffSeconds + diffMilliseconds;
             delay = step - diffSeconds - diffMilliseconds;
-        } else if (delay <= MIN15) {
-            long step = MIN5;
+        } else if (delay <= 15 * MIN1) {
+            long step = 5 * MIN1;
             if (delay - step < step) // if 5:30, make step 00:30
                 step = delay - step + diffSeconds + diffMilliseconds;
             delay = step - diffSeconds - diffMilliseconds;

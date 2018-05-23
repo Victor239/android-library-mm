@@ -138,6 +138,9 @@ public class AudioTrack extends android.media.AudioTrack {
         }
     }
 
+    public static class NotInitializedException extends RuntimeException {
+    }
+
     // old phones bug.
     // http://stackoverflow.com/questions/27602492
     //
@@ -160,14 +163,14 @@ public class AudioTrack extends android.media.AudioTrack {
     public AudioTrack(int streamType, AudioParams buffer, int len) throws IllegalArgumentException {
         super(streamType, buffer.hz, buffer.c, buffer.a, len, MODE_STREAM, AudioManager.AUDIO_SESSION_ID_GENERATE);
         if (getState() != STATE_INITIALIZED)
-            throw new RuntimeException("Unable initialize AudioTrack");
+            throw new NotInitializedException();
     }
 
     @TargetApi(21)
     public AudioTrack(AudioAttributes a, AudioParams buffer, int len) throws IllegalArgumentException {
         super(a, buffer.getAudioFormat(), len, MODE_STREAM, AudioManager.AUDIO_SESSION_ID_GENERATE);
         if (getState() != STATE_INITIALIZED)
-            throw new RuntimeException("Unable initialize AudioTrack");
+            throw new NotInitializedException();
     }
 
     void playbackListenerUpdate() {

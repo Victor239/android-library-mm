@@ -108,7 +108,7 @@ public class HttpClient {
     public static final String CONTENTTYPE_XJAVASCRIPT = "application/x-javascript";
     public static final String CONTENTTYPE_JSON = "application/json";
 
-    public static int CONNECTION_TIMEOUT = AlarmManager.SEC10;
+    public static int CONNECTION_TIMEOUT = 10 * AlarmManager.SEC1;
 
     protected CloseableHttpClient httpclient;
     protected HttpClientContext httpClientContext = HttpClientContext.create();

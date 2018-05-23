@@ -507,8 +507,12 @@ public class Storage {
     }
 
     public File getStoragePath(File file) {
+        if (ejected(file))
+            return getLocalStorage();
+        if (file.exists() && canWrite(file))
+            return file;
         File p = file.getParentFile();
-        if (ejected(file) || !canWrite(p))
+        if (!canWrite(p)) // storage con points to non existed folder, but parent should be writable
             return getLocalStorage();
         return file;
     }
