@@ -378,7 +378,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
             return false;
         }
 
-        public void check() { // disable when here is no ApplicationReceiver
+        public void check() { // override when here is no ApplicationReceiver
             handler.postDelayed(check, CHECK_DELAY);
             Intent i = new Intent(service.getCanonicalName() + PING);
             context.sendBroadcast(i);
