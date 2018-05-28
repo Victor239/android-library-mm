@@ -32,7 +32,8 @@ public class ProximitySensor implements SensorEventListener {
         anchor.setBackgroundColor(Color.BLACK);
         decorView = w.getDecorView();
         DisplayMetrics dm = context.getResources().getDisplayMetrics();
-        p = new PopupWindow(anchor, dm.widthPixels, dm.heightPixels);
+        int m = Math.max(dm.widthPixels, dm.heightPixels);
+        p = new PopupWindow(anchor, m, m);
     }
 
     public void turnScreenOff() {
