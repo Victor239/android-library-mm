@@ -1,8 +1,10 @@
 package com.github.axet.androidlibrary.widgets;
 
+import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
@@ -82,10 +84,19 @@ public class ProximitySensor implements SensorEventListener {
             proximity = sm.getDefaultSensor(Sensor.TYPE_PROXIMITY);
     }
 
+    public void setContext(Context context) {
+        this.context = context;
+    }
+
     public void turnScreenOff() {
-        if (d != null)
+        if (!(context instanceof Activity)) // no window create support
+            return;
+        if (d != null) // already hidded
             return;
 
+        Intent it = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
+        context.sendBroadcast(it);
+        
         final View anchor = new View(context);
         anchor.setBackgroundColor(Color.BLACK);
 
@@ -119,9 +130,10 @@ public class ProximitySensor implements SensorEventListener {
             d.dismiss();
             d = null;
         }
-        if (w == null)
-            return;
-        showSystemUI();
+        if (w != null) {
+            showSystemUI();
+            w = null;
+        }
     }
 
     public void create() {
@@ -139,7 +151,7 @@ public class ProximitySensor implements SensorEventListener {
     @Override
     public void onSensorChanged(SensorEvent event) {
         float distance = event.values[0];
-        if (distance <= 2) { // always 0 or 5 on my device (cm)
+        if (distance <= 0) { // always 0 or 5 on my device (cm)
             onNear();
         } else {
             onFar();
