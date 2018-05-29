@@ -1,68 +1,127 @@
 package com.github.axet.androidlibrary.widgets;
 
+import android.app.Dialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.res.Configuration;
 import android.graphics.Color;
+import android.graphics.PixelFormat;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.InsetDrawable;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Build;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.view.WindowCallbackWrapper;
 import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.PopupWindow;
 
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+
 public class ProximitySensor implements SensorEventListener {
     SensorManager sm;
     Sensor proximity;
-    WindowManager.LayoutParams old;
     Window w;
-    View decorView;
-    PopupWindow p;
-    View anchor;
+    Dialog d;
+    Context context;
 
-    public ProximitySensor(Window w) {
-        this.w = w;
-        Context context = w.getContext();
+    public void clearFlags(WindowManager.LayoutParams attrs, int flags) {
+        setFlags(attrs, 0, flags);
+    }
+
+    public static void setFlags(WindowManager.LayoutParams attrs, int flags, int mask) {
+        attrs.flags = (attrs.flags & ~mask) | (flags & mask);
+    }
+
+    public static void setWindowLayoutTypeCompat(PopupWindow w, int layoutType) {
+        if (Build.VERSION.SDK_INT >= 23) {
+            w.setWindowLayoutType(layoutType);
+        } else {
+            try {
+                Class c = w.getClass();
+                Method m = c.getMethod("setWindowLayoutType", Integer.TYPE);
+                if (m != null) {
+                    m.invoke(w, layoutType);
+                }
+            } catch (Exception e) {
+            }
+        }
+    }
+
+    public static class Windows {
+        public HashSet<Window> list = new HashSet<>();
+        public HashMap<Window, WindowManager.LayoutParams> olds = new HashMap<>();
+
+        public void add(Window w) {
+            list.add(w);
+        }
+
+        public void remove(Window w) {
+            list.remove(w);
+            olds.remove(w);
+        }
+    }
+
+    public ProximitySensor(Context context) {
+        this.context = context;
         sm = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
-        proximity = sm.getDefaultSensor(Sensor.TYPE_PROXIMITY);
-        anchor = new View(context);
-        anchor.setBackgroundColor(Color.BLACK);
-        decorView = w.getDecorView();
-        DisplayMetrics dm = context.getResources().getDisplayMetrics();
-        int m = Math.max(dm.widthPixels, dm.heightPixels);
-        p = new PopupWindow(anchor, m, m);
+        if (sm != null)
+            proximity = sm.getDefaultSensor(Sensor.TYPE_PROXIMITY);
     }
 
     public void turnScreenOff() {
-        old = new WindowManager.LayoutParams();
-        WindowManager.LayoutParams params = w.getAttributes();
-        old.copyFrom(params);
-        params.flags |= WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON | WindowManager.LayoutParams.FLAG_FULLSCREEN;
-        params.screenBrightness = 0;
-        w.setAttributes(params);
+        if (d != null)
+            return;
 
-        p.setFocusable(false);
-        p.showAtLocation(anchor, Gravity.NO_GRAVITY, 0, 0);
+        final View anchor = new View(context);
+        anchor.setBackgroundColor(Color.BLACK);
+
+        d = new Dialog(context);
+        d.setCancelable(false);
+        w = d.getWindow();
+        d.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        d.setContentView(anchor);
+        if (Build.VERSION.SDK_INT >= 11) {
+            w.getDecorView().setOnSystemUiVisibilityChangeListener(new View.OnSystemUiVisibilityChangeListener() {
+                @Override
+                public void onSystemUiVisibilityChange(int visibility) {
+                    hideSystemUI();
+                }
+            });
+        }
+        w.setBackgroundDrawable(new InsetDrawable(new ColorDrawable(Color.BLACK), 0));
+        WindowManager.LayoutParams attrs = w.getAttributes();
+        attrs.screenBrightness = 0;
+        attrs.screenOrientation = Configuration.ORIENTATION_PORTRAIT;
+        w.setAttributes(attrs);
+        w.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON | WindowManager.LayoutParams.FLAG_FULLSCREEN | WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
+        w.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        d.show();
 
         hideSystemUI();
     }
 
     public void turnScreenOn() {
-        if (old == null)
+        if (d != null) {
+            d.dismiss();
+            d = null;
+        }
+        if (w == null)
             return;
-
-        p.dismiss();
-
-        WindowManager.LayoutParams params = w.getAttributes();
-        params.copyFrom(old);
-        w.setAttributes(params);
-
         showSystemUI();
-
-        old = null;
     }
 
     public void create() {
@@ -71,8 +130,8 @@ public class ProximitySensor implements SensorEventListener {
     }
 
     public void close() {
-        if (old != null)
-            turnScreenOn();
+        turnScreenOn();
+
         if (sm != null && proximity != null)
             sm.unregisterListener(this);
     }
@@ -98,20 +157,22 @@ public class ProximitySensor implements SensorEventListener {
     }
 
     void showSystemUI() {
-        if (Build.VERSION.SDK_INT >= 11)
-            decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+        if (Build.VERSION.SDK_INT >= 11) {
+            w.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+        }
     }
 
     void hideSystemUI() {
         // Set the IMMERSIVE flag.
         // Set the content to appear under the system bars so that the content
         // doesn't resize when the system bars hide and show.
-        if (Build.VERSION.SDK_INT >= 11)
-            decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+        if (Build.VERSION.SDK_INT >= 11) {
+            w.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                     | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                     | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                     | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION // hide nav bar
                     | View.SYSTEM_UI_FLAG_FULLSCREEN // hide status bar
                     | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+        }
     }
 }
