@@ -96,7 +96,7 @@ public class ProximitySensor implements SensorEventListener {
                 @Override
                 public void onSystemUiVisibilityChange(int visibility) {
                     closeSystemDialogs();
-                    hideSystemUI();
+                    hideSystemUI(d.getWindow());
                 }
             });
         }
