@@ -88,6 +88,8 @@ public class ProximityShader implements SensorEventListener {
         if (d != null) // already hidded
             return;
 
+        boolean locked = (((Activity) context).getWindow().getAttributes().flags & WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED) == WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED;
+
         final View anchor = new View(context);
         anchor.setBackgroundColor(Color.BLACK);
 
@@ -109,8 +111,10 @@ public class ProximityShader implements SensorEventListener {
         WindowManager.LayoutParams attrs = w.getAttributes();
         attrs.screenBrightness = 0;
         attrs.screenOrientation = Configuration.ORIENTATION_PORTRAIT;
+        attrs.flags |= WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON | WindowManager.LayoutParams.FLAG_FULLSCREEN;
+        if (locked)
+            attrs.flags |= WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED;
         w.setAttributes(attrs);
-        w.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON | WindowManager.LayoutParams.FLAG_FULLSCREEN | WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
         w.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         d.show();
 
