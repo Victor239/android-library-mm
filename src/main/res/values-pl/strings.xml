@@ -43,7 +43,7 @@
 
     <string name="optimization_dialog">Ustawienia Optymalizacji</string>
     <string name="optimization_message">Rozważ dodanie aplikacji do białej listy menedżera baterii telefonu, aby zapobiec usunięciu z pamięci.</string>
-    <string name="optimization_killed">Aplikacji została zabita przez OS. Rozważ dodanie aplikacji do białej listy.</string>
+    <string name="optimization_killed">Aplikacja została zabita przez system. Rozważ dodanie aplikacji do białej listy.</string>
 
     <string name="menu_settings">Ustawienia</string>
     <string name="menu_about">O aplikacji</string>
@@ -52,11 +52,11 @@
 	<string name="are_you_sure">Czy jesteś pewny/a?</string>
     <string name="default_button">Domyślnie</string>
 
-	<string name="not_permitted">Nie dozwolone</string>
+	<string name="not_permitted">Niedozwolone</string>
     <string name="close">Zamknij</string>
 
     <string-array name="screen_lock_text">
-        <item>Demuślnie Systemowo</item>
+        <item>Domyślnie Systemowo</item>
         <item>Zostaw Włączony</item>
         <item>Wyłącz po 30 sek</item>
         <item>Wyłącz po 1 min</item>
