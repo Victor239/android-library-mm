@@ -1,0 +1,68 @@
+<resources>
+    <!--OpenFileDialog-->
+    <string name="filedialog_rename">Zmień nazwę</string>
+    <string name="filedialog_delete">Usuń</string>
+    <string name="filedialog_newfolder">Nowy Folder</string>
+    <string name="filedialog_foldername">Nazwa Folderu</string>
+    <string name="filedialog_unablecreatefolder">Nie można utworzyć folderu: \'%1$s\'</string>
+    <string name="filedialog_foldercreated">Utworzono folder \'%1$s\'</string>
+    <string name="filedialog_folderdeleted">Usunięto: \'%1$s\'</string>
+    <string name="filedialog_renameto">Zmieniono nazwę na: \'%1$s\'</string>
+    <string name="filedialog_empty">Pusta Lista</string>
+    <string name="filedialog_readonly">Katalog tylko do odczytu</string>
+    <string name="filedialog_selectfolder">Proszę wybierz folder</string>
+
+    <string name="ShareAction">Udostępnij</string>
+    <string name="shared_via">Udostępnione przez %1$s</string>
+
+    <plurals name="days">
+        <item quantity="one">%d dzień</item>
+        <item quantity="other">%d dni</item>
+    </plurals>
+
+    <plurals name="hours">
+        <item quantity="one">%d godzina</item>
+        <item quantity="other">%d godzin</item>
+    </plurals>
+
+    <plurals name="minutes">
+        <item quantity="one">%d minuta</item>
+        <item quantity="other">%d minut</item>
+    </plurals>
+
+    <plurals name="seconds">
+        <item quantity="one">%d sekunda</item>
+        <item quantity="other">%d sekund</item>
+    </plurals>
+
+    <string name="days_symbol">"d"</string>
+
+    <string name="size_gb">%1$.1f GB</string>
+    <string name="size_mb">%1$.1f MB</string>
+    <string name="size_kb">%1$.1f kb</string>
+
+    <string name="optimization_dialog">Ustawienia Optymalizacji</string>
+    <string name="optimization_message">Rozważ dodanie aplikacji do białej listy menedżera baterii telefonu, aby zapobiec usunięciu z pamięci.</string>
+    <string name="optimization_killed">Aplikacja została zabita przez system. Rozważ dodanie aplikacji do białej listy.</string>
+
+    <string name="menu_settings">Ustawienia</string>
+    <string name="menu_about">O aplikacji</string>
+
+    <string name="open_browser">Otwórz Przeglądarkę</string>
+	<string name="are_you_sure">Czy jesteś pewny/a?</string>
+    <string name="default_button">Domyślnie</string>
+
+	<string name="not_permitted">Niedozwolone</string>
+    <string name="close">Zamknij</string>
+
+    <string-array name="screen_lock_text">
+        <item>Domyślnie Systemowo</item>
+        <item>Zostaw Włączony</item>
+        <item>Wyłącz po 30 sek</item>
+        <item>Wyłącz po 1 min</item>
+        <item>Wyłącz po 5 min</item>
+        <item>Wyłącz po 30 min</item>
+    </string-array>
+
+    <string name="pref_screenlock_title">Zostaw Ekran Włączony</string>
+</resources>

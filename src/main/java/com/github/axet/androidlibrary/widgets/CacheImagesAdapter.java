@@ -75,6 +75,56 @@ public class CacheImagesAdapter {
     protected DownloadImageTask current;
     public UriImagesExecutor executor = new UriImagesExecutor();
 
+    public static File getCache(Context context) {
+        File cache = context.getExternalCacheDir();
+        if (cache == null || !Storage.canWrite(cache))
+            cache = context.getCacheDir();
+        cache = new File(cache, CACHE_NAME);
+        if (!cache.exists() && !cache.mkdirs())
+            throw new RuntimeException("unable to create cache");
+        return cache;
+    }
+
+    public static File cacheUri(Context context, Uri u) {
+        File cache = getCache(context);
+        return new File(cache, MD5.digest(u.toString()));
+    }
+
+    synchronized public static void cacheClear(Context context) {
+        File cache = getCache(context);
+        File[] ff = cache.listFiles();
+        if (ff == null)
+            return;
+        Calendar c = Calendar.getInstance();
+        c.add(Calendar.DAY_OF_MONTH, -CACHE_DAYS);
+        long total = 0;
+        for (File f : ff) {
+            long last = f.lastModified();
+            if (last < c.getTimeInMillis()) {
+                f.delete();
+            } else {
+                total += f.length();
+            }
+        }
+        Arrays.sort(ff, new SortDate());
+        for (int i = 0; i < ff.length && total > CACHE_MB * 1024 * 1024; i++) {
+            File f = ff[i];
+            long size = f.length();
+            f.delete();
+            total -= size;
+        }
+    }
+
+    synchronized public static void cachePurge(Context context) {
+        File cache = getCache(context);
+        File[] ff = cache.listFiles();
+        if (ff == null)
+            return;
+        for (File f : ff) {
+            f.delete();
+        }
+    }
+
     public class UriImagesExecutor extends ThreadPoolExecutor {
         public UriImagesExecutor() {
             super(CORE_POOL_SIZE, MAXIMUM_POOL_SIZE, KEEP_ALIVE_SECONDS, TimeUnit.SECONDS, sPoolWorkQueue, sThreadFactory);
@@ -168,56 +218,6 @@ public class CacheImagesAdapter {
         return context;
     }
 
-    public File getCache() {
-        File cache = context.getExternalCacheDir();
-        if (cache == null || !Storage.canWrite(cache))
-            cache = context.getCacheDir();
-        cache = new File(cache, CACHE_NAME);
-        if (!cache.exists() && !cache.mkdirs())
-            throw new RuntimeException("unable to create cache");
-        return cache;
-    }
-
-    public File cacheUri(Uri u) {
-        File cache = getCache();
-        return new File(cache, MD5.digest(u.toString()));
-    }
-
-    synchronized public void cacheClear() {
-        File cache = getCache();
-        File[] ff = cache.listFiles();
-        if (ff == null)
-            return;
-        Calendar c = Calendar.getInstance();
-        c.add(Calendar.DAY_OF_MONTH, -CACHE_DAYS);
-        long total = 0;
-        for (File f : ff) {
-            long last = f.lastModified();
-            if (last < c.getTimeInMillis()) {
-                f.delete();
-            } else {
-                total += f.length();
-            }
-        }
-        Arrays.sort(ff, new SortDate());
-        for (int i = 0; i < ff.length && total > CACHE_MB * 1024 * 1024; i++) {
-            File f = ff[i];
-            long size = f.length();
-            f.delete();
-            total -= size;
-        }
-    }
-
-    public void cachePurge() {
-        File cache = getCache();
-        File[] ff = cache.listFiles();
-        if (ff == null)
-            return;
-        for (File f : ff) {
-            f.delete();
-        }
-    }
-
     public void refresh() {
     }
 
@@ -286,10 +286,10 @@ public class CacheImagesAdapter {
 
     public Bitmap downloadImage(Uri cover) {
         try {
-            cacheClear();
+            cacheClear(context);
             String s = cover.getScheme();
             if (s.startsWith(WebViewCustom.SCHEME_HTTP)) {
-                File f = cacheUri(cover);
+                File f = cacheUri(context, cover);
                 if (f.length() > 0) {
                     try {
                         return BitmapFactory.decodeStream(new FileInputStream(f));
