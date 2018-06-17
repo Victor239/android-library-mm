@@ -55,6 +55,7 @@ public class StorageProvider extends ContentProvider {
 
     public static HashMap<String, Uri> hashs = new HashMap<>(); // hash -> original url
     public static HashMap<Uri, Long> uris = new HashMap<>(); // original url -> time
+    public static HashMap<Uri, String> names = new HashMap<>(); // original url -> name
 
     protected Runnable refresh = new Runnable() {
         @Override
@@ -118,21 +119,25 @@ public class StorageProvider extends ContentProvider {
     }
 
     public static Uri share(Context context, Uri u) { // original uri -> hased uri
+        return share(context, u, null);
+    }
+
+    public static Uri share(Context context, Uri u, String name) { // original uri -> hased uri
         long now = System.currentTimeMillis();
         uris.put(u, now);
         String hash = Storage.md5(u.toString());
         hashs.put(hash, u);
 
-        String name;
-
-        String s = u.getScheme();
-        if (Build.VERSION.SDK_INT >= 21 && s.startsWith(ContentResolver.SCHEME_CONTENT) && !DocumentsContract.isDocumentUri(context, u)) {
-            String id = DocumentsContract.getTreeDocumentId(u);
-            id = id.substring(id.indexOf(":") + 1);
-            File f = new File(id);
-            name = f.getName();
-        } else {
-            name = Storage.getDocumentName(u);
+        if (name == null) {
+            String s = u.getScheme();
+            if (Build.VERSION.SDK_INT >= 21 && s.startsWith(ContentResolver.SCHEME_CONTENT) && !DocumentsContract.isDocumentUri(context, u)) {
+                String id = DocumentsContract.getTreeDocumentId(u);
+                id = id.substring(id.indexOf(":") + 1);
+                File f = new File(id);
+                name = f.getName();
+            } else {
+                name = Storage.getDocumentName(u);
+            }
         }
 
         File path = new File(hash, name);
