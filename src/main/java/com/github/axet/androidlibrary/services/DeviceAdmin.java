@@ -1,19 +1,16 @@
 package com.github.axet.androidlibrary.services;
 
 import android.annotation.TargetApi;
-import android.app.Activity;
 import android.app.admin.DeviceAdminReceiver;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
-import android.support.v4.app.Fragment;
 import android.util.Log;
-import android.widget.Toast;
 
-import com.github.axet.androidlibrary.BuildConfig;
 import com.github.axet.androidlibrary.app.SuperUser;
+import com.github.axet.androidlibrary.widgets.Toast;
 
 // adb shell dpm set-device-owner com.github.axet.admin/com.github.axet.androidlibrary.services.DeviceAdmin
 //

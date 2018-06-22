@@ -2,7 +2,6 @@ package com.github.axet.androidlibrary.widgets;
 
 import android.content.DialogInterface;
 import android.os.Environment;
-import android.widget.Toast;
 
 import com.github.axet.androidlibrary.R;
 import com.github.axet.androidlibrary.app.Storage;
