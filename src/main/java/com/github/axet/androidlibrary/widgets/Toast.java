@@ -3,10 +3,14 @@ package com.github.axet.androidlibrary.widgets;
 import android.app.Activity;
 import android.app.KeyguardManager;
 import android.content.Context;
+import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Handler;
 import android.view.Gravity;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.FrameLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 
@@ -17,7 +21,9 @@ public class Toast {
     public static final long SHORT_DURATION_TIMEOUT = 5000;
     public static final long LONG_DURATION_TIMEOUT = 1000;
 
+    public Context context;
     public int d;
+    public CharSequence m;
     public android.widget.Toast toast;
     public PopupWindow w;
     public Handler handler = new Handler();
@@ -27,18 +33,60 @@ public class Toast {
             cancel();
         }
     };
+    OnDismissListener dismissListener;
+
+    public interface OnDismissListener {
+        void onDismiss(Toast t);
+    }
 
     public static Toast makeText(Context context, int r, int d) {
-        return new Toast(android.widget.Toast.makeText(context, r, d), d);
+        return new Toast(context, android.widget.Toast.makeText(context, r, d), d, context.getString(r));
     }
 
     public static Toast makeText(Context context, CharSequence t, int d) {
-        return new Toast(android.widget.Toast.makeText(context, t, d), d);
+        return new Toast(context, android.widget.Toast.makeText(context, t, d), d, t);
     }
 
-    public Toast(android.widget.Toast t, int d) {
-        toast = t;
+    public static Toast onCreate(final Activity a) {
+        String m = a.getIntent().getStringExtra("text");
+        int d = a.getIntent().getIntExtra("duration", 0);
+        final Toast t = Toast.makeText(a, m, d);
+        View v = t.toast.getView();
+        FrameLayout f = new FrameLayout(a) {
+            @Override
+            protected void onAttachedToWindow() {
+                super.onAttachedToWindow();
+            }
+
+            @Override
+            protected void onDetachedFromWindow() {
+                super.onDetachedFromWindow();
+                if (t.dismissListener != null)
+                    t.dismissListener.onDismiss(t);
+            }
+        };
+        f.addView(v);
+        Window w = a.getWindow();
+        w.requestFeature(Window.FEATURE_NO_TITLE);
+        a.setContentView(f);
+        w.setGravity(Gravity.BOTTOM);
+        w.setWindowAnimations(android.R.style.Animation_Toast);
+        w.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        w.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+        w.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        w.addFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
+        return t;
+    }
+
+    public Toast(Context context, android.widget.Toast t, int d, CharSequence m) {
+        this.context = context;
+        this.toast = t;
         this.d = d;
+        this.m = m;
+    }
+
+    public void setOnDismissListener(OnDismissListener l) {
+        dismissListener = l;
     }
 
     public Toast center() {
@@ -55,6 +103,8 @@ public class Toast {
             w = null;
         }
         handler.removeCallbacksAndMessages(null);
+        if (dismissListener != null)
+            dismissListener.onDismiss(this);
     }
 
     public void setDuration(int d) {
@@ -69,26 +119,52 @@ public class Toast {
     }
 
     public void show() {
-        Context context = toast.getView().getContext();
+        Runnable show = new Runnable() {
+            @Override
+            public void run() {
+                View v = toast.getView();
+                FrameLayout f = new FrameLayout(context) {
+                    @Override
+                    protected void onAttachedToWindow() {
+                        super.onAttachedToWindow();
+                    }
+
+                    @Override
+                    protected void onDetachedFromWindow() {
+                        super.onDetachedFromWindow();
+                        if (dismissListener != null)
+                            dismissListener.onDismiss(Toast.this);
+                    }
+                };
+                f.addView(v);
+                toast.setView(f);
+                toast.show();
+            }
+        };
         KeyguardManager myKM = (KeyguardManager) context.getSystemService(Context.KEYGUARD_SERVICE);
         if (myKM.inKeyguardRestrictedInputMode()) {
-            if (w != null)
+            if (w != null) {
                 w.dismiss();
-            View v = toast.getView();
-            int ww = context.getResources().getDisplayMetrics().widthPixels;
-            int hh = context.getResources().getDisplayMetrics().heightPixels;
-            v.measure(View.MeasureSpec.makeMeasureSpec(ww, View.MeasureSpec.AT_MOST), View.MeasureSpec.makeMeasureSpec(hh, View.MeasureSpec.AT_MOST));
-            w = new PopupWindow(v, v.getMeasuredWidth(), v.getMeasuredHeight(), false);
-            w.setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
-            w.setContentView(v);
-            w.setAnimationStyle(android.R.style.Animation_Toast);
-            View p = v;
-            if (context instanceof Activity)
-                p = ((Activity) context).getWindow().getDecorView();
-            w.showAtLocation(p, Gravity.BOTTOM, 0, hh / 6);
-            handler.postDelayed(hide, getDuration());
+                w = null;
+            }
+            if (context instanceof Activity) {
+                View v = toast.getView();
+                int ww = context.getResources().getDisplayMetrics().widthPixels;
+                int hh = context.getResources().getDisplayMetrics().heightPixels;
+                v.measure(View.MeasureSpec.makeMeasureSpec(ww, View.MeasureSpec.AT_MOST), View.MeasureSpec.makeMeasureSpec(hh, View.MeasureSpec.AT_MOST));
+                w = new PopupWindow(v, v.getMeasuredWidth(), v.getMeasuredHeight(), false);
+                w.setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
+                w.setContentView(v);
+                w.setAnimationStyle(android.R.style.Animation_Toast);
+                View p = ((Activity) context).getWindow().getDecorView();
+                w.showAtLocation(p, Gravity.BOTTOM, 0, hh / 6);
+                handler.removeCallbacks(hide);
+                handler.postDelayed(hide, getDuration());
+            } else { // from Service
+                show.run();
+            }
         } else {
-            toast.show();
+            show.run();
         }
     }
 
