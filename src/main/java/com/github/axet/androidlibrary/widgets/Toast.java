@@ -39,6 +39,24 @@ public class Toast {
         void onDismiss(Toast t);
     }
 
+    public static String toString(Throwable e) {
+        Throwable p;
+        while ((p = e.getCause()) != null) {
+            e = p;
+        }
+        String msg = e.getClass().getSimpleName();
+        String m = e.getMessage();
+        if (m != null && !m.isEmpty())
+            msg += ": " + m;
+        return msg;
+    }
+
+    public static Toast Error(Context context, String msg, Throwable e) {
+        Toast t = Toast.makeText(context, msg + "\n" + toString(e), LENGTH_SHORT);
+        t.show();
+        return t;
+    }
+
     public static Toast makeText(Context context, int r, int d) {
         return new Toast(context, android.widget.Toast.makeText(context, r, d), d, context.getString(r));
     }
