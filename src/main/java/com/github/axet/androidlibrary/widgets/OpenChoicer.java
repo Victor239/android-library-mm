@@ -29,6 +29,8 @@ import java.util.regex.Matcher;
 public class OpenChoicer {
     public static String TAG = OpenChoicer.class.getSimpleName();
 
+    public static final String EXTRA_INITIAL_URI = "android.provider.extra.INITIAL_URI";
+
     public Context context;
     public OpenFileDialog.DIALOG_TYPE type;
     public boolean readonly;
@@ -200,7 +202,7 @@ public class OpenChoicer {
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
         if (!readonly)
             intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-        // intent.putExtra(EXTRA_INITIAL_URI, old); // API 26+
+        intent.putExtra(EXTRA_INITIAL_URI, old); // API 26+
         if (force || showStorageAccessFramework(context, old != null ? old.toString() : null, perms, intent, readonly)) {
             if (sa != null) {
                 sa.startActivityForResult(intent, sresult);
@@ -323,16 +325,18 @@ public class OpenChoicer {
             return;
         }
         Uri u = data.getData();
-        if (Build.VERSION.SDK_INT >= 21) {
-            ContentResolver resolver = context.getContentResolver();
-            try {
-                int flags = Intent.FLAG_GRANT_READ_URI_PERMISSION;
-                if (!readonly)
-                    flags |= Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
-                resolver.takePersistableUriPermission(u, flags);
-                onResult(u, false);
-            } catch (SecurityException e) { // remote / sdcard SAF?
-                onResult(u, true);
+        if (u != null) {
+            if (Build.VERSION.SDK_INT >= 21) {
+                ContentResolver resolver = context.getContentResolver();
+                try {
+                    int flags = Intent.FLAG_GRANT_READ_URI_PERMISSION;
+                    if (!readonly)
+                        flags |= Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
+                    resolver.takePersistableUriPermission(u, flags);
+                    onResult(u, false);
+                } catch (SecurityException e) { // remote / sdcard SAF?
+                    onResult(u, true);
+                }
             }
         }
         onDismiss();
