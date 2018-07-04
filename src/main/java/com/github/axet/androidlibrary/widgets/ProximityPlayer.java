@@ -59,6 +59,11 @@ public class ProximityPlayer extends ProximityShader {
     }
 
     @Override
+    public void create() {
+        super.create();
+    }
+
+    @Override
     public void onNear() {
         super.onNear();
         turnScreenOff();

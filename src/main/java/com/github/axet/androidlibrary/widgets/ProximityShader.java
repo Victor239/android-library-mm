@@ -30,6 +30,8 @@ public class ProximityShader implements SensorEventListener {
     public Context context;
     public Handler handler = new Handler();
     public boolean ready = false; // delayed proximity detection, user can not click on screen when proximity == 0 (broken proximity sensor?)
+    public boolean readyNear = false;
+    public boolean readyFar = false;
 
     public void clearFlags(WindowManager.LayoutParams attrs, int flags) {
         setFlags(attrs, 0, flags);
@@ -147,6 +149,7 @@ public class ProximityShader implements SensorEventListener {
             if (proximity != null)
                 sm.registerListener(this, proximity, SensorManager.SENSOR_DELAY_NORMAL);
         }
+        onFar(); // sensor should be onFar during creating, or it is broken sensor
     }
 
     public void close() {
@@ -165,12 +168,14 @@ public class ProximityShader implements SensorEventListener {
             return;
         float distance = event.values[0];
         if (distance <= 0) { // always 0 or 5 on my device (cm)
-            if (!ready) { // proximity called exactly after sharer created - broken proximity sensor
-                close();
+            if (!ready) // proximity called exactly after shader created - broken proximity sensor
                 return;
-            }
+            if (!readyFar) // onFar never been called - broken proximity sensor
+                return;
+            readyNear = true;
             onNear();
         } else {
+            readyFar = true;
             onFar();
         }
     }
