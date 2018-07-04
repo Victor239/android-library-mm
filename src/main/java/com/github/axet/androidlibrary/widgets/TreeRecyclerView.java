@@ -1,9 +1,12 @@
 package com.github.axet.androidlibrary.widgets;
 
 import android.content.Context;
+import android.graphics.PointF;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.ViewCompat;
 import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.LinearSmoothScroller;
+import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
@@ -170,12 +173,19 @@ public class TreeRecyclerView extends HeaderRecyclerView {
             return false;
         TreeAdapter t = (TreeAdapter) a;
         TreeListView.TreeNode n = t.getItem(pos);
+        return performItemClick(t, pos, n, h);
+    }
+
+    public boolean performItemClick(TreeAdapter t, int pos, TreeListView.TreeNode n, ViewHolder h) {
         if (!n.nodes.isEmpty()) { // is folder
             n.expanded = !n.expanded;
-            if (n.expanded)
-                t.expand(n);
-            else
+            if (n.expanded) {
+                int c = t.expand(n);
+                if (c > 0)
+                    smoothScrollToPosition(pos + 1);
+            } else {
                 t.collapse(n);
+            }
             if (toggleListener != null)
                 toggleListener.onItemToggled(h);
             return true;
