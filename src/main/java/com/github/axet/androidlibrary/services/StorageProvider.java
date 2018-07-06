@@ -154,7 +154,7 @@ public class StorageProvider extends ContentProvider {
         return uri.getPathSegments().get(0).length() == MD5_SIZE;
     }
 
-    Uri find(Uri uri) { // hashed uri -> original uri
+    public Uri find(Uri uri) { // hashed uri -> original uri
         String hash = uri.getPathSegments().get(0);
         Uri f = hashs.get(hash);
         if (f == null)
@@ -164,7 +164,7 @@ public class StorageProvider extends ContentProvider {
         return f;
     }
 
-    void freeUris() {
+    public void freeUris() {
         long now = System.currentTimeMillis();
         for (Uri p : new HashSet<>(uris.keySet())) {
             long l = uris.get(p);

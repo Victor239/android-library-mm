@@ -406,6 +406,10 @@ public class Storage {
 
     public static String getTypeByName(String fileName) {
         String ext = Storage.getExt(fileName);
+        return getTypeByExt(ext);
+    }
+
+    public static String getTypeByExt(String ext) {
         if (ext == null || ext.isEmpty()) {
             return CONTENTTYPE_OCTETSTREAM; // replace 'null'
         }
