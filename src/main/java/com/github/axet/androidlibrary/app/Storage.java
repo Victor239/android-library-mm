@@ -354,7 +354,7 @@ public class Storage {
             File f = getFile(uri);
             return f.getPath();
         } else {
-            throw new RuntimeException("unknown uri");
+            throw new UnknownUri();
         }
     }
 
@@ -378,7 +378,7 @@ public class Storage {
             File f = getFile(uri);
             return f.getName();
         } else {
-            throw new RuntimeException("unknown uri");
+            throw new UnknownUri();
         }
     }
 
@@ -428,6 +428,9 @@ public class Storage {
         return type;
     }
 
+    public static class UnknownUri extends RuntimeException {
+    }
+
     public Storage(Context context) {
         this.context = context;
         this.resolver = context.getContentResolver();
@@ -461,7 +464,7 @@ public class Storage {
         if (s.equals(ContentResolver.SCHEME_FILE)) {
             return isLocalStorage(getFile(u));
         } else {
-            throw new RuntimeException("unknown uri");
+            throw new UnknownUri();
         }
     }
 
@@ -543,7 +546,7 @@ public class Storage {
                 return false;
             return f1.exists();
         } else {
-            throw new RuntimeException("unknown uri");
+            throw new UnknownUri();
         }
     }
 
@@ -562,7 +565,7 @@ public class Storage {
             File f1 = new File(getFile(uri), name);
             return Uri.fromFile(f1);
         } else {
-            throw new RuntimeException("unknown uri");
+            throw new UnknownUri();
         }
     }
 
@@ -574,7 +577,7 @@ public class Storage {
             File ff = getFile(f);
             return delete(ff);
         } else {
-            throw new RuntimeException("unknown uri");
+            throw new UnknownUri();
         }
     }
 
@@ -585,7 +588,7 @@ public class Storage {
         } else if (s.equals(ContentResolver.SCHEME_FILE)) {
             return getNameNoExt(getFile(f));
         } else {
-            throw new RuntimeException("unknown uri");
+            throw new UnknownUri();
         }
     }
 
@@ -596,7 +599,7 @@ public class Storage {
         } else if (s.equals(ContentResolver.SCHEME_FILE)) {
             return getExt(getFile(f));
         } else {
-            throw new RuntimeException("unknown uri");
+            throw new UnknownUri();
         }
     }
 
@@ -612,7 +615,7 @@ public class Storage {
             f1.renameTo(ff);
             return Uri.fromFile(ff);
         } else {
-            throw new RuntimeException("unknown uri");
+            throw new UnknownUri();
         }
     }
 
@@ -644,7 +647,7 @@ public class Storage {
             File f1 = getFile(parent);
             return Uri.fromFile(getNextFile(f1, name, ext));
         } else {
-            throw new RuntimeException("unknown uri");
+            throw new UnknownUri();
         }
     }
 
@@ -667,7 +670,7 @@ public class Storage {
                 return 0;
             }
         } else {
-            throw new RuntimeException("unknown uri");
+            throw new UnknownUri();
         }
     }
 
@@ -709,7 +712,7 @@ public class Storage {
             File p = new File(path.getPath());
             return ejected(p);
         } else {
-            throw new RuntimeException("unknown uri");
+            throw new UnknownUri();
         }
     }
 
@@ -750,7 +753,7 @@ public class Storage {
         } else if (s.equals(ContentResolver.SCHEME_FILE)) {
             return getFile(f).getName();
         } else {
-            throw new RuntimeException("unknown uri");
+            throw new UnknownUri();
         }
         return null;
     }
@@ -775,7 +778,7 @@ public class Storage {
             File f = getFile(uri);
             return f.length();
         } else {
-            throw new RuntimeException("unknown uri");
+            throw new UnknownUri();
         }
     }
 
@@ -799,7 +802,7 @@ public class Storage {
             File f = getFile(uri);
             return f.lastModified();
         } else {
-            throw new RuntimeException("unknown uri");
+            throw new UnknownUri();
         }
     }
 
@@ -827,7 +830,7 @@ public class Storage {
             File f = getFile(uri);
             return f.getAbsolutePath();
         } else {
-            throw new RuntimeException("unknown uri");
+            throw new UnknownUri();
         }
     }
 
@@ -877,7 +880,7 @@ public class Storage {
 
             return Uri.fromFile(Storage.move(f, to));
         } else {
-            throw new RuntimeException("unknown uri");
+            throw new UnknownUri();
         }
     }
 
@@ -923,7 +926,7 @@ public class Storage {
                 return Uri.fromFile(move(f, tofile));
             }
         } else {
-            throw new RuntimeException("unknown uri");
+            throw new UnknownUri();
         }
     }
 

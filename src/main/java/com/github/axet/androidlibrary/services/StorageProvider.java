@@ -251,7 +251,7 @@ public class StorageProvider extends ContentProvider {
             }
             return cursor;
         } else {
-            throw new RuntimeException("unknown uri");
+            throw new Storage.UnknownUri();
         }
     }
 
@@ -267,7 +267,7 @@ public class StorageProvider extends ContentProvider {
             File ff = new File(f.getPath());
             return MimeTypeMap.getSingleton().getMimeTypeFromExtension(Storage.getExt(ff));
         } else {
-            throw new RuntimeException("unknown uri");
+            throw new Storage.UnknownUri();
         }
     }
 
@@ -306,7 +306,7 @@ public class StorageProvider extends ContentProvider {
                 File ff = new File(f.getPath());
                 return ParcelFileDescriptor.open(ff, fileMode);
             } else {
-                throw new RuntimeException("unknown uri");
+                throw new Storage.UnknownUri();
             }
         } catch (IOException e) {
             throw new RuntimeException(e);

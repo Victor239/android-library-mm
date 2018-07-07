@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FilenameFilter;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
@@ -43,7 +44,7 @@ public class CacheImagesAdapter {
 
     public static int CACHE_MB = 30;
     public static int CACHE_DAYS = 30;
-    public static String CACHE_NAME = "cacheimages";
+    public static String CACHE_NAME = "cacheimages_";
 
     public static final int CPU_COUNT = Runtime.getRuntime().availableProcessors();
     public static final int CORE_POOL_SIZE = Math.max(2, Math.min(CPU_COUNT - 1, 4));
@@ -79,20 +80,22 @@ public class CacheImagesAdapter {
         File cache = context.getExternalCacheDir();
         if (cache == null || !Storage.canWrite(cache))
             cache = context.getCacheDir();
-        cache = new File(cache, CACHE_NAME);
-        if (!cache.exists() && !cache.mkdirs())
-            throw new RuntimeException("unable to create cache");
         return cache;
     }
 
     public static File cacheUri(Context context, Uri u) {
         File cache = getCache(context);
-        return new File(cache, MD5.digest(u.toString()));
+        return new File(cache, CACHE_NAME + MD5.digest(u.toString()));
     }
 
     synchronized public static void cacheClear(Context context) {
         File cache = getCache(context);
-        File[] ff = cache.listFiles();
+        File[] ff = cache.listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                return name.startsWith(CACHE_NAME);
+            }
+        });
         if (ff == null)
             return;
         Calendar c = Calendar.getInstance();
@@ -117,7 +120,12 @@ public class CacheImagesAdapter {
 
     synchronized public static void cachePurge(Context context) {
         File cache = getCache(context);
-        File[] ff = cache.listFiles();
+        File[] ff = cache.listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                return name.startsWith(CACHE_NAME);
+            }
+        });
         if (ff == null)
             return;
         for (File f : ff) {
