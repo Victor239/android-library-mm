@@ -96,6 +96,11 @@ public class AboutPreferenceCompat extends DialogPreference {
                     AlertDialog.Builder b = new AlertDialog.Builder(context);
                     b.setTitle("Error");
                     b.setMessage(e.getMessage());
+                    b.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                        }
+                    });
                     b.show();
                 }
                 d.cancel();
