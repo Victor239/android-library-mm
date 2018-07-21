@@ -49,9 +49,13 @@ public class SearchView extends android.support.v7.widget.SearchView {
         void onClosed();
     }
 
+    public static String normalize(String s) {
+        return Normalizer.normalize(s, Normalizer.Form.NFC); // й composed as two chars sometimes.
+    }
+
     public static boolean filter(String filter, String text) {
-        filter = Normalizer.normalize(filter, Normalizer.Form.NFC).toLowerCase(Locale.US); // й composed as two chars sometimes.
-        text = Normalizer.normalize(text, Normalizer.Form.NFC).toLowerCase(Locale.US);
+        filter = normalize(filter).toLowerCase(Locale.US); // й composed as two chars sometimes.
+        text = normalize(text).toLowerCase(Locale.US);
         boolean all = true;
         for (String f : filter.split("\\s+"))
             all &= text.contains(f);

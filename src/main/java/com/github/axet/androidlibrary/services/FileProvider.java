@@ -39,17 +39,15 @@ import java.util.Map;
 public class FileProvider extends ContentProvider {
     public static final String[] COLUMNS = {OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE};
 
-    protected static Map<Uri, String> types = new HashMap<>();
-    protected static Map<Uri, String> names = new HashMap<>();
-    protected static Map<Uri, File> files = new HashMap<>();
-    protected static ProviderInfo info;
+    public ProviderInfo info;
+    public Map<Uri, String> types = new HashMap<>();
+    public Map<Uri, String> names = new HashMap<>();
+    public Map<Uri, File> files = new HashMap<>();
 
-    public static Uri getUriForFile(Context context, String type, String name, File file) {
-        Uri u = new Uri.Builder().scheme(ContentResolver.SCHEME_CONTENT).authority(info.authority).path(name).build();
-        types.put(u, type);
-        names.put(u, name);
-        files.put(u, file);
-        return u;
+    protected static HashMap<Class, FileProvider> infos = new HashMap<>();
+
+    public static FileProvider getProvider() {
+        return infos.get(FileProvider.class);
     }
 
     public static void grantPermissions(Context context, Intent intent) {
@@ -124,10 +122,18 @@ public class FileProvider extends ContentProvider {
         return modeBits;
     }
 
+    public Uri getUriForFile(Context context, String type, String name, File file) {
+        Uri u = new Uri.Builder().scheme(ContentResolver.SCHEME_CONTENT).authority(info.authority).path(name).build();
+        types.put(u, type);
+        names.put(u, name);
+        files.put(u, file);
+        return u;
+    }
+
     @Override
     public void attachInfo(Context context, ProviderInfo info) {
         super.attachInfo(context, info);
-        FileProvider.info = info;
+        this.info = info;
         // Sanity check our security
         if (info.exported) {
             throw new SecurityException("Provider must not be exported");
@@ -135,6 +141,7 @@ public class FileProvider extends ContentProvider {
         if (!info.grantUriPermissions) {
             throw new SecurityException("Provider must grant uri permissions");
         }
+        infos.put(getClass(), this);
     }
 
     @Override

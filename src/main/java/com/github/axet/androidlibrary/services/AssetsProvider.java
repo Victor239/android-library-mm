@@ -36,16 +36,22 @@ import java.util.Map;
 // content://com.github.axet.android-library/image.jpg
 
 public class AssetsProvider extends ContentProvider {
-    static Map<Uri, String> types = new HashMap<>();
-    static Map<Uri, String> names = new HashMap<>();
-    static Map<Uri, AssetFileDescriptor> files = new HashMap<>();
+    public Map<Uri, String> types = new HashMap<>();
+    public Map<Uri, String> names = new HashMap<>();
+    public Map<Uri, AssetFileDescriptor> files = new HashMap<>();
 
-    static ProviderInfo info;
+    public ProviderInfo info;
+
+    protected HashMap<Class, AssetsProvider> infos = new HashMap<>();
+
+    public AssetsProvider getProvider() {
+        return infos.get(AssetsProvider.class);
+    }
 
     @Override
     public void attachInfo(Context context, ProviderInfo info) {
         super.attachInfo(context, info);
-        AssetsProvider.info = info;
+        this.info = info;
         AssetManager am = context.getAssets();
         try {
             String[] a = am.list("");
@@ -86,7 +92,7 @@ public class AssetsProvider extends ContentProvider {
         }
     }
 
-    public static Uri addFile(String name, AssetFileDescriptor file) {
+    public Uri addFile(String name, AssetFileDescriptor file) {
         Uri u = new Uri.Builder().scheme(ContentResolver.SCHEME_CONTENT).authority(info.authority).path(name).build();
         String type = MimeTypeMap.getFileExtensionFromUrl(u.toString());
         type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(type);
