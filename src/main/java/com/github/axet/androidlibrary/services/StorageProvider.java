@@ -28,6 +28,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
+import java.security.Provider;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -51,11 +52,12 @@ public class StorageProvider extends ContentProvider {
 
     public static final String CONTENTTYPE_FOLDER = "resource/folder";
 
-    protected static ProviderInfo info;
+    protected static HashMap<Class, StorageProvider> infos = new HashMap<>();
 
-    public static HashMap<String, Uri> hashs = new HashMap<>(); // hash -> original url
-    public static HashMap<Uri, Long> uris = new HashMap<>(); // original url -> time
-    public static HashMap<Uri, String> names = new HashMap<>(); // original url -> name
+    public ProviderInfo info;
+    public HashMap<String, Uri> hashs = new HashMap<>(); // hash -> original url
+    public HashMap<Uri, Long> uris = new HashMap<>(); // original url -> time
+    public HashMap<Uri, String> names = new HashMap<>(); // original url -> name
 
     protected Runnable refresh = new Runnable() {
         @Override
@@ -67,7 +69,35 @@ public class StorageProvider extends ContentProvider {
     protected Storage storage;
     protected ContentResolver resolver;
 
-    public static Intent openFolderIntent(Context context, Uri p) {
+    public static boolean isFolderCallable(Context context, Intent intent, String authory) {
+        Uri p = intent.getData();
+        String s = p.getScheme();
+        if (s.equals(ContentResolver.SCHEME_CONTENT) && Build.VERSION.SDK_INT >= 21 && !p.getAuthority().equals(authory)) {
+            String tree = DocumentsContract.getTreeDocumentId(p);
+            String[] ss = tree.split(":"); // 1D13-0F08:private
+            if (!ss[0].equals(Storage.STORAGE_PRIMARY)) {
+                return false;
+            }
+        }
+        if (s.equals(ContentResolver.SCHEME_FILE)) {
+            if (Build.VERSION.SDK_INT >= 24 && context.getApplicationInfo().targetSdkVersion >= 24)
+                return false; // target sdk 24+ failed to open file:// links
+        }
+        return OptimizationPreferenceCompat.isCallable(context, intent);
+    }
+
+    public static StorageProvider getProvider() {
+        return infos.get(StorageProvider.class);
+    }
+
+    public static boolean isStorageUri(Uri uri) {
+        return uri.getPathSegments().get(0).length() == MD5_SIZE;
+    }
+
+    public StorageProvider() {
+    }
+
+    public Intent openFolderIntent(Context context, Uri p) {
         if (Build.VERSION.SDK_INT >= 24 && context.getApplicationInfo().targetSdkVersion >= 24) { // 24+ failed to open file:// with FileUriExposedException
             p = share(context, p);
             Intent intent = new Intent(Intent.ACTION_VIEW);
@@ -79,7 +109,7 @@ public class StorageProvider extends ContentProvider {
         }
     }
 
-    public static Intent openFolderIntent23(Context context, Uri p) {
+    public Intent openFolderIntent23(Context context, Uri p) {
         boolean perms = false;
         String s = p.getScheme();
         if (s.equals(ContentResolver.SCHEME_CONTENT) && Build.VERSION.SDK_INT >= 21) { // convert content:///primary to file://
@@ -101,28 +131,11 @@ public class StorageProvider extends ContentProvider {
         return intent;
     }
 
-    public static boolean isFolderCallable(Context context, Intent intent, String authory) {
-        Uri p = intent.getData();
-        String s = p.getScheme();
-        if (s.equals(ContentResolver.SCHEME_CONTENT) && Build.VERSION.SDK_INT >= 21 && !p.getAuthority().equals(authory)) {
-            String tree = DocumentsContract.getTreeDocumentId(p);
-            String[] ss = tree.split(":"); // 1D13-0F08:private
-            if (!ss[0].equals(Storage.STORAGE_PRIMARY)) {
-                return false;
-            }
-        }
-        if (s.equals(ContentResolver.SCHEME_FILE)) {
-            if (Build.VERSION.SDK_INT >= 24 && context.getApplicationInfo().targetSdkVersion >= 24)
-                return false; // target sdk 24+ failed to open file:// links
-        }
-        return OptimizationPreferenceCompat.isCallable(context, intent);
-    }
-
-    public static Uri share(Context context, Uri u) { // original uri -> hased uri
+    public Uri share(Context context, Uri u) { // original uri -> hased uri
         return share(context, u, null);
     }
 
-    public static Uri share(Context context, Uri u, String name) { // original uri -> hased uri
+    public Uri share(Context context, Uri u, String name) { // original uri -> hased uri
         long now = System.currentTimeMillis();
         uris.put(u, now);
         String hash = Storage.md5(u.toString());
@@ -144,14 +157,10 @@ public class StorageProvider extends ContentProvider {
         return new Uri.Builder().scheme(ContentResolver.SCHEME_CONTENT).authority(info.authority).path(path.toString()).build();
     }
 
-    public static String getAuthority() {
+    public String getAuthority() {
         if (info == null)
             return null; // service never been initalized (low api?)
         return info.authority;
-    }
-
-    public static boolean isStorageUri(Uri uri) {
-        return uri.getPathSegments().get(0).length() == MD5_SIZE;
     }
 
     public Uri find(Uri uri) { // hashed uri -> original uri
@@ -191,6 +200,7 @@ public class StorageProvider extends ContentProvider {
         if (!info.grantUriPermissions) {
             throw new SecurityException("Provider must grant uri permissions");
         }
+        infos.put(getClass(), this);
     }
 
     @Override
@@ -224,13 +234,37 @@ public class StorageProvider extends ContentProvider {
 
             File path = new File(f.getPath());
 
-            File[] ff = path.listFiles();
-            if (ff == null || ff.length == 0)
-                return null;
+            if (path.isDirectory()) {
+                File[] ff = path.listFiles();
+                if (ff == null || ff.length == 0)
+                    return null;
 
-            final MatrixCursor cursor = new MatrixCursor(projection, 1);
+                final MatrixCursor cursor = new MatrixCursor(projection, 1);
 
-            for (File file : ff) {
+                for (File file : ff) {
+                    String[] cols = new String[projection.length];
+                    Object[] values = new Object[projection.length];
+
+                    int i = 0;
+                    for (String col : projection) {
+                        if (OpenableColumns.DISPLAY_NAME.equals(col)) {
+                            cols[i] = OpenableColumns.DISPLAY_NAME;
+                            values[i++] = file.getName();
+                        } else if (OpenableColumns.SIZE.equals(col)) {
+                            cols[i] = OpenableColumns.SIZE;
+                            values[i++] = file.length();
+                        }
+                    }
+
+                    values = FileProvider.copyOf(values, i);
+
+                    cursor.addRow(values);
+                }
+
+                return cursor;
+            } else {
+                final MatrixCursor cursor = new MatrixCursor(projection, 1);
+
                 String[] cols = new String[projection.length];
                 Object[] values = new Object[projection.length];
 
@@ -238,18 +272,18 @@ public class StorageProvider extends ContentProvider {
                 for (String col : projection) {
                     if (OpenableColumns.DISPLAY_NAME.equals(col)) {
                         cols[i] = OpenableColumns.DISPLAY_NAME;
-                        values[i++] = file.getName();
+                        values[i++] = uri.getLastPathSegment();
                     } else if (OpenableColumns.SIZE.equals(col)) {
                         cols[i] = OpenableColumns.SIZE;
-                        values[i++] = file.length();
+                        values[i++] = path.length();
                     }
                 }
 
                 values = FileProvider.copyOf(values, i);
 
                 cursor.addRow(values);
+                return cursor;
             }
-            return cursor;
         } else {
             throw new Storage.UnknownUri();
         }
