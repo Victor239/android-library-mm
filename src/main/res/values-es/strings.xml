@@ -12,7 +12,7 @@
     <string name="filedialog_readonly">El directorio es de sólo lectura (read-only)</string>
     <string name="filedialog_selectfolder">Por favor, selecione una carpeta</string>
 
-    <string name="ShareAction">Copartir</string>
+    <string name="ShareAction">Compartir</string>
     <string name="shared_via">"Compartir vía %1$s"</string>
 
     <plurals name="days">
@@ -42,13 +42,13 @@
     <string name="size_kb">%1$.1f KB</string>
 
     <string name="optimization_dialog">Ajustes de optimización</string>
-    <string name="optimization_message">Por favor, considerar añadir esta aplicación a la lista de excepciones para evitar que el optimizador de batería (o energía) la remueva de la memoria RAM.</string>
+    <string name="optimization_message">Por favor, considera añadir esta aplicación a la lista de excepciones para evitar que el optimizador de batería (o energía) la remueva de la memoria RAM.</string>
     <string name="optimization_killed">La aplicación fue detenida por el sistema. Considera añadir la aplicación a la lista de excepciones.</string>
 
     <string name="menu_settings">Configuración</string>
     <string name="menu_about">Acerca de</string>
     <string name="open_browser">Abrir Navegador</string>
-    <string name="are_you_sure">T¿Estás seguro?</string>
+    <string name="are_you_sure">¿Estás seguro?</string>
     <string name="default_button">Predeterminado</string>
     <string name="not_permitted">No permitido</string>
     <string name="close">Cerrar</string>

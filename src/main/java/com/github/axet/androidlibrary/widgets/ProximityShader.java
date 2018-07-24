@@ -33,6 +33,11 @@ public class ProximityShader implements SensorEventListener {
     public boolean readyNear = false;
     public boolean readyFar = false;
 
+    public static void closeSystemDialogs(Context context) {
+        Intent it = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
+        context.sendBroadcast(it);
+    }
+
     public void clearFlags(WindowManager.LayoutParams attrs, int flags) {
         setFlags(attrs, 0, flags);
     }
@@ -84,11 +89,6 @@ public class ProximityShader implements SensorEventListener {
         this.context = context;
     }
 
-    public void closeSystemDialogs() {
-        Intent it = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
-        context.sendBroadcast(it);
-    }
-
     public void turnScreenOff() {
         if (!(context instanceof Activity) || ((Activity) context).isFinishing()) // no window create support
             return;
@@ -109,7 +109,7 @@ public class ProximityShader implements SensorEventListener {
             w.getDecorView().setOnSystemUiVisibilityChangeListener(new View.OnSystemUiVisibilityChangeListener() {
                 @Override
                 public void onSystemUiVisibilityChange(int visibility) {
-                    closeSystemDialogs();
+                    closeSystemDialogs(context);
                     hideSystemUI(w);
                 }
             });
