@@ -125,7 +125,7 @@ public class ProximityShader implements SensorEventListener {
         w.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         d.show();
 
-        closeSystemDialogs();
+        closeSystemDialogs(context);
         hideSystemUI(w);
     }
 
