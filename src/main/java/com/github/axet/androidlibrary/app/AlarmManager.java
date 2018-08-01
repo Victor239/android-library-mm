@@ -200,6 +200,10 @@ public class AlarmManager {
         }
     }
 
+    public Alarm checkPost(final long time, final Intent intent) {
+        return checkPost(time, intent, createPendingIntent(context, intent));
+    }
+
     public Alarm checkPost(final long time, final Intent intent, final PendingIntent pe) {
         final String id = checkId(0, intent);
         Runnable r = new Runnable() {
