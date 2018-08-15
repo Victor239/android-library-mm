@@ -38,6 +38,7 @@ public class SeekBarPreference extends DialogPreference {
         public boolean mPreferenceChanged;
 
         public float value;
+        public LinearLayout layout;
         public TextView valueText;
         public SeekBar seekBar;
 
@@ -91,7 +92,7 @@ public class SeekBarPreference extends DialogPreference {
 
             Context context = builder.getContext();
 
-            LinearLayout layout = new LinearLayout(context);
+            layout = new LinearLayout(context);
             layout.setOrientation(LinearLayout.VERTICAL);
 
             LinearLayout.LayoutParams lp;
