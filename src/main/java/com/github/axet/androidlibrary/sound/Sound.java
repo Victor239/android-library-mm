@@ -23,7 +23,7 @@ public class Sound {
     public static final int DEFAULT_AUDIOFORMAT = AudioFormat.ENCODING_PCM_16BIT;
     public static final int DEFAULT_RATE = 16000;
 
-    public static int[] RATES = new int[]{8000, 11025, 16000, 22050, 44100};
+    public static int[] RATES = new int[]{8000, 11025, 16000, 22050, 44100, 48000};
 
     public static final String ZEN_MODE = "zen_mode";
     public static final int ZEN_MODE_OFF = 0;
