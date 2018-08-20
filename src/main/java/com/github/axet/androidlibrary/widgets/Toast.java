@@ -6,6 +6,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Handler;
+import android.support.annotation.IntDef;
 import android.view.Gravity;
 import android.view.View;
 import android.view.Window;
@@ -14,12 +15,20 @@ import android.widget.FrameLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+
 public class Toast {
     public static final int LENGTH_LONG = android.widget.Toast.LENGTH_LONG;
     public static final int LENGTH_SHORT = android.widget.Toast.LENGTH_SHORT;
 
     public static final long SHORT_DURATION_TIMEOUT = 5000;
     public static final long LONG_DURATION_TIMEOUT = 1000;
+
+    @IntDef({LENGTH_SHORT, LENGTH_LONG})
+    @Retention(RetentionPolicy.SOURCE)
+    public @interface Duration {
+    }
 
     public Context context;
     public int d;
@@ -57,11 +66,11 @@ public class Toast {
         return t;
     }
 
-    public static Toast makeText(Context context, int r, int d) {
+    public static Toast makeText(Context context, int r, @Duration int d) {
         return new Toast(context, android.widget.Toast.makeText(context, r, d), d, context.getString(r));
     }
 
-    public static Toast makeText(Context context, CharSequence t, int d) {
+    public static Toast makeText(Context context, CharSequence t, @Duration int d) {
         return new Toast(context, android.widget.Toast.makeText(context, t, d), d, t);
     }
 

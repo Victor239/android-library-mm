@@ -33,7 +33,7 @@ import java.nio.charset.Charset;
 public class AboutPreferenceCompat extends DialogPreference {
     int id;
 
-    public static AlertDialog.Builder buildDialog(final Context context, int id) {
+    public static View buildTitle(Context context) {
         LayoutInflater inflater = LayoutInflater.from(context);
         View title = inflater.inflate(R.layout.about_title, null);
         TextView t = (TextView) title.findViewById(R.id.about_title_name);
@@ -50,6 +50,10 @@ public class AboutPreferenceCompat extends DialogPreference {
             throw new RuntimeException(e);
         }
 
+        return title;
+    }
+
+    public static AlertDialog.Builder buildDialog(final Context context, int id) {
         WebViewCustom web = new WebViewCustom(context) {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, final String url) {
@@ -68,7 +72,7 @@ public class AboutPreferenceCompat extends DialogPreference {
         }
 
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        builder.setCustomTitle(title);
+        builder.setCustomTitle(buildTitle(context));
         builder.setView(web);
         builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
             @Override
