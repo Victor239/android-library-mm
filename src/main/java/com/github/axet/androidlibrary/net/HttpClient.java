@@ -342,6 +342,7 @@ public class HttpClient {
             Header ct = response.getFirstHeader("Content-Disposition");
             if (ct != null)
                 contentDisposition = ct.getValue();
+            contentLength = entity.getContentLength();
         }
 
         public DownloadResponse(String mimeType, String encoding, InputStream data) {

@@ -135,12 +135,10 @@ public class FileProvider extends ContentProvider {
         super.attachInfo(context, info);
         this.info = info;
         // Sanity check our security
-        if (info.exported) {
+        if (info.exported)
             throw new SecurityException("Provider must not be exported");
-        }
-        if (!info.grantUriPermissions) {
+        if (!info.grantUriPermissions)
             throw new SecurityException("Provider must grant uri permissions");
-        }
         infos.put(getClass(), this);
     }
 

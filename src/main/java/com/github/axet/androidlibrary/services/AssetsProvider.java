@@ -42,9 +42,9 @@ public class AssetsProvider extends ContentProvider {
 
     public ProviderInfo info;
 
-    protected HashMap<Class, AssetsProvider> infos = new HashMap<>();
+    protected static HashMap<Class, AssetsProvider> infos = new HashMap<>();
 
-    public AssetsProvider getProvider() {
+    public static AssetsProvider getProvider() {
         return infos.get(AssetsProvider.class);
     }
 
@@ -66,12 +66,11 @@ public class AssetsProvider extends ContentProvider {
             throw new RuntimeException(e);
         }
         // Sanity check our security
-        if (info.exported) {
+        if (info.exported)
             throw new SecurityException("Provider must not be exported");
-        }
-        if (!info.grantUriPermissions) {
+        if (!info.grantUriPermissions)
             throw new SecurityException("Provider must grant uri permissions");
-        }
+        infos.put(getClass(), this);
     }
 
     @Override
