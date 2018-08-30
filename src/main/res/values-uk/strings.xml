@@ -3,7 +3,7 @@
     <string name="filedialog_rename">Переіменувати</string>
     <string name="filedialog_delete">Видалити</string>
     <string name="filedialog_newfolder">Нова тека</string>
-    <string name="filedialog_foldername">Ім'я теки</string>
+    <string name="filedialog_foldername">Ім\'я теки</string>
     <string name="filedialog_unablecreatefolder">Не вдалося створити теку: \'%1$s\'</string>
     <string name="filedialog_foldercreated">Тека \'%1$s\' створена</string>
     <string name="filedialog_folderdeleted">Видалено: \'%1$s\'</string>
@@ -50,8 +50,8 @@
     <string name="size_kb">%1$.1f кб</string>
 
     <string name="optimization_dialog">Оптимізація батареї</string>
-    <string name="optimization_message">Додайте застосунок до білого списку менеджера пам'яті телефону, щоб запобігти неочікуваному вимкненню програми.</string>
-    <string name="optimization_killed">Застосунок було видалено з пам'яті. Змініть системні налаштування, заборонивши видалення цієї програми.</string>
+    <string name="optimization_message">Додайте застосунок до білого списку менеджера пам\'яті телефону, щоб запобігти неочікуваному вимкненню програми.</string>
+    <string name="optimization_killed">Застосунок було видалено з пам\'яті. Змініть системні налаштування, заборонивши видалення цієї програми.</string>
 
     <string name="menu_settings">Налаштування</string>
     <string name="menu_about">Про програму</string>
