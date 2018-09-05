@@ -105,9 +105,12 @@ public abstract class AppCompatThemeActivity extends AppCompatActivity {
             String a = intent.getAction();
             if (a == null)
                 return;
-            if (a.equals(Intent.ACTION_SCREEN_OFF)) {
-                off.run();
-            }
+            if (a.equals(Intent.ACTION_SCREEN_OFF))
+                onScreenOff();
+        }
+
+        public void onScreenOff() {
+            off.run();
         }
     }
 
