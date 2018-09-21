@@ -64,4 +64,10 @@
         <item>30 分鐘後關閉</item>
     </string-array>
     <string name="pref_screenlock_title">保持螢幕開啟</string>
+    <string name="optimization_alive">Keep Alive Service</string>
+    <string name="optimization_alive_summary">Background service keep application running</string>
+    <string name="optimization_icon">Persistent Icon</string>
+    <string name="optimization_icon_summary">Requires on some devices when application constantly get removed</string>
+    <string name="optimization_system">Battery Optimization</string>
+    <string name="optimization_system_summary">Open system battery optimization dialog</string>
 </resources>

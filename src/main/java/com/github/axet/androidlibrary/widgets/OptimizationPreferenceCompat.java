@@ -13,32 +13,27 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
-import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
-import android.support.annotation.Nullable;
 import android.support.v4.widget.TextViewCompat;
 import android.support.v7.app.AlertDialog;
-import android.support.v7.internal.widget.PreferenceImageView;
 import android.support.v7.preference.Preference;
 import android.support.v7.preference.PreferenceViewHolder;
 import android.support.v7.preference.SwitchPreferenceCompat;
 import android.support.v7.view.WindowCallbackWrapper;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.github.axet.androidlibrary.R;
@@ -193,9 +188,9 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
     }
 
     @SuppressLint("RestrictedApi")
-    public static PreferenceViewHolder inflate(Preference p) {
+    public static PreferenceViewHolder inflate(Preference p, ViewGroup root) {
         LayoutInflater inflater = LayoutInflater.from(p.getContext());
-        View pref = inflater.inflate(p.getLayoutResource(), null);
+        View pref = inflater.inflate(p.getLayoutResource(), root);
         ViewGroup widgetFrame = (ViewGroup) pref.findViewById(android.R.id.widget_frame);
         if (widgetFrame != null) {
             if (p.getWidgetLayoutResource() != 0) {
@@ -222,10 +217,16 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
                 builder.builder.setNeutralButton(R.string.menu_settings, click);
             LinearLayout ll = new LinearLayout(builder.getContext());
             ll.setOrientation(LinearLayout.VERTICAL);
+            int dp5 = ThemeUtils.dp2px(builder.getContext(), 5);
+            ll.setPadding(dp5, dp5, dp5, dp5);
+            TextView desc = new TextView(builder.getContext());
+            TextViewCompat.setTextAppearance(desc, R.style.TextAppearance_AppCompat_Body1);
+            desc.setText(msg);
+            ll.addView(desc);
             builder.icon = new SwitchPreferenceCompat(builder.getContext());
-            builder.icon.setTitle("Persistent Icon");
-            builder.icon.setSummary("Requires on some devices when application constantly get removed");
-            builder.iconHolder = inflate(builder.icon);
+            builder.icon.setTitle(builder.getContext().getString(R.string.optimization_icon));
+            builder.icon.setSummary(builder.getContext().getString(R.string.optimization_icon_summary));
+            builder.iconHolder = inflate(builder.icon, null);
             builder.icon.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
                 @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
@@ -248,10 +249,10 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
             ll.addView(builder.iconHolder.itemView);
             if (Build.VERSION.SDK_INT >= 23) {
                 builder.optimization = new SwitchPreferenceCompat(builder.getContext());
-                builder.optimization.setTitle("Battery Optimization");
-                builder.optimization.setSummary("Open system battery optimization dialog");
+                builder.optimization.setTitle(builder.getContext().getString(R.string.optimization_system));
+                builder.optimization.setSummary(builder.getContext().getString(R.string.optimization_system_summary));
                 builder.optimization.setIcon(R.drawable.ic_open_in_new_black_24dp);
-                builder.optimizationHolder = inflate(builder.optimization);
+                builder.optimizationHolder = inflate(builder.optimization, null);
                 builder.optimization.setOnPreferenceClickListener(new OnPreferenceClickListener() {
                     @Override
                     public boolean onPreferenceClick(Preference preference) {
@@ -263,21 +264,21 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
                 ll.addView(builder.optimizationHolder.itemView);
             } else {
                 final SwitchPreferenceCompat alive = new SwitchPreferenceCompat(builder.getContext());
-                alive.setTitle("Keep Alive Service");
-                alive.setSummary("Background service keep application running");
+                alive.setTitle(builder.getContext().getString(R.string.optimization_alive));
+                alive.setSummary(builder.getContext().getString(R.string.optimization_alive_summary));
                 State23 state = getState23(builder.context, builder.key);
                 alive.setChecked(state.service);
-                final PreferenceViewHolder h = inflate(alive);
+                final PreferenceViewHolder h = inflate(alive, null);
                 alive.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
                     @Override
                     public boolean onPreferenceChange(Preference preference, Object newValue) {
                         boolean b = (boolean) newValue;
                         if (b) {
-                            builder.enable.run();
+                            builder.serviceEnable.run();
                             alive.setChecked(true);
                             alive.onBindViewHolder(h);
                         } else {
-                            builder.disable.run();
+                            builder.serviceDisable.run();
                             alive.setChecked(false);
                             alive.onBindViewHolder(h);
                         }
@@ -286,7 +287,9 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
                 });
                 ll.addView(h.itemView);
             }
-            builder.builder.setView(ll);
+            ScrollView scroll = new ScrollView(builder.getContext());
+            scroll.addView(ll);
+            builder.builder.setView(scroll);
             builder.builder.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
@@ -458,8 +461,8 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         public PreferenceViewHolder iconHolder;
         public SwitchPreferenceCompat optimization;
         public PreferenceViewHolder optimizationHolder;
-        public Runnable enable;
-        public Runnable disable;
+        public Runnable serviceEnable;
+        public Runnable serviceDisable;
 
         public WarningBuilder(Context context, String key) {
             this.key = key;
@@ -758,8 +761,8 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
                         };
                         if (ICON) {
                             WarningBuilder builder = buildWarning(getContext(), true, getKey());
-                            builder.enable = enable;
-                            builder.disable = disable;
+                            builder.serviceEnable = enable;
+                            builder.serviceDisable = disable;
                             showWarning(getContext(), builder); // show commons
                             return false;
                         }
