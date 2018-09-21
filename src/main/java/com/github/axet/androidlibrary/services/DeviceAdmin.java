@@ -32,6 +32,8 @@ import com.github.axet.androidlibrary.widgets.Toast;
 public class DeviceAdmin extends DeviceAdminReceiver {
     public static String TAG = DeviceAdmin.class.getCanonicalName();
 
+    public static final String DEVICE_ADMIN = "android.app.device_admin";
+
     // adb shell am broadcast -n com.github.axet.admin/com.github.axet.androidlibrary.services.DeviceAdmin -a android.app.action.DEVICE_ADMIN_DISABLE_REQUESTED
     @TargetApi(24)
     public static void removeDeviceOwner(Context context) {
