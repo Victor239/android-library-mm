@@ -13,6 +13,7 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
@@ -20,6 +21,8 @@ import android.os.PowerManager;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v4.widget.TextViewCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.preference.Preference;
@@ -206,53 +209,57 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
     }
 
     public static void build(final WarningBuilder builder, String msg, DialogInterface.OnClickListener click) {
+        final Context context = builder.getContext();
         builder.builder.setTitle(R.string.optimization_dialog);
         final DialogInterface.OnClickListener opt = new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                showOptimization(builder.getContext());
+                showOptimization(context);
             }
         };
         if (ICON) {
             if (click != null)
                 builder.builder.setNeutralButton(R.string.menu_settings, click);
-            LinearLayout ll = new LinearLayout(builder.getContext());
+            LinearLayout ll = new LinearLayout(context);
             ll.setOrientation(LinearLayout.VERTICAL);
-            int dp5 = ThemeUtils.dp2px(builder.getContext(), 5);
+            int dp5 = ThemeUtils.dp2px(context, 5);
             ll.setPadding(dp5, dp5, dp5, dp5);
-            TextView desc = new TextView(builder.getContext());
+            TextView desc = new TextView(context);
             TextViewCompat.setTextAppearance(desc, R.style.TextAppearance_AppCompat_Body1);
             desc.setText(msg);
             ll.addView(desc);
-            builder.icon = new SwitchPreferenceCompat(builder.getContext());
-            builder.icon.setTitle(builder.getContext().getString(R.string.optimization_icon));
-            builder.icon.setSummary(builder.getContext().getString(R.string.optimization_icon_summary));
+            builder.icon = new SwitchPreferenceCompat(context);
+            builder.icon.setTitle(context.getString(R.string.optimization_icon));
+            builder.icon.setSummary(context.getString(R.string.optimization_icon_summary));
             builder.iconHolder = inflate(builder.icon, null);
             builder.icon.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
                 @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
                     if (Build.VERSION.SDK_INT < 23) {
-                        State23 state = getState23(builder.getContext(), builder.key);
+                        State23 state = getState23(context, builder.key);
                         state.icon = (boolean) newValue;
-                        saveState(builder.getContext(), state, builder.key);
+                        saveState(context, state, builder.key);
                     } else {
-                        State state = getState(builder.getContext(), builder.key);
+                        State state = getState(context, builder.key);
                         state.icon = (boolean) newValue;
-                        saveState(builder.getContext(), state, builder.key);
+                        saveState(context, state, builder.key);
                     }
                     builder.updateIcon();
                     Intent intent = new Intent(ICON_UPDATE);
-                    builder.getContext().sendBroadcast(intent);
+                    context.sendBroadcast(intent);
                     return false;
                 }
             });
             builder.updateIcon();
             ll.addView(builder.iconHolder.itemView);
             if (Build.VERSION.SDK_INT >= 23) {
-                builder.optimization = new SwitchPreferenceCompat(builder.getContext());
-                builder.optimization.setTitle(builder.getContext().getString(R.string.optimization_system));
-                builder.optimization.setSummary(builder.getContext().getString(R.string.optimization_system_summary));
-                builder.optimization.setIcon(R.drawable.ic_open_in_new_black_24dp);
+                builder.optimization = new SwitchPreferenceCompat(context);
+                builder.optimization.setTitle(context.getString(R.string.optimization_system));
+                builder.optimization.setSummary(context.getString(R.string.optimization_system_summary));
+                Drawable d = context.getDrawable(R.drawable.ic_open_in_new_black_24dp);
+                d = DrawableCompat.wrap(d);
+                DrawableCompat.setTint(d, ThemeUtils.getThemeColor(context, android.R.attr.colorForeground));
+                builder.optimization.setIcon(d);
                 builder.optimizationHolder = inflate(builder.optimization, null);
                 builder.optimization.setOnPreferenceClickListener(new OnPreferenceClickListener() {
                     @Override
@@ -264,9 +271,9 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
                 builder.updateOptimization();
                 ll.addView(builder.optimizationHolder.itemView);
             } else {
-                final SwitchPreferenceCompat alive = new SwitchPreferenceCompat(builder.getContext());
-                alive.setTitle(builder.getContext().getString(R.string.optimization_alive));
-                alive.setSummary(builder.getContext().getString(R.string.optimization_alive_summary));
+                final SwitchPreferenceCompat alive = new SwitchPreferenceCompat(context);
+                alive.setTitle(context.getString(R.string.optimization_alive));
+                alive.setSummary(context.getString(R.string.optimization_alive_summary));
                 State23 state = getState23(builder.context, builder.key);
                 alive.setChecked(state.service);
                 final PreferenceViewHolder h = inflate(alive, null);
@@ -288,7 +295,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
                 });
                 ll.addView(h.itemView);
             }
-            ScrollView scroll = new ScrollView(builder.getContext());
+            ScrollView scroll = new ScrollView(context);
             scroll.addView(ll);
             builder.builder.setView(scroll);
             builder.builder.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
@@ -464,6 +471,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         public PreferenceViewHolder optimizationHolder;
         public Runnable serviceEnable;
         public Runnable serviceDisable;
+        public OptimizationPreferenceCompat pref;
 
         public WarningBuilder(Context context, String key) {
             this.key = key;
@@ -481,6 +489,12 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
                 @Override
                 public void onShow(DialogInterface dialog) {
                     WarningBuilder.this.onShow();
+                }
+            });
+            dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                @Override
+                public void onDismiss(DialogInterface dialog) {
+                    WarningBuilder.this.onDismiss();
                 }
             });
             return dialog;
@@ -504,6 +518,11 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
             dialog.show();
         }
 
+        public void onDismiss() {
+            if (pref != null)
+                pref.onResume();
+        }
+
         public void onShow() {
             Window w = dialog.getWindow();
             w.setCallback(new WindowCallbackWrapper(w.getCallback()) {
@@ -517,8 +536,8 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         }
 
         public void onWindowFocusChanged(boolean hasFocus) {
-            if (Build.VERSION.SDK_INT >= 23) {
-                if (ICON) {
+            if (ICON) {
+                if (Build.VERSION.SDK_INT >= 23) {
                     updateOptimization();
                 }
             }
@@ -640,7 +659,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
             if (a.equals(service.getCanonicalName() + PONG)) {
                 handler.removeCallbacks(check);
             }
-            if(a.equals(SERVICE_UPDATE)) {
+            if (a.equals(SERVICE_UPDATE)) {
                 register();
             }
         }
@@ -832,6 +851,8 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
                 @TargetApi(23)
                 public boolean onPreferenceChange(Preference preference, Object o) {
                     WarningBuilder builder = buildWarning(getContext(), !isIgnoringBatteryOptimizations(getContext()), getKey());  // hide commons
+                    if (builder != null)
+                        builder.pref = OptimizationPreferenceCompat.this;
                     showWarning(getContext(), builder);
                     return false;
                 }

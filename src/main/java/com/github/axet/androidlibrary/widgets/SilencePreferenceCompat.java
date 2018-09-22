@@ -19,8 +19,8 @@ public class SilencePreferenceCompat extends SwitchPreferenceCompat {
 
     @TargetApi(23)
     public static boolean isNotificationPolicyAccessGranted(Context context) {
-        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        return notificationManager.isNotificationPolicyAccessGranted();
+        NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        return nm.isNotificationPolicyAccessGranted();
     }
 
     @TargetApi(23)
