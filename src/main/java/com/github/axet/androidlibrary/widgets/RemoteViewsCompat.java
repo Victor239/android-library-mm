@@ -7,6 +7,7 @@ import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.Button;
 import android.widget.RemoteViews;
 import android.widget.TextView;
 
@@ -45,6 +46,10 @@ public class RemoteViewsCompat {
                         setBackgroundColor(view, id, out.data);
                     if (name.equals("TextView")) {
                         TextView t = new TextView(context, attrs); // 'textColor' not seen by obtainStyledAttributes() for unknown reason
+                        view.setTextColor(id, t.getCurrentTextColor());
+                    }
+                    if (name.equals("Button")) {
+                        Button t = new Button(context, attrs); // 'textColor' not seen by obtainStyledAttributes() for unknown reason
                         view.setTextColor(id, t.getCurrentTextColor());
                     }
                     if (name.equals("ImageButton") || name.equals("ImageView")) {
