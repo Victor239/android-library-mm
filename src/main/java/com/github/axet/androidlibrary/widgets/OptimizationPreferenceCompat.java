@@ -444,8 +444,8 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         try {
             String json = shared.getString(key, "");
             return new State(json);
-        } catch (JSONException e) {
-            throw new RuntimeException(e);
+        } catch (ClassCastException | JSONException e) {
+            return new State();
         }
     }
 
