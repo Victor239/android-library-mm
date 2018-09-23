@@ -7,7 +7,6 @@ import android.content.Intent;
 import android.media.AudioAttributes;
 import android.net.Uri;
 import android.os.Build;
-import android.util.Log;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -34,9 +33,9 @@ public class NotificationChannelCompat {
                 f.setAccessible(true);
                 f.set(n, channelId);
             } catch (NoSuchFieldException e) {
-                Log.e(TAG, "Unable to use channel", e);
+                throw new RuntimeException(e);
             } catch (IllegalAccessException e) {
-                Log.e(TAG, "Unable to use channel", e);
+                throw new RuntimeException(e);
             }
         }
     }
@@ -63,9 +62,9 @@ public class NotificationChannelCompat {
                 Method CreateNotificationChannel = NotificationManagerClass.getDeclaredMethod("createNotificationChannel", NotificationChannelClass);
                 CreateNotificationChannel.invoke(nm, nc);
             } catch (NoSuchMethodException | ClassNotFoundException e) {
-                Log.e(TAG, "Unable to use channel", e);
+                throw new RuntimeException(e);
             } catch (IllegalAccessException | InvocationTargetException | InstantiationException e) {
-                Log.e(TAG, "Unable to use channel", e);
+                throw new RuntimeException(e);
             }
         }
     }
@@ -76,9 +75,9 @@ public class NotificationChannelCompat {
                 Method m = NotificationChannelClass.getDeclaredMethod("setDescription", String.class);
                 m.invoke(nc, str);
             } catch (NoSuchMethodException e) {
-                Log.e(TAG, "Unable to use channel", e);
+                throw new RuntimeException(e);
             } catch (InvocationTargetException | IllegalAccessException e) {
-                Log.e(TAG, "Unable to use channel", e);
+                throw new RuntimeException(e);
             }
         }
     }
@@ -89,9 +88,9 @@ public class NotificationChannelCompat {
                 Method m = NotificationChannelClass.getDeclaredMethod("setSound", Uri.class, AudioAttributes.class);
                 m.invoke(nc, sound, attr);
             } catch (NoSuchMethodException e) {
-                Log.e(TAG, "Unable to use channel", e);
+                throw new RuntimeException(e);
             } catch (InvocationTargetException | IllegalAccessException e) {
-                Log.e(TAG, "Unable to use channel", e);
+                throw new RuntimeException(e);
             }
         }
     }
