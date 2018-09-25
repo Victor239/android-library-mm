@@ -2,6 +2,7 @@ package com.github.axet.androidlibrary.app;
 
 import android.app.Application;
 import android.content.Context;
+import android.content.SharedPreferences;
 
 import com.github.axet.androidlibrary.R;
 
@@ -12,17 +13,6 @@ public class MainApplication extends Application {
     public static final String TAG = MainApplication.class.getSimpleName();
 
     public static final SimpleDateFormat SIMPLE = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
-    @Override
-    protected void attachBaseContext(Context base) {
-        super.attachBaseContext(base);
-        try { // MultiDex.install(this);
-            Class<?> klass = Class.forName("android.support.multidex.MultiDex");
-            Method m = klass.getMethod("install", Context.class);
-            m.invoke(null, this);
-        } catch (Exception ignore) {
-        }
-    }
 
     public static String formatTime(int tt) {
         return String.format("%02d", tt);
@@ -104,4 +94,25 @@ public class MainApplication extends Application {
         return str.trim();
     }
 
+    @Override
+    protected void attachBaseContext(Context base) {
+        super.attachBaseContext(base);
+        try { // MultiDex.install(this);
+            Class<?> klass = Class.forName("android.support.multidex.MultiDex");
+            Method m = klass.getMethod("install", Context.class);
+            m.invoke(null, this);
+        } catch (Exception ignore) {
+        }
+    }
+
+    public int getVersion(String key, int id) {
+        final SharedPreferences defaultValueSp = getSharedPreferences(android.support.v7.preference.PreferenceManager.KEY_HAS_SET_DEFAULT_VALUES, Context.MODE_PRIVATE);
+        if (!defaultValueSp.getBoolean(android.support.v7.preference.PreferenceManager.KEY_HAS_SET_DEFAULT_VALUES, false)) {
+            android.support.v7.preference.PreferenceManager.setDefaultValues(this,id, false);
+            return -1;
+        } else {
+            SharedPreferences shared = android.support.v7.preference.PreferenceManager.getDefaultSharedPreferences(this);
+            return shared.getInt(key, 0);
+        }
+    }
 }

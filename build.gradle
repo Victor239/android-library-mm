@@ -5,7 +5,7 @@ buildscript {
         google()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.1.4'
+        classpath 'com.android.tools.build:gradle:3.2.0'
         classpath 'com.github.dcendents:android-maven-gradle-plugin:2.1'
     }
 }
@@ -23,13 +23,13 @@ apply plugin: 'com.github.dcendents.android-maven' // 'gradle install' task
 
 android {
     compileSdkVersion 25
-    buildToolsVersion "27.0.3"
+    buildToolsVersion '28.0.2'
 
     defaultConfig {
         minSdkVersion 9
         targetSdkVersion 23 // 24+ - unable to start intent with 'file://'
-        versionCode 420
-        versionName "1.26.2"
+        versionCode 421
+        versionName "1.26.3"
     }
     buildTypes {
         release {
