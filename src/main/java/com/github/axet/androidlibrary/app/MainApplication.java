@@ -3,6 +3,7 @@ package com.github.axet.androidlibrary.app;
 import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.support.v7.preference.PreferenceManager;
 
 import com.github.axet.androidlibrary.R;
 
@@ -106,12 +107,12 @@ public class MainApplication extends Application {
     }
 
     public int getVersion(String key, int id) {
-        final SharedPreferences defaultValueSp = getSharedPreferences(android.support.v7.preference.PreferenceManager.KEY_HAS_SET_DEFAULT_VALUES, Context.MODE_PRIVATE);
-        if (!defaultValueSp.getBoolean(android.support.v7.preference.PreferenceManager.KEY_HAS_SET_DEFAULT_VALUES, false)) {
-            android.support.v7.preference.PreferenceManager.setDefaultValues(this,id, false);
+        final SharedPreferences defaultValueSp = getSharedPreferences(PreferenceManager.KEY_HAS_SET_DEFAULT_VALUES, Context.MODE_PRIVATE);
+        if (!defaultValueSp.getBoolean(PreferenceManager.KEY_HAS_SET_DEFAULT_VALUES, false)) {
+            PreferenceManager.setDefaultValues(this,id, false);
             return -1;
         } else {
-            SharedPreferences shared = android.support.v7.preference.PreferenceManager.getDefaultSharedPreferences(this);
+            SharedPreferences shared = PreferenceManager.getDefaultSharedPreferences(this);
             return shared.getInt(key, 0);
         }
     }

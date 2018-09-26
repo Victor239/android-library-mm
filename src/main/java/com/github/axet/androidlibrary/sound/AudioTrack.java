@@ -125,6 +125,25 @@ public class AudioTrack extends android.media.AudioTrack {
             buffer[pos + 1] = s2;
         }
 
+        public void write(int pos, short... ss) {
+            for (int i = 0; i < ss.length; i++)
+                buffer[pos + i] = ss[i];
+        }
+
+        public void write(int pos, short s, int cn) {
+            switch (cn) {
+                case 1:
+                    write(pos, s);
+                    break;
+                case 2:
+                    write(pos, s, s);
+                    break;
+                default:
+                    for (int i = 0; i < cn; i++)
+                        buffer[pos + i] = s;
+            }
+        }
+
         public void reset() {
             pos = 0;
         }

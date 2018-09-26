@@ -163,4 +163,19 @@ public class Sound {
         }
     }
 
+    public static int getChannelCount(int channelConfig) {
+        switch (channelConfig) {
+            case AudioFormat.CHANNEL_OUT_DEFAULT: //AudioFormat.CHANNEL_CONFIGURATION_DEFAULT
+            case AudioFormat.CHANNEL_OUT_MONO:
+            case AudioFormat.CHANNEL_CONFIGURATION_MONO:
+                return 1;
+            case AudioFormat.CHANNEL_OUT_STEREO:
+            case AudioFormat.CHANNEL_CONFIGURATION_STEREO:
+                return 2;
+            default:
+                if (channelConfig == AudioFormat.CHANNEL_INVALID)
+                    return 0;
+                return Integer.bitCount(channelConfig);
+        }
+    }
 }

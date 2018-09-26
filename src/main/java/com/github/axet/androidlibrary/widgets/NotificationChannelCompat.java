@@ -4,9 +4,12 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.media.AudioAttributes;
 import android.net.Uri;
 import android.os.Build;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -22,7 +25,7 @@ public class NotificationChannelCompat {
     public static final String EXTRA_APP_PACKAGE = "android.provider.extra.APP_PACKAGE";
 
     public String channelId;
-    public Object nc;
+    public Object channel;
     public Class NotificationChannelClass;
 
     public static void setChannelId(Notification n, String channelId) {
@@ -51,16 +54,16 @@ public class NotificationChannelCompat {
         context.startActivity(intent);
     }
 
-    public NotificationChannelCompat(Context context, String id, String name, int i) {
+    public NotificationChannelCompat(Context context, String id, String name, int importance) {
         this.channelId = id;
         if (Build.VERSION.SDK_INT >= 26) {
             try {
                 NotificationChannelClass = Class.forName("android.app.NotificationChannel");
-                nc = NotificationChannelClass.getConstructor(String.class, CharSequence.class, int.class).newInstance(id, name, i);
+                channel = NotificationChannelClass.getConstructor(String.class, CharSequence.class, int.class).newInstance(id, name, importance);
                 NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
                 Class NotificationManagerClass = nm.getClass();
                 Method CreateNotificationChannel = NotificationManagerClass.getDeclaredMethod("createNotificationChannel", NotificationChannelClass);
-                CreateNotificationChannel.invoke(nm, nc);
+                CreateNotificationChannel.invoke(nm, channel);
             } catch (NoSuchMethodException | ClassNotFoundException e) {
                 throw new RuntimeException(e);
             } catch (IllegalAccessException | InvocationTargetException | InstantiationException e) {
@@ -73,7 +76,7 @@ public class NotificationChannelCompat {
         if (Build.VERSION.SDK_INT >= 26) {
             try {
                 Method m = NotificationChannelClass.getDeclaredMethod("setDescription", String.class);
-                m.invoke(nc, str);
+                m.invoke(channel, str);
             } catch (NoSuchMethodException e) {
                 throw new RuntimeException(e);
             } catch (InvocationTargetException | IllegalAccessException e) {
@@ -86,7 +89,7 @@ public class NotificationChannelCompat {
         if (Build.VERSION.SDK_INT >= 26) {
             try {
                 Method m = NotificationChannelClass.getDeclaredMethod("setSound", Uri.class, AudioAttributes.class);
-                m.invoke(nc, sound, attr);
+                m.invoke(channel, sound, attr);
             } catch (NoSuchMethodException e) {
                 throw new RuntimeException(e);
             } catch (InvocationTargetException | IllegalAccessException e) {
@@ -95,7 +98,141 @@ public class NotificationChannelCompat {
         }
     }
 
+    public Uri getSound() {
+        if (Build.VERSION.SDK_INT >= 26) {
+            try {
+                Method m = NotificationChannelClass.getDeclaredMethod("getSound");
+                return (Uri) m.invoke(channel);
+            } catch (NoSuchMethodException e) {
+                throw new RuntimeException(e);
+            } catch (InvocationTargetException | IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return null;
+    }
+
+    public AudioAttributes getAudioAttributes() {
+        if (Build.VERSION.SDK_INT >= 26) {
+            try {
+                Method m = NotificationChannelClass.getDeclaredMethod("getAudioAttributes");
+                return (AudioAttributes) m.invoke(channel);
+            } catch (NoSuchMethodException e) {
+                throw new RuntimeException(e);
+            } catch (InvocationTargetException | IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return null;
+    }
+
+    public boolean shouldVibrate() {
+        if (Build.VERSION.SDK_INT >= 26) {
+            try {
+                Method m = NotificationChannelClass.getDeclaredMethod("shouldVibrate");
+                return (boolean) m.invoke(channel);
+            } catch (NoSuchMethodException e) {
+                throw new RuntimeException(e);
+            } catch (InvocationTargetException | IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return false;
+    }
+
+    public long[] getVibrationPattern() {
+        if (Build.VERSION.SDK_INT >= 26) {
+            try {
+                Method m = NotificationChannelClass.getDeclaredMethod("getVibrationPattern");
+                return (long[]) m.invoke(channel);
+            } catch (NoSuchMethodException e) {
+                throw new RuntimeException(e);
+            } catch (InvocationTargetException | IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return null;
+    }
+
+    public boolean shouldShowLights() {
+        if (Build.VERSION.SDK_INT >= 26) {
+            try {
+                Method m = NotificationChannelClass.getDeclaredMethod("shouldShowLights");
+                return (boolean) m.invoke(channel);
+            } catch (NoSuchMethodException e) {
+                throw new RuntimeException(e);
+            } catch (InvocationTargetException | IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return false;
+    }
+
+    public int getLightColor() {
+        if (Build.VERSION.SDK_INT >= 26) {
+            try {
+                Method m = NotificationChannelClass.getDeclaredMethod("getLightColor");
+                return (int) m.invoke(channel);
+            } catch (NoSuchMethodException e) {
+                throw new RuntimeException(e);
+            } catch (InvocationTargetException | IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return Color.BLACK;
+    }
+
+    public int getImportance() {
+        if (Build.VERSION.SDK_INT >= 26) {
+            try {
+                Method m = NotificationChannelClass.getDeclaredMethod("getImportance");
+                return (int) m.invoke(channel);
+            } catch (NoSuchMethodException e) {
+                throw new RuntimeException(e);
+            } catch (InvocationTargetException | IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return NotificationManagerCompat.IMPORTANCE_UNSPECIFIED;
+    }
+
     public void apply(Notification n) {
         NotificationChannelCompat.setChannelId(n, channelId);
+    }
+
+    public void applyDefaults(NotificationCompat.Builder builder) {
+        int defaults = 0;
+        switch (getImportance()) {
+            case NotificationManagerCompat.IMPORTANCE_MAX:
+                builder.setPriority(NotificationCompat.PRIORITY_MAX);
+                defaults = NotificationCompat.DEFAULT_ALL;
+                break;
+            case NotificationManagerCompat.IMPORTANCE_HIGH:
+                builder.setPriority(NotificationCompat.PRIORITY_HIGH);
+                defaults = NotificationCompat.DEFAULT_ALL;
+                break;
+            case NotificationManagerCompat.IMPORTANCE_DEFAULT:
+                builder.setPriority(NotificationCompat.PRIORITY_DEFAULT);
+                defaults = NotificationCompat.DEFAULT_SOUND;
+                break;
+            case NotificationManagerCompat.IMPORTANCE_LOW:
+                builder.setPriority(NotificationCompat.PRIORITY_LOW);
+                break;
+            case NotificationManagerCompat.IMPORTANCE_MIN:
+                builder.setPriority(NotificationCompat.PRIORITY_MIN);
+                break;
+        }
+        builder.setDefaults(defaults);
+        Uri uri = getSound();
+        if (uri != null)
+            builder.setSound(uri);
+        if (shouldVibrate()) {
+            long[] p = getVibrationPattern();
+            if (p == null)
+                p = new long[]{1000, 500};
+            builder.setVibrate(p);
+        }
+        if (shouldShowLights())
+            builder.setLights(getLightColor(), 1000, 500);
     }
 }

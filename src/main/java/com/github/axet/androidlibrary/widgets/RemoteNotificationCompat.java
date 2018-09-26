@@ -27,10 +27,12 @@ public class RemoteNotificationCompat extends NotificationCompat {
             view = new RemoteViews(mContext.getPackageName(), layoutId);
             if (Build.VERSION.SDK_INT >= 21)
                 setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
+            setContent(view);
         }
 
         public Builder setChannel(NotificationChannelCompat channel) {
             this.channel = channel;
+            channel.applyDefaults(this);
             return this;
         }
 
@@ -44,14 +46,17 @@ public class RemoteNotificationCompat extends NotificationCompat {
             view.setOnClickPendingIntent(R.id.status_bar_latest_event_content, main);
             if (Build.VERSION.SDK_INT < 11)
                 setContentIntent(main);
-            setContent(view);
             return this;
         }
 
         public Builder setTitle(String title) {
+            return setTitle(title, null);
+        }
+
+        public Builder setTitle(String title, String ticker) {
             view.setTextViewText(R.id.title, title);
             setContentTitle(title);
-            setTicker(title); // few secs short tooltip
+            setTicker(ticker); // few secs short tooltip
             return this;
         }
 
