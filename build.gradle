@@ -23,13 +23,13 @@ apply plugin: 'com.github.dcendents.android-maven' // 'gradle install' task
 
 android {
     compileSdkVersion 25
-    buildToolsVersion '28.0.2'
+    buildToolsVersion '28.0.3'
 
     defaultConfig {
         minSdkVersion 9
         targetSdkVersion 23 // 24+ - unable to start intent with 'file://'
-        versionCode 422
-        versionName "1.27.0"
+        versionCode 423
+        versionName "1.27.1"
     }
     buildTypes {
         release {
