@@ -196,6 +196,20 @@ public class NotificationChannelCompat {
         return NotificationManagerCompat.IMPORTANCE_UNSPECIFIED;
     }
 
+    public String getGroup() {
+        if (Build.VERSION.SDK_INT >= 26) {
+            try {
+                Method m = NotificationChannelClass.getDeclaredMethod("getGroup");
+                return (String) m.invoke(channel);
+            } catch (NoSuchMethodException e) {
+                throw new RuntimeException(e);
+            } catch (InvocationTargetException | IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return null;
+    }
+
     public void apply(Notification n) {
         NotificationChannelCompat.setChannelId(n, channelId);
     }
@@ -205,15 +219,15 @@ public class NotificationChannelCompat {
         switch (getImportance()) {
             case NotificationManagerCompat.IMPORTANCE_MAX:
                 builder.setPriority(NotificationCompat.PRIORITY_MAX);
-                defaults = NotificationCompat.DEFAULT_ALL;
+                defaults |= NotificationCompat.DEFAULT_ALL;
                 break;
             case NotificationManagerCompat.IMPORTANCE_HIGH:
                 builder.setPriority(NotificationCompat.PRIORITY_HIGH);
-                defaults = NotificationCompat.DEFAULT_ALL;
+                defaults |= NotificationCompat.DEFAULT_ALL;
                 break;
             case NotificationManagerCompat.IMPORTANCE_DEFAULT:
                 builder.setPriority(NotificationCompat.PRIORITY_DEFAULT);
-                defaults = NotificationCompat.DEFAULT_SOUND;
+                defaults |= NotificationCompat.DEFAULT_SOUND;
                 break;
             case NotificationManagerCompat.IMPORTANCE_LOW:
                 builder.setPriority(NotificationCompat.PRIORITY_LOW);
@@ -222,17 +236,21 @@ public class NotificationChannelCompat {
                 builder.setPriority(NotificationCompat.PRIORITY_MIN);
                 break;
         }
-        builder.setDefaults(defaults);
         Uri uri = getSound();
         if (uri != null)
             builder.setSound(uri);
         if (shouldVibrate()) {
             long[] p = getVibrationPattern();
             if (p == null)
-                p = new long[]{1000, 500};
-            builder.setVibrate(p);
+                defaults |= NotificationCompat.DEFAULT_VIBRATE;
+            else
+                builder.setVibrate(p);
         }
         if (shouldShowLights())
             builder.setLights(getLightColor(), 1000, 500);
+        builder.setDefaults(defaults);
+        String group = getGroup();
+        if (group != null)
+            builder.setGroup(group);
     }
 }
