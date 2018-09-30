@@ -17,6 +17,8 @@ import android.os.ParcelFileDescriptor;
 import android.provider.OpenableColumns;
 import android.support.annotation.Nullable;
 
+import com.github.axet.androidlibrary.app.Storage;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -122,7 +124,16 @@ public class FileProvider extends ContentProvider {
         return modeBits;
     }
 
-    public Uri getUriForFile(Context context, String type, String name, File file) {
+    public Uri share(File file) {
+        String n = file.getName();
+        return share(Storage.getTypeByName(n), n, file);
+    }
+
+    public Uri share(String type, File file) {
+        return share(type, file.getName(), file);
+    }
+
+    public Uri share(String type, String name, File file) {
         Uri u = new Uri.Builder().scheme(ContentResolver.SCHEME_CONTENT).authority(info.authority).path(name).build();
         types.put(u, type);
         names.put(u, name);

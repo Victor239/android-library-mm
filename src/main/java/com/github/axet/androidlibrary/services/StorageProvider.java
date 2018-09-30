@@ -26,9 +26,6 @@ import com.github.axet.androidlibrary.widgets.OptimizationPreferenceCompat;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.security.MessageDigest;
-import java.security.Provider;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -97,19 +94,19 @@ public class StorageProvider extends ContentProvider {
     public StorageProvider() {
     }
 
-    public Intent openFolderIntent(Context context, Uri p) {
-        if (Build.VERSION.SDK_INT >= 24 && context.getApplicationInfo().targetSdkVersion >= 24) { // 24+ failed to open file:// with FileUriExposedException
-            p = share(context, p);
+    public Intent openFolderIntent(Uri p) {
+        if (Build.VERSION.SDK_INT >= 24 && getContext().getApplicationInfo().targetSdkVersion >= 24) { // 24+ failed to open file:// with FileUriExposedException
+            p = share(p);
             Intent intent = new Intent(Intent.ACTION_VIEW);
             intent.setDataAndType(p, CONTENTTYPE_FOLDER);
-            FileProvider.grantPermissions(context, intent, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
+            FileProvider.grantPermissions(getContext(), intent, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
             return intent;
         } else { // 23 can open file://
-            return openFolderIntent23(context, p);
+            return openFolderIntent23(p);
         }
     }
 
-    public Intent openFolderIntent23(Context context, Uri p) {
+    public Intent openFolderIntent23(Uri p) {
         boolean perms = false;
         String s = p.getScheme();
         if (s.equals(ContentResolver.SCHEME_CONTENT) && Build.VERSION.SDK_INT >= 21) { // convert content:///primary to file://
@@ -127,15 +124,15 @@ public class StorageProvider extends ContentProvider {
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setDataAndType(p, CONTENTTYPE_FOLDER);
         if (perms)
-            FileProvider.grantPermissions(context, intent, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
+            FileProvider.grantPermissions(getContext(), intent, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
         return intent;
     }
 
-    public Uri share(Context context, Uri u) { // original uri -> hased uri
-        return share(context, u, null);
+    public Uri share(Uri u) { // original uri -> hased uri
+        return share(u, null);
     }
 
-    public Uri share(Context context, Uri u, String name) { // original uri -> hased uri
+    public Uri share(Uri u, String name) { // original uri -> hased uri
         long now = System.currentTimeMillis();
         uris.put(u, now);
         String hash = Storage.md5(u.toString());
@@ -143,7 +140,7 @@ public class StorageProvider extends ContentProvider {
 
         if (name == null) {
             String s = u.getScheme();
-            if (Build.VERSION.SDK_INT >= 21 && s.startsWith(ContentResolver.SCHEME_CONTENT) && !DocumentsContract.isDocumentUri(context, u)) {
+            if (Build.VERSION.SDK_INT >= 21 && s.startsWith(ContentResolver.SCHEME_CONTENT) && !DocumentsContract.isDocumentUri(getContext(), u)) {
                 String id = DocumentsContract.getTreeDocumentId(u);
                 id = id.substring(id.indexOf(":") + 1);
                 File f = new File(id);

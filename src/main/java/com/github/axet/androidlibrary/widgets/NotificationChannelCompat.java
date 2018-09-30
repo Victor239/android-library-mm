@@ -251,18 +251,22 @@ public class NotificationChannelCompat {
 
     public void apply(NotificationCompat.Builder builder) {
         int defaults = 0;
+        Uri sound = null;
         switch (getImportance()) {
             case NotificationManagerCompat.IMPORTANCE_MAX:
                 builder.setPriority(NotificationCompat.PRIORITY_MAX);
                 defaults |= NotificationCompat.DEFAULT_ALL;
+                sound = getSound();
                 break;
             case NotificationManagerCompat.IMPORTANCE_HIGH:
                 builder.setPriority(NotificationCompat.PRIORITY_HIGH);
                 defaults |= NotificationCompat.DEFAULT_ALL;
+                sound = getSound();
                 break;
             case NotificationManagerCompat.IMPORTANCE_DEFAULT:
                 builder.setPriority(NotificationCompat.PRIORITY_DEFAULT);
                 defaults |= NotificationCompat.DEFAULT_SOUND;
+                sound = getSound();
                 break;
             case NotificationManagerCompat.IMPORTANCE_LOW:
                 builder.setPriority(NotificationCompat.PRIORITY_LOW);
@@ -271,9 +275,8 @@ public class NotificationChannelCompat {
                 builder.setPriority(NotificationCompat.PRIORITY_MIN);
                 break;
         }
-        Uri uri = getSound();
-        if (uri != null)
-            builder.setSound(uri);
+        if (sound != null)
+            builder.setSound(sound);
         if (shouldVibrate()) {
             long[] p = getVibrationPattern();
             if (p == null)
