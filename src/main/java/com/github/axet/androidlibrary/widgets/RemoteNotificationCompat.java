@@ -82,5 +82,12 @@ public class RemoteNotificationCompat extends NotificationCompat {
             view.setImageViewResource(R.id.icon, id);
             return this;
         }
+
+        @Override
+        public Notification build() {
+            Notification n = super.build();
+            NotificationChannelCompat.setChannelId(n, channel.channelId); // API26+
+            return n;
+        }
     }
 }
