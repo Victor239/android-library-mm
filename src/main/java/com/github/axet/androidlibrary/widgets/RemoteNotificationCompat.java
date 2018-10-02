@@ -39,8 +39,7 @@ public class RemoteNotificationCompat extends NotificationCompat {
         @SuppressLint("RestrictedApi")
         public Builder setTheme(int id) {
             theme = new ContextThemeWrapper(mContext, id);
-            if (Build.VERSION.SDK_INT < 21)
-                RemoteViewsCompat.applyTheme(theme, view);
+            RemoteViewsCompat.applyTheme(theme, view);
             return this;
         }
 
