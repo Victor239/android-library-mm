@@ -22,7 +22,11 @@ public class ProximityPlayer extends ProximityShader {
             return false;
         if (am.isBluetoothA2dpOn())
             return false;
-        return MediaRouter.getInstance(context).getDefaultRoute().isDeviceSpeaker(); // device mounted or usb speaker
+        try {
+            return MediaRouter.getInstance(context).getDefaultRoute().isDeviceSpeaker(); // device mounted or usb speaker
+        } catch (android.content.res.Resources.NotFoundException e) {
+            return true;
+        }
     }
 
     public static boolean isDeviceMountedSpeaker(Context context, Object o) {

@@ -37,6 +37,7 @@ public class RemoteViewsCompat {
                         android.R.attr.tint, // 2
                         android.R.attr.textColor, // 3
                         android.R.attr.textAppearance, // 4
+                        android.R.attr.theme, // 5
                 };
                 TypedArray ta = context.obtainStyledAttributes(attrs, attrsArray);
                 TypedValue out = new TypedValue();
