@@ -85,7 +85,7 @@ public class RemoteNotificationCompat extends NotificationCompat {
         @Override
         public Notification build() {
             Notification n = super.build();
-            NotificationChannelCompat.setChannelId(n, channel.channelId); // API26+
+            NotificationChannelCompat.setChannelId(n, channel.channelId); // builder recreate Notification object by prorerty
             return n;
         }
     }

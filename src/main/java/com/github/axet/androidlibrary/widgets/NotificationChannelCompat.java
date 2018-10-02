@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
+import android.util.Log;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -27,6 +28,22 @@ public class NotificationChannelCompat {
     public String channelId;
     public Object channel;
     public Class NotificationChannelClass;
+
+    public static void setChannelId(NotificationCompat.Builder builder, String channelId) {
+        try {
+            Class klass = NotificationCompat.Builder.class;
+            Field mPublicVersion = klass.getDeclaredField("mPublicVersion");
+            mPublicVersion.setAccessible(true);
+            Notification n = (Notification) mPublicVersion.get(builder);
+            if (n != null)
+                NotificationChannelCompat.setChannelId(n, channelId);
+        } catch (NoSuchFieldException e) {
+            Log.d(TAG, "unable to set public", e);
+        } catch (IllegalAccessException e) {
+            Log.d(TAG, "unable to set public", e);
+        }
+        NotificationChannelCompat.setChannelId(builder.mNotification, channelId);
+    }
 
     public static void setChannelId(Notification n, String channelId) {
         if (Build.VERSION.SDK_INT >= 26) {
@@ -292,6 +309,6 @@ public class NotificationChannelCompat {
         if (group != null)
             builder.setGroup(group);
 
-        NotificationChannelCompat.setChannelId(builder.mNotification, channelId);
+        NotificationChannelCompat.setChannelId(builder, channelId);
     }
 }
