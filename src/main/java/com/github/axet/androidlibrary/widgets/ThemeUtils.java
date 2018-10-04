@@ -17,17 +17,17 @@ public class ThemeUtils {
 
     // get attrs.xml / styles.xml
     public static int getThemeColor(Context context, int id) {
-        TypedValue tv = new TypedValue();
-        boolean found = context.getTheme().resolveAttribute(id, tv, true);
+        TypedValue out = new TypedValue();
+        boolean found = context.getTheme().resolveAttribute(id, out, true);
         if (found) {
-            switch (tv.type) {
+            switch (out.type) {
                 case TypedValue.TYPE_INT_COLOR_ARGB4:
                 case TypedValue.TYPE_INT_COLOR_ARGB8:
                 case TypedValue.TYPE_INT_COLOR_RGB4:
                 case TypedValue.TYPE_INT_COLOR_RGB8:
-                    return tv.data;
+                    return out.data;
                 default:
-                    return getColor(context, tv.resourceId);
+                    return getColor(context, out.resourceId);
             }
         } else {
             throw new RuntimeException("not found");
