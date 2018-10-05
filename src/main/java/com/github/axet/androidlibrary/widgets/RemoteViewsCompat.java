@@ -121,9 +121,9 @@ public class RemoteViewsCompat {
             int style = getImageButtonStyle(theme, context);
             switch (style) {
                 case android.R.style.Widget_Material_ImageButton:
-                    return R.drawable.btn_default_material_dark;
+                    return R.drawable.remoteview_btn_dark;
                 case android.R.style.Widget_Material_Light_ImageButton:
-                    return R.drawable.btn_default_material_light;
+                    return R.drawable.remoteview_btn_light;
                 case 0:
                     break;
                 default:

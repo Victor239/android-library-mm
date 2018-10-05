@@ -4,15 +4,24 @@ import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.Context;
+import android.content.pm.ApplicationInfo;
 import android.os.Build;
 import android.support.v4.app.NotificationCompat;
 import android.support.v7.view.ContextThemeWrapper;
+import android.view.View;
 import android.widget.RemoteViews;
 
 import com.github.axet.androidlibrary.R;
 
 // Check android notification_template_base.xml for constants
 public class RemoteNotificationCompat extends NotificationCompat {
+
+    public static String getApplicationName(Context context) {
+        ApplicationInfo applicationInfo = context.getApplicationInfo();
+        int stringId = applicationInfo.labelRes;
+        return stringId == 0 ? applicationInfo.nonLocalizedLabel.toString() : context.getString(stringId);
+    }
+
     public static class Builder extends NotificationCompat.Builder {
         public NotificationChannelCompat channel;
         public RemoteViews view;
@@ -87,6 +96,28 @@ public class RemoteNotificationCompat extends NotificationCompat {
             Notification n = super.build();
             NotificationChannelCompat.setChannelId(n, channel.channelId); // builder recreate Notification object by prorerty
             return n;
+        }
+    }
+
+    public static class Compact extends Builder {
+        public Compact(Context context) {
+            super(context, R.layout.remoteview_compact);
+            view.setTextViewText(R.id.app_name_text, getApplicationName(context));
+        }
+
+        @Override
+        public Builder setText(String text) {
+            view.setViewVisibility(R.id.header_text_divider, View.VISIBLE);
+            view.setTextViewText(R.id.header_text, text);
+            view.setViewVisibility(R.id.header_text, View.VISIBLE);
+            return super.setText(text);
+        }
+
+        @Override
+        public NotificationCompat.Builder setSmallIcon(int icon) {
+            view.setImageViewResource(R.id.icon, icon);
+            setImageViewTint(R.id.icon_circle, R.attr.colorButtonNormal);
+            return super.setSmallIcon(icon);
         }
     }
 }
