@@ -30,7 +30,10 @@ public class RemoteNotificationCompat extends NotificationCompat {
 
         public Builder(Context context, int layoutId) {
             super(context);
-            create(layoutId);
+            compact = new RemoteViews(mContext.getPackageName(), layoutId);
+            setCustomContentView(compact);
+            if (Build.VERSION.SDK_INT >= 21)
+                setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
         }
 
         public Builder(Context context, int layoutId, int bigId) {
@@ -39,16 +42,14 @@ public class RemoteNotificationCompat extends NotificationCompat {
             setCustomBigContentView(big);
         }
 
-        public void create(int layoutId) {
-            compact = new RemoteViews(mContext.getPackageName(), layoutId);
-            if (Build.VERSION.SDK_INT >= 21)
-                setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
-            setContent(compact);
-        }
-
         public Builder setChannel(NotificationChannelCompat channel) {
             this.channel = channel;
             channel.apply(this);
+            return this;
+        }
+
+        public Builder setWhen(Notification n) {
+            setWhen(n == null ? System.currentTimeMillis() : n.when);
             return this;
         }
 
@@ -91,11 +92,6 @@ public class RemoteNotificationCompat extends NotificationCompat {
             return this;
         }
 
-        public Builder setWhen(Notification n) {
-            setWhen(n == null ? System.currentTimeMillis() : n.when);
-            return this;
-        }
-
         public Builder setImageViewTint(int id, int attr) { // android:tint="?attr/..." crashing <API21
             RemoteViewsCompat.setImageViewTint(compact, id, ThemeUtils.getThemeColor(theme, attr));
             if (big != null)
@@ -134,7 +130,8 @@ public class RemoteNotificationCompat extends NotificationCompat {
         @Override
         public Notification build() {
             Notification n = super.build();
-            NotificationChannelCompat.setChannelId(n, channel.channelId); // builder recreate Notification object by prorerty
+            if (channel != null)
+                NotificationChannelCompat.setChannelId(n, channel.channelId); // builder recreate Notification object by prorerty
             return n;
         }
     }
@@ -145,11 +142,11 @@ public class RemoteNotificationCompat extends NotificationCompat {
             compact.setTextViewText(R.id.app_name_text, getApplicationName(context));
         }
 
-        public Low(Context context, int layoutId) {
-            super(context, Build.VERSION.SDK_INT >= 26 ? R.layout.remoteview_low : layoutId);
+        public Low(Context context, int bigId) {
+            super(context, Build.VERSION.SDK_INT >= 26 ? R.layout.remoteview_low : bigId);
             compact.setTextViewText(R.id.app_name_text, getApplicationName(context));
             if (Build.VERSION.SDK_INT >= 26) {
-                big = new RemoteViews(mContext.getPackageName(), layoutId);
+                big = new RemoteViews(mContext.getPackageName(), bigId);
                 setCustomBigContentView(big);
             }
         }
