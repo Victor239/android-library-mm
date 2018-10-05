@@ -122,19 +122,18 @@ public class RemoteViewsCompat {
                         if (!ta.getValue(1, out)) { // no background set
                             if (theme.resolveAttribute(android.R.attr.imageButtonStyle, out, true)) {
                                 switch (out.resourceId) {
-                                    case android.R.style.Widget_DeviceDefault_ImageButton:
                                     case android.R.style.Widget_Material_ImageButton:
-                                        out.resourceId = android.R.style.Widget_Holo_ImageButton; // Holo has individual resource file per theme
+                                        setBackgroundResource(view, id, R.drawable.btn_default_material_dark);
                                         break;
-                                    case android.R.style.Widget_DeviceDefault_Light_ImageButton:
                                     case android.R.style.Widget_Material_Light_ImageButton:
-                                        out.resourceId = android.R.style.Widget_Holo_Light_ImageButton; // Holo has individual resource file per theme
+                                        setBackgroundResource(view, id, R.drawable.btn_default_material_light);
                                         break;
+                                    default:
+                                        ContextThemeWrapper w = new ContextThemeWrapper(context2, out.resourceId);
+                                        Resources.Theme t = w.getTheme();
+                                        if (t.resolveAttribute(android.R.attr.background, out, true))
+                                            setBackgroundResource(view, id, out.resourceId);
                                 }
-                                ContextThemeWrapper w = new ContextThemeWrapper(context2, out.resourceId);
-                                Resources.Theme t = w.getTheme();
-                                if (t.resolveAttribute(android.R.attr.background, out, true))
-                                    setBackgroundResource(view, id, out.resourceId);
                             }
                         }
                     }
