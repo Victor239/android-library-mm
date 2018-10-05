@@ -1,18 +1,136 @@
 package com.github.axet.androidlibrary.widgets;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
+import android.os.Build;
+import android.support.v7.view.ContextThemeWrapper;
+import android.support.v7.widget.AppCompatImageButton;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.RemoteViews;
 import android.widget.TextView;
 
+import com.github.axet.androidlibrary.R;
+
 public class RemoteViewsCompat {
     public static final String TAG = RemoteViewsCompat.class.getSimpleName();
+
+    public static class ThemeFactory implements LayoutInflater.Factory {
+        public Context context;
+        public RemoteViews view;
+
+        public ThemeFactory(Context context, RemoteViews view) {
+            this.context = context;
+            this.view = view;
+        }
+
+        @Override
+        public View onCreateView(String name, Context context, AttributeSet attrs) {
+            if (Build.VERSION.SDK_INT >= 21 && this.context != context) // API21+ and 'android:theme' applied = ignore
+                return null;
+            int[] attrsArray = new int[]{
+                    android.R.attr.id, // 0
+                    android.R.attr.background, // 1
+                    android.R.attr.tint, // 2
+                    android.R.attr.textColor, // 3
+                    android.R.attr.textAppearance, // 4
+                    android.R.attr.theme, // 5
+            };
+            Resources.Theme theme = context.getTheme();
+            TypedArray ta = theme.obtainStyledAttributes(attrs, attrsArray, 0, 0);
+            TypedValue out = new TypedValue();
+            if (ta.getValue(0, out)) {
+                int id = out.resourceId;
+                if (ta.getValue(1, out))
+                    setBackgroundColor(view, id, out.data);
+                if (name.equals("TextView")) {
+                    TextView t = new TextView(context, attrs); // 'textColor' not seen by obtainStyledAttributes() for unknown reason
+                    view.setTextColor(id, t.getCurrentTextColor());
+                }
+                if (name.equals("Button")) {
+                    Button t = new Button(context, attrs); // 'textColor' not seen by obtainStyledAttributes() for unknown reason
+                    view.setTextColor(id, t.getCurrentTextColor());
+                }
+                if (name.equals("ImageView")) {
+                    if (ta.getValue(2, out))
+                        setImageViewTint(view, id, out.data);
+                }
+                if (name.equals("ImageButton")) {
+                    if (ta.getValue(2, out))
+                        setImageViewTint(view, id, out.data);
+                    if (!ta.getValue(1, out)) { // no background set
+                        int res = getImageButtonBackground(theme, context);
+                        if (res != 0)
+                            setBackgroundResource(view, id, res);
+                    }
+                }
+            }
+            ta.recycle();
+            return null;
+        }
+
+        @SuppressLint("RestrictedApi")
+        public int getImageButtonStyle(Resources.Theme theme, Context context) {
+            TypedValue style = new TypedValue();
+            if (theme.resolveAttribute(R.attr.imageButtonStyle, style, true)) {
+                if (style.resourceId == R.style.Widget_AppCompat_ImageButton) {
+                    ContextThemeWrapper w = new ContextThemeWrapper(context, style.resourceId);
+                    Resources.Theme t = w.getTheme();
+                    TypedValue out = new TypedValue();
+                    if (t.resolveAttribute(android.R.attr.background, out, true)) {
+                        if (out.string != null) {
+                            String[] ss = new String[]{
+                                    "res/drawable/btn_default_material.xml", // API21
+                                    "res/drawable/abc_btn_default_mtrl_shape.xml" // API16
+                            };
+                            for (String s : ss) {
+                                if (out.string.equals(s)) { // AppCompat material button
+                                    if (t.resolveAttribute(android.R.attr.imageButtonStyle, out, true)) { // which theme light or dark?
+                                        switch (out.resourceId) {
+                                            case android.R.style.Widget_Holo_ImageButton:
+                                            case android.R.style.Widget_Material_ImageButton:
+                                                return android.R.style.Widget_Material_ImageButton;
+                                            case android.R.style.Widget_Holo_Light_ImageButton:
+                                            case android.R.style.Widget_Material_Light_ImageButton:
+                                                return android.R.style.Widget_Material_Light_ImageButton;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                return style.resourceId;
+            }
+            return 0;
+        }
+
+        @SuppressLint("RestrictedApi")
+        public int getImageButtonBackground(Resources.Theme theme, Context context) {
+            TypedValue out = new TypedValue();
+            int style = getImageButtonStyle(theme, context);
+            switch (style) {
+                case android.R.style.Widget_Material_ImageButton:
+                    return R.drawable.btn_default_material_dark;
+                case android.R.style.Widget_Material_Light_ImageButton:
+                    return R.drawable.btn_default_material_light;
+                case 0:
+                    break;
+                default:
+                    ContextThemeWrapper w = new ContextThemeWrapper(context, style);
+                    Resources.Theme t = w.getTheme();
+                    if (t.resolveAttribute(android.R.attr.background, out, true))
+                        return out.resourceId;
+            }
+            return 0;
+        }
+    }
 
     public static void setBackgroundColor(RemoteViews view, int id, int color) {
         view.setInt(id, "setBackgroundColor", color);
@@ -73,44 +191,14 @@ public class RemoteViewsCompat {
         return false;
     }
 
-    public static void applyTheme(Context context, final RemoteViews view) {
+    public static void applyTheme(final Context context, final RemoteViews view) {
+        applyTheme(context, view, new ThemeFactory(context, view));
+    }
+
+    public static void applyTheme(final Context context, final RemoteViews view, LayoutInflater.Factory factory) {
         LayoutInflater inflater = LayoutInflater.from(context);
         inflater = inflater.cloneInContext(context);
-        inflater.setFactory(new LayoutInflater.Factory() {
-            @Override
-            public View onCreateView(String name, Context context, AttributeSet attrs) {
-                int[] attrsArray = new int[]{
-                        android.R.attr.id, // 0
-                        android.R.attr.background, // 1
-                        android.R.attr.tint, // 2
-                        android.R.attr.textColor, // 3
-                        android.R.attr.textAppearance, // 4
-                        android.R.attr.theme, // 5
-                };
-                Resources.Theme theme = context.getTheme();
-                TypedArray ta = theme.obtainStyledAttributes(attrs, attrsArray, 0, 0);
-                TypedValue out = new TypedValue();
-                if (ta.getValue(0, out)) {
-                    int id = out.resourceId;
-                    if (ta.getValue(1, out))
-                        setBackgroundColor(view, id, out.data);
-                    if (name.equals("TextView")) {
-                        TextView t = new TextView(context, attrs); // 'textColor' not seen by obtainStyledAttributes() for unknown reason
-                        view.setTextColor(id, t.getCurrentTextColor());
-                    }
-                    if (name.equals("Button")) {
-                        Button t = new Button(context, attrs); // 'textColor' not seen by obtainStyledAttributes() for unknown reason
-                        view.setTextColor(id, t.getCurrentTextColor());
-                    }
-                    if (name.equals("ImageButton") || name.equals("ImageView")) {
-                        if (ta.getValue(2, out))
-                            setImageViewTint(view, id, out.data);
-                    }
-                }
-                ta.recycle();
-                return null;
-            }
-        });
+        inflater.setFactory(factory);
         inflater.inflate(view.getLayoutId(), null);
     }
 
