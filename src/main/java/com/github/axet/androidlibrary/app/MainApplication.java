@@ -1,6 +1,8 @@
 package com.github.axet.androidlibrary.app;
 
+import android.app.Activity;
 import android.app.Application;
+import android.app.Service;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.support.v7.preference.PreferenceManager;
@@ -14,6 +16,14 @@ public class MainApplication extends Application {
     public static final String TAG = MainApplication.class.getSimpleName();
 
     public static final SimpleDateFormat SIMPLE = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+    public static MainApplication from(Context context) {
+        if (context instanceof Service)
+            return (MainApplication) ((Service) context).getApplication();
+        if (context instanceof Activity)
+            return (MainApplication) ((Activity) context).getApplication();
+        return (MainApplication) context.getApplicationContext();
+    }
 
     public static String formatTime(int tt) {
         return String.format("%02d", tt);
