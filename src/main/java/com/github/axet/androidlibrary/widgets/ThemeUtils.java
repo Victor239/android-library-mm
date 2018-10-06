@@ -1,6 +1,7 @@
 package com.github.axet.androidlibrary.widgets;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.support.v4.content.ContextCompat;
 import android.util.TypedValue;
 
@@ -10,7 +11,7 @@ public class ThemeUtils {
         return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, context.getResources().getDisplayMetrics());
     }
 
-    // get colors.xml
+    // get colors.xml / some_name_statelist.xml
     public static int getColor(Context context, int id) {
         return ContextCompat.getColor(context, id);
     }
@@ -30,7 +31,7 @@ public class ThemeUtils {
                     return getColor(context, out.resourceId);
             }
         } else {
-            throw new RuntimeException("not found");
+            throw new Resources.NotFoundException("Color resource ID #0x" + Integer.toHexString(id));
         }
     }
 }

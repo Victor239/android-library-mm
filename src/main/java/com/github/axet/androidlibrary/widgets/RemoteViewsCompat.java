@@ -62,10 +62,14 @@ public class RemoteViewsCompat {
                 if (ta.getValue(TINT, out))
                     setImageViewTint(view, id, getColor(context, out));
                 if (name.equals(ImageButton.class.getSimpleName())) {
-                    if (!ta.hasValue(BACKGROUND)) { // no background set
-                        int res = getImageButtonBackground(theme, context);
-                        if (res != 0)
-                            setBackgroundResource(view, id, res);
+                    if (Build.VERSION.SDK_INT <= 10) { // seems like API10 and below does not support notification buttons
+                        view.setViewVisibility(id, View.GONE);
+                    } else {
+                        if (!ta.hasValue(BACKGROUND)) { // no background set
+                            int res = getImageButtonBackground(theme, context);
+                            if (res != 0)
+                                setBackgroundResource(view, id, res);
+                        }
                     }
                 }
             }
