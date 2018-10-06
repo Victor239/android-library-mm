@@ -160,7 +160,7 @@ public class RemoteNotificationCompat extends NotificationCompat {
     }
 
     public static class Low extends Builder {
-        public static final int LOW = R.layout.remoteview_low;
+        private static final int LOW = R.layout.remoteview_low; // when public crashing javadoc
 
         public Low(Context context) {
             super(context);
