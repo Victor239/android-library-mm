@@ -160,15 +160,17 @@ public class RemoteNotificationCompat extends NotificationCompat {
     }
 
     public static class Low extends Builder {
+        public static final int LOW = R.layout.remoteview_low;
+
         public Low(Context context) {
             super(context);
-            create(R.layout.remoteview_low);
+            create(LOW);
         }
 
         public Low(Context context, int bigId) {
             super(context);
             if (Build.VERSION.SDK_INT >= 26)
-                create(R.layout.remoteview_low, bigId);
+                create(LOW, bigId);
             else
                 create(bigId);
         }
@@ -176,22 +178,27 @@ public class RemoteNotificationCompat extends NotificationCompat {
         @Override
         public void create(int layoutId) {
             super.create(layoutId);
-            compact.setTextViewText(R.id.app_name_text, getApplicationName(mContext));
+            if (compact.getLayoutId() == LOW)
+                compact.setTextViewText(R.id.app_name_text, getApplicationName(mContext));
         }
 
         @Override
         public Builder setText(CharSequence text) {
-            compact.setViewVisibility(R.id.header_text_divider, View.VISIBLE);
-            compact.setTextViewText(R.id.header_text, text);
-            compact.setViewVisibility(R.id.header_text, View.VISIBLE);
+            if (compact.getLayoutId() == LOW) {
+                compact.setViewVisibility(R.id.header_text_divider, View.VISIBLE);
+                compact.setTextViewText(R.id.header_text, text);
+                compact.setViewVisibility(R.id.header_text, View.VISIBLE);
+            }
             return super.setText(text);
         }
 
         @Override
         public NotificationCompat.Builder setSmallIcon(int icon) {
             compact.setImageViewResource(R.id.icon, icon);
-            if (theme != null || Build.VERSION.SDK_INT >= 21)
+            if (theme != null)
                 setImageViewTint(R.id.icon_circle, R.attr.colorButtonNormal);
+            else if (Build.VERSION.SDK_INT >= 21)
+                setImageViewTint(R.id.icon_circle, android.R.attr.colorButtonNormal);
             else
                 setImageViewTint(R.id.icon_circle, android.R.attr.windowBackground);
             return super.setSmallIcon(icon);
