@@ -7,8 +7,11 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Handler;
 import android.support.annotation.IntDef;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
@@ -19,6 +22,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 public class Toast {
+    public static final String TAG = Toast.class.getSimpleName();
+
     public static final int LENGTH_LONG = android.widget.Toast.LENGTH_LONG;
     public static final int LENGTH_SHORT = android.widget.Toast.LENGTH_SHORT;
 
@@ -150,7 +155,14 @@ public class Toast {
         Runnable show = new Runnable() {
             @Override
             public void run() {
+                if (w != null) {
+                    w.dismiss();
+                    w = null;
+                }
                 View v = toast.getView();
+                ViewParent p = v.getParent();
+                if (p != null) // second show same view (after exception)
+                    ((ViewGroup) p).removeView(v);
                 FrameLayout f = new FrameLayout(context) {
                     @Override
                     protected void onAttachedToWindow() {
@@ -177,17 +189,22 @@ public class Toast {
             }
             if (context instanceof Activity) {
                 View v = toast.getView();
-                int ww = context.getResources().getDisplayMetrics().widthPixels;
-                int hh = context.getResources().getDisplayMetrics().heightPixels;
-                v.measure(View.MeasureSpec.makeMeasureSpec(ww, View.MeasureSpec.AT_MOST), View.MeasureSpec.makeMeasureSpec(hh, View.MeasureSpec.AT_MOST));
-                w = new PopupWindow(v, v.getMeasuredWidth(), v.getMeasuredHeight(), false);
-                w.setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
-                w.setContentView(v);
-                w.setAnimationStyle(android.R.style.Animation_Toast);
-                View p = ((Activity) context).getWindow().getDecorView();
-                w.showAtLocation(p, Gravity.BOTTOM, 0, hh / 6);
-                handler.removeCallbacks(hide);
-                handler.postDelayed(hide, getDuration());
+                try {
+                    int ww = context.getResources().getDisplayMetrics().widthPixels;
+                    int hh = context.getResources().getDisplayMetrics().heightPixels;
+                    v.measure(View.MeasureSpec.makeMeasureSpec(ww, View.MeasureSpec.AT_MOST), View.MeasureSpec.makeMeasureSpec(hh, View.MeasureSpec.AT_MOST));
+                    w = new PopupWindow(v, v.getMeasuredWidth(), v.getMeasuredHeight(), false);
+                    w.setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
+                    w.setContentView(v);
+                    w.setAnimationStyle(android.R.style.Animation_Toast);
+                    View p = ((Activity) context).getWindow().getDecorView();
+                    w.showAtLocation(p, Gravity.BOTTOM, 0, hh / 6);
+                    handler.removeCallbacks(hide);
+                    handler.postDelayed(hide, getDuration());
+                } catch (WindowManager.BadTokenException e) { // happens onCreate when screen is locked
+                    Log.d(TAG, "unable to use activity", e);
+                    show.run();
+                }
             } else { // from Service
                 show.run();
             }
