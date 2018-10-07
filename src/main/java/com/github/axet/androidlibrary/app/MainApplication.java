@@ -18,6 +18,8 @@ public class MainApplication extends Application {
     public static final SimpleDateFormat SIMPLE = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     public static MainApplication from(Context context) {
+        if (context instanceof Application)
+            return (MainApplication) context;
         if (context instanceof Service)
             return (MainApplication) ((Service) context).getApplication();
         if (context instanceof Activity)
@@ -42,7 +44,7 @@ public class MainApplication extends Application {
         }
     }
 
-    static public String formatDuration(Context context, long diff) {
+    public static String formatDuration(Context context, long diff) {
         int diffMilliseconds = (int) (diff % 1000);
         int diffSeconds = (int) (diff / 1000 % 60);
         int diffMinutes = (int) (diff / (60 * 1000) % 60);
@@ -105,6 +107,15 @@ public class MainApplication extends Application {
         return str.trim();
     }
 
+    public static int getTheme(Context context, String key, int light, int dark) {
+        SharedPreferences shared = PreferenceManager.getDefaultSharedPreferences(context);
+        String theme = shared.getString(key, "");
+        if (theme.equals(context.getString(R.string.Theme_Dark)))
+            return dark;
+        else
+            return light;
+    }
+
     @Override
     protected void attachBaseContext(Context base) {
         super.attachBaseContext(base);
@@ -119,7 +130,7 @@ public class MainApplication extends Application {
     public int getVersion(String key, int id) {
         final SharedPreferences defaultValueSp = getSharedPreferences(PreferenceManager.KEY_HAS_SET_DEFAULT_VALUES, Context.MODE_PRIVATE);
         if (!defaultValueSp.getBoolean(PreferenceManager.KEY_HAS_SET_DEFAULT_VALUES, false)) {
-            PreferenceManager.setDefaultValues(this,id, false);
+            PreferenceManager.setDefaultValues(this, id, false);
             return -1;
         } else {
             SharedPreferences shared = PreferenceManager.getDefaultSharedPreferences(this);
