@@ -44,7 +44,7 @@ public class MainApplication extends Application {
         }
     }
 
-    static public String formatDuration(Context context, long diff) {
+    public static String formatDuration(Context context, long diff) {
         int diffMilliseconds = (int) (diff % 1000);
         int diffSeconds = (int) (diff / 1000 % 60);
         int diffMinutes = (int) (diff / (60 * 1000) % 60);
@@ -105,6 +105,15 @@ public class MainApplication extends Application {
             str += " " + context.getResources().getQuantityString(R.plurals.seconds, diffSeconds, diffSeconds);
 
         return str.trim();
+    }
+
+    public static int getTheme(Context context, String key, int light, int dark) {
+        SharedPreferences shared = PreferenceManager.getDefaultSharedPreferences(context);
+        String theme = shared.getString(key, "");
+        if (theme.equals(context.getString(R.string.Theme_Dark)))
+            return dark;
+        else
+            return light;
     }
 
     @Override
