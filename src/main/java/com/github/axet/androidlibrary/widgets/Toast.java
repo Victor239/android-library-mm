@@ -197,18 +197,17 @@ public class Toast {
                     w.showAtLocation(p, Gravity.BOTTOM, 0, hh / 6);
                     handler.removeCallbacks(hide);
                     handler.postDelayed(hide, getDuration());
-                } catch (WindowManager.BadTokenException e) { // happens onCreate when screen is locked
+                } catch (WindowManager.BadTokenException e) { // happens in onCreate when screen is locked (and about to be unlocked)
                     Log.d(TAG, "unable to use activity", e);
-                    handler.removeCallbacks(hide);
                     w = null; // nothing to dismiss, dismiss may crash due to IllegalArgumentException
+                    context = context.getApplicationContext(); // toast can crash internally if activity context used
                     show.run();
                 }
-            } else { // from Service
+            } else { // from Application / Service
                 show.run();
             }
         } else {
             show.run();
         }
     }
-
 }

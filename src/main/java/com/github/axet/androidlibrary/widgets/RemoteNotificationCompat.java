@@ -150,6 +150,13 @@ public class RemoteNotificationCompat extends NotificationCompat {
             return this;
         }
 
+        public Builder setContentDescription(int id, CharSequence text) {
+            RemoteViewsCompat.setContentDescription(compact, id, text);
+            if (big != null)
+                RemoteViewsCompat.setContentDescription(big, id, text);
+            return this;
+        }
+
         @Override
         public Notification build() {
             Notification n = super.build();

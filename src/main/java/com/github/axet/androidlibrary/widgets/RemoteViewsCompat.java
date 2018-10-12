@@ -11,6 +11,7 @@ import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.RemoteViews;
 
@@ -61,6 +62,10 @@ public class RemoteViewsCompat {
                 }
                 if (ta.getValue(TINT, out))
                     setImageViewTint(view, id, getColor(context, out));
+                if (name.equals(Button.class.getSimpleName())) {
+                    if (Build.VERSION.SDK_INT <= 10) // seems like API10 and below does not support notification buttons
+                        view.setViewVisibility(id, View.GONE);
+                }
                 if (name.equals(ImageButton.class.getSimpleName())) {
                     if (Build.VERSION.SDK_INT <= 10) { // seems like API10 and below does not support notification buttons
                         view.setViewVisibility(id, View.GONE);
