@@ -158,7 +158,8 @@ public class RemoteViewsCompat {
     }
 
     public static void setContentDescription(RemoteViews view, int id, CharSequence text) {
-        view.setCharSequence(id, "setContentDescription", text);
+        if (Build.VERSION.SDK_INT >= 15) // RemotableViewMethod.class annotation starting from 4.0.3
+            view.setCharSequence(id, "setContentDescription", text);
     }
 
     public static int findAttr(AttributeSet attrs, String name) {
