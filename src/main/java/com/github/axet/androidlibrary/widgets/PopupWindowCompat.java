@@ -32,7 +32,7 @@ public class PopupWindowCompat {
         if (Build.VERSION.SDK_INT >= 11) {
             ViewCompat.setRotation(view, rotation); // missing api 10 support
         } else {
-            RotateAnimation animation = new RotateAnimation(0, rotation, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+            RotateAnimation animation = new RotateAnimation(rotation, rotation, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
             animation.setDuration(0);
             animation.setFillAfter(true);
             view.startAnimation(animation);
