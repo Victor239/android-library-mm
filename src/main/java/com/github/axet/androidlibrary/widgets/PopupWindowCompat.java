@@ -1,7 +1,6 @@
 package com.github.axet.androidlibrary.widgets;
 
 import android.content.Context;
-import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
@@ -9,8 +8,6 @@ import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
-import android.support.graphics.drawable.VectorDrawableCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v4.view.ViewCompat;
 import android.support.v7.widget.AppCompatImageView;
@@ -20,15 +17,27 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
+import android.view.animation.Animation;
+import android.view.animation.RotateAnimation;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 
 import com.github.axet.androidlibrary.R;
-import com.github.axet.androidlibrary.widgets.ThemeUtils;
 
 public class PopupWindowCompat {
+
+    public static void setRotationCompat(View view, float rotation) {
+        if (Build.VERSION.SDK_INT >= 11) {
+            ViewCompat.setRotation(view, rotation); // missing api 10 support
+        } else {
+            RotateAnimation animation = new RotateAnimation(0, rotation, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+            animation.setDuration(0);
+            animation.setFillAfter(true);
+            view.startAnimation(animation);
+        }
+    }
 
     public static Rect getOnScreenRect(View v) {
         int[] loc = new int[2];
@@ -109,7 +118,7 @@ public class PopupWindowCompat {
 
         AppCompatImageView up = new AppCompatImageView(context);
         up.setImageResource(R.drawable.popup_triangle);
-        ViewCompat.setRotation(up, 180);
+        setRotationCompat(up, 180);
         tooltip.addView(up, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         final FrameLayout content = new FrameLayout(context);
