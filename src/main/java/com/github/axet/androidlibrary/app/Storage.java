@@ -717,8 +717,7 @@ public class Storage {
         if (Build.VERSION.SDK_INT >= 21 && s.startsWith(ContentResolver.SCHEME_CONTENT)) {
             return ejected(path, Intent.FLAG_GRANT_READ_URI_PERMISSION);
         } else if (s.startsWith(ContentResolver.SCHEME_FILE)) {
-            File p = new File(path.getPath());
-            return ejected(p);
+            return ejected(getFile(path));
         } else {
             throw new UnknownUri();
         }
@@ -732,7 +731,7 @@ public class Storage {
                 return u;
             f = fallbackStorage(); // we need to fallback to local storage internal or exernal
         } else if (path.startsWith(ContentResolver.SCHEME_FILE)) {
-            f = Storage.getFile(Uri.parse(path));
+            f = getFile(Uri.parse(path));
         } else {
             f = new File(path);
         }
@@ -926,7 +925,7 @@ public class Storage {
                 delete(f);
                 return dir;
             } else {
-                File to = new File(dir.getPath());
+                File to = Storage.getFile(dir);
                 if (!to.exists() && !to.mkdirs()) {
                     throw new RuntimeException("No permissions: " + to);
                 }

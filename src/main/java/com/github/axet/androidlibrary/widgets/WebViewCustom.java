@@ -24,6 +24,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 import com.github.axet.androidlibrary.R;
+import com.github.axet.androidlibrary.app.Storage;
 import com.github.axet.androidlibrary.crypto.MD5;
 import com.github.axet.androidlibrary.net.HttpClient;
 
@@ -883,7 +884,7 @@ public class WebViewCustom extends WebView {
             String[] cc = cookies.split(";");
             for (String c : cc) {
                 String[] vv = c.split("=");
-                for (File f = new File(uri.getPath()); f != null; f = f.getParentFile()) {
+                for (File f = Storage.getFile(uri); f != null; f = f.getParentFile()) {
                     String p;
                     String path;
                     if (f.equals(new File(File.separator))) {
