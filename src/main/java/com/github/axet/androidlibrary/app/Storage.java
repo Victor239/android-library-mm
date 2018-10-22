@@ -321,8 +321,7 @@ public class Storage {
     }
 
     public static File getFile(Uri u) {
-        String p = u.getPath();
-        return new File(p);
+        return new File(u.getPath());
     }
 
     public static boolean ejected(File p) { // check target 'parent RW' access if child does not exist, and 'child R' if exists

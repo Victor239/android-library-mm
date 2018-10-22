@@ -32,6 +32,13 @@ import java.util.ArrayList;
 public class AdminPreferenceCompat extends SwitchPreferenceCompat {
     public static final String TAG = AdminPreferenceCompat.class.getSimpleName();
 
+    public enum Installer {
+        ADB, // installed using 'adb'
+        STORE, // installed from goole play store
+        APK, // installed using android install apk dialog
+        UNKNOWN
+    }
+
     public static String TITLE = "Enable device admin access";
     public static String ENABLED = "(Device Owner enabled)";
     public static String MISSING = "MISSING";
@@ -41,11 +48,25 @@ public class AdminPreferenceCompat extends SwitchPreferenceCompat {
 
     public static final String USES_POLICIES = "uses-policies";
 
+    public static boolean STORE_ONLY_DISCLOSURE = true; // show additional dialog only for google play users = true.
+
     public Activity a;
     public Fragment f;
     public int code;
     public String m; // description
     public String[] mm; // messages
+
+    public static Installer getInstaller(Context context) {
+        PackageManager pm = context.getPackageManager();
+        String installer = pm.getInstallerPackageName(context.getPackageName());
+        if (installer == null)
+            return Installer.ADB;
+        if (installer.startsWith("com.android.packageinstaller"))
+            return Installer.APK;
+        if (installer.startsWith("com.android.vending"))
+            return Installer.STORE;
+        return Installer.UNKNOWN;
+    }
 
     @TargetApi(21)
     public AdminPreferenceCompat(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
@@ -220,7 +241,7 @@ public class AdminPreferenceCompat extends SwitchPreferenceCompat {
                         f.startActivityForResult(intent, code);
                 }
             };
-            if (mm != null) {
+            if (mm != null && (!STORE_ONLY_DISCLOSURE || getInstaller(context) == Installer.STORE)) {
                 int p5 = ThemeUtils.dp2px(context, 5);
                 AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
                 builder.setTitle(TITLE);
