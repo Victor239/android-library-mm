@@ -8,10 +8,13 @@ import android.graphics.Color;
 import android.media.AudioAttributes;
 import android.net.Uri;
 import android.os.Build;
+import android.support.annotation.IntDef;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
 import android.util.Log;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -24,6 +27,13 @@ public class NotificationChannelCompat {
     public static final String ACTION_APP_NOTIFICATION_SETTINGS = "android.settings.APP_NOTIFICATION_SETTINGS";
     public static final String ACTION_CHANNEL_NOTIFICATION_SETTINGS = "android.settings.CHANNEL_NOTIFICATION_SETTINGS";
     public static final String EXTRA_APP_PACKAGE = "android.provider.extra.APP_PACKAGE";
+
+    @IntDef({NotificationManagerCompat.IMPORTANCE_NONE, NotificationManagerCompat.IMPORTANCE_MIN, NotificationManagerCompat.IMPORTANCE_LOW,
+            NotificationManagerCompat.IMPORTANCE_DEFAULT, NotificationManagerCompat.IMPORTANCE_HIGH, NotificationManagerCompat.IMPORTANCE_MAX,
+            NotificationManagerCompat.IMPORTANCE_UNSPECIFIED})
+    @Retention(RetentionPolicy.SOURCE)
+    public @interface Importance {
+    }
 
     public String channelId;
     public Object channel;
@@ -71,7 +81,7 @@ public class NotificationChannelCompat {
         context.startActivity(intent);
     }
 
-    public NotificationChannelCompat(Context context, String id, String name, int importance) {
+    public NotificationChannelCompat(Context context, String id, String name, @Importance int importance) {
         this.channelId = id;
         if (Build.VERSION.SDK_INT >= 26) {
             try {

@@ -101,7 +101,7 @@ public class WifiKeepService extends Service {
         if (keep) {
             final long next = System.currentTimeMillis() + REFRESH;
             AlarmManager.set(context, next, intent);
-            Thread t = new Thread() { // ping can lag app
+            Thread t = new Thread("wifi ping") { // ping can lag app
                 @Override
                 public void run() {
                     wifi(context);
