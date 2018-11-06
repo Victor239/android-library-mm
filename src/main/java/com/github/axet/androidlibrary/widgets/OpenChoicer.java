@@ -289,7 +289,7 @@ public class OpenChoicer {
     public OpenFileDialog fileDialogBuild() {
         final OpenFileDialog dialog = new OpenFileDialog(context, type, readonly);
         if (old != null)
-            dialog.setCurrentPath(new File(old.getPath()));
+            dialog.setCurrentPath(Storage.getFile(old));
         dialog.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface d, int which) {

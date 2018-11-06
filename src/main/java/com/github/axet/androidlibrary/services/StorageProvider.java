@@ -229,7 +229,7 @@ public class StorageProvider extends ContentProvider {
                 projection = FileProvider.COLUMNS;
             }
 
-            File path = new File(f.getPath());
+            File path = Storage.getFile(f);
 
             if (path.isDirectory()) {
                 File[] ff = path.listFiles();
@@ -295,7 +295,7 @@ public class StorageProvider extends ContentProvider {
         if (s.startsWith(ContentResolver.SCHEME_CONTENT)) {
             return resolver.getType(f);
         } else if (s.startsWith(ContentResolver.SCHEME_FILE)) {
-            File ff = new File(f.getPath());
+            File ff = Storage.getFile(f);
             return MimeTypeMap.getSingleton().getMimeTypeFromExtension(Storage.getExt(ff));
         } else {
             throw new Storage.UnknownUri();
@@ -334,7 +334,7 @@ public class StorageProvider extends ContentProvider {
             if (s.startsWith(ContentResolver.SCHEME_CONTENT)) {
                 return resolver.openFileDescriptor(f, mode);
             } else if (s.startsWith(ContentResolver.SCHEME_FILE)) {
-                File ff = new File(f.getPath());
+                File ff = Storage.getFile(f);
                 return ParcelFileDescriptor.open(ff, fileMode);
             } else {
                 throw new Storage.UnknownUri();
