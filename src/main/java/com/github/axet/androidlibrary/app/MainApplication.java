@@ -22,7 +22,7 @@ public class MainApplication extends Application {
     public static final SimpleDateFormat SIMPLE = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     public static ComponentName startService(Context context, Intent intent) {
-        if (Build.VERSION.SDK_INT >= 26) {
+        if (Build.VERSION.SDK_INT >= 26 && context.getApplicationInfo().targetSdkVersion >= 26) {
             Class k = context.getClass();
             try {
                 Method m = k.getMethod("startForegroundService", Intent.class);
