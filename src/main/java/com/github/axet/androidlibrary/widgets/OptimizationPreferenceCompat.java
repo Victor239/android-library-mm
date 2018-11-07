@@ -591,12 +591,12 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
     }
 
     public static class ServiceReceiver extends BroadcastReceiver {
-        protected Context context;
-        protected String key;
-        protected Handler handler = new Handler();
-        protected Class<? extends Service> service;
-        protected long next;
-        protected Runnable check = new Runnable() {
+        public  Context context;
+        public  String key;
+        public  Handler handler = new Handler();
+        public  Class<? extends Service> service;
+        public  long next;
+        public  Runnable check = new Runnable() {
             @Override
             public void run() {
                 Intent intent = new Intent(context, service);
@@ -604,16 +604,20 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
                 OptimizationPreferenceCompat.startService(context, intent);
             }
         };
+        public IntentFilter filters;
 
         public ServiceReceiver(final Context context, final Class<? extends Service> service, String key) {
             this.key = key;
             this.context = context;
             this.service = service;
             disableKill(context, service);
-            IntentFilter ff = new IntentFilter();
-            ff.addAction(SERVICE_UPDATE);
-            ff.addAction(service.getCanonicalName() + PONG);
-            context.registerReceiver(this, ff);
+            filters = new IntentFilter();
+            filters.addAction(SERVICE_UPDATE);
+            filters.addAction(service.getCanonicalName() + PONG);
+        }
+
+        public void create() {
+            context.registerReceiver(this, filters);
             register();
         }
 
@@ -630,16 +634,17 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
             String a = intent.getAction();
             if (a == null)
                 return false;
-            if (a.equals(SERVICE_CHECK)) {
+            if (a.equals(SERVICE_CHECK))
                 check();
-            }
-            if (a.equals(SERVICE_RESTART)) {
+            if (a.equals(SERVICE_RESTART))
                 return true;
-            }
             return false;
         }
 
-        public void check() { // override when here is no ApplicationReceiver
+        public void check() { // override when here is ApplicationReceiver and call ping()
+        }
+
+        public void ping() {
             handler.postDelayed(check, CHECK_DELAY);
             Intent i = new Intent(service.getCanonicalName() + PING);
             context.sendBroadcast(i);
