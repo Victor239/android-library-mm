@@ -14,8 +14,8 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import com.github.axet.androidlibrary.R;
 import com.github.axet.androidlibrary.app.AlarmManager;
-import com.github.axet.androidlibrary.app.MainApplication;
 import com.github.axet.androidlibrary.app.SuperUser;
 import com.github.axet.androidlibrary.widgets.OptimizationPreferenceCompat;
 
@@ -35,13 +35,15 @@ public class WifiKeepService extends Service {
 
     public static int REFRESH = 1 * 60 * 1000; // check every ms
     public static int NOTIFICATION_ICON = 200; // notificaion icon id
+    public static int ICON = R.drawable.ic_circle;
+    public static String DESCRIPTION = null;
 
     public static final String WIFI = WifiKeepService.class.getCanonicalName() + ".WIFI";
 
     public static final String BIN_PING = SuperUser.which("ping");
 
     public Thread t;
-    OptimizationPreferenceCompat.NotificationIcon icon;
+    public OptimizationPreferenceCompat.NotificationIcon icon;
 
     public static void startIfEnabled(Context context, boolean b) {
         if (b) {
@@ -172,6 +174,9 @@ public class WifiKeepService extends Service {
     public void onCreate() {
         super.onCreate();
         icon = new OptimizationPreferenceCompat.NotificationIcon(this, NOTIFICATION_ICON, "wifi", "Wifi");
+        icon.icon = ICON;
+        if (DESCRIPTION != null)
+            icon.description = DESCRIPTION;
         icon.onCreate();
     }
 

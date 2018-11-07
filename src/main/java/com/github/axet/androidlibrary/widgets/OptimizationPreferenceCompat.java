@@ -43,7 +43,6 @@ import android.widget.TextView;
 
 import com.github.axet.androidlibrary.R;
 import com.github.axet.androidlibrary.app.AlarmManager;
-import com.github.axet.androidlibrary.app.MainApplication;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -746,11 +745,15 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         public int iconId;
         public String key;
         public String text;
+        public String description;
         public int theme = R.style.AppThemeDarkLib;
+        public int bigID = -1;
+        public int icon = R.drawable.ic_circle;
 
         public NotificationIcon(Service context, int iconId) {
             this.context = context;
             this.iconId = iconId;
+            this.description = context.getString(R.string.optimization_alive);
         }
 
         public NotificationIcon(Service context, int iconId, String key, String text) {
@@ -762,6 +765,11 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         public NotificationIcon(Service context, int iconId, String key, String text, int theme) {
             this(context, iconId, key, text);
             this.theme = theme;
+        }
+
+        public NotificationIcon(Service context, int iconId, String key, String text, int theme, int bigID) {
+            this(context, iconId, key, text, theme);
+            this.bigID = bigID;
         }
 
         public void onCreate() {
@@ -778,8 +786,14 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         @SuppressLint("RestrictedApi")
         public Notification build() {
             String title = context.getApplicationInfo().name;
-            String text = context.getString(R.string.optimization_alive);
-            RemoteNotificationCompat.Builder builder = new RemoteNotificationCompat.Low(context);
+            String text = description;
+
+            RemoteNotificationCompat.Builder builder;
+
+            if (bigID == -1)
+                builder = new RemoteNotificationCompat.Low(context);
+            else
+                builder = new RemoteNotificationCompat.Low(context, bigID);
 
             PackageManager pm = context.getPackageManager();
             Intent intent = pm.getLaunchIntentForPackage(context.getPackageName());
@@ -793,7 +807,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
                     .setWhen(notification)
                     .setMainIntent(main)
                     .setOngoing(true)
-                    .setSmallIcon(R.drawable.ic_circle);
+                    .setSmallIcon(icon);
 
             return builder.build();
         }
