@@ -180,7 +180,8 @@ public class WifiKeepService extends Service {
     public void onCreate() {
         super.onCreate();
         channel = new NotificationChannelCompat(this, "wifi", "Wifi", NotificationManagerCompat.IMPORTANCE_LOW);
-        showNotification(true);
+        if (Build.VERSION.SDK_INT >= 26 && getApplicationInfo().targetSdkVersion >= 26)
+            showNotification(true);
     }
 
     @Override
@@ -200,6 +201,8 @@ public class WifiKeepService extends Service {
     public void onDestroy() {
         super.onDestroy();
         t = wifi(false);
+        if (Build.VERSION.SDK_INT >= 26 && getApplicationInfo().targetSdkVersion >= 26)
+            showNotification(false);
     }
 
     @Nullable
@@ -215,7 +218,7 @@ public class WifiKeepService extends Service {
         RemoteNotificationCompat.Builder builder;
 
         String title;
-        String text = "Wifi service";
+        String text = getString(R.string.optimization_alive);
         builder = new RemoteNotificationCompat.Low(this);
         title = getApplicationInfo().name;
 
@@ -225,7 +228,9 @@ public class WifiKeepService extends Service {
 
         main = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-        builder.setTitle(title)
+        builder.setTheme(R.style.AppThemeDarkLib)
+                .setChannel(channel)
+                .setTitle(title)
                 .setText(text)
                 .setWhen(notification)
                 .setMainIntent(main)
