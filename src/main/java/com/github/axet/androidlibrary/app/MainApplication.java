@@ -21,24 +21,6 @@ public class MainApplication extends Application {
 
     public static final SimpleDateFormat SIMPLE = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-    public static ComponentName startService(Context context, Intent intent) {
-        if (Build.VERSION.SDK_INT >= 26) {
-            Class k = context.getClass();
-            try {
-                Method m = k.getMethod("startForegroundService", Intent.class);
-                return (ComponentName) m.invoke(context, intent);
-            } catch (NoSuchMethodException e) {
-                throw new RuntimeException(e);
-            } catch (InvocationTargetException e) {
-                throw new RuntimeException(e);
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            }
-        } else {
-            return context.startService(intent);
-        }
-    }
-
     public static MainApplication from(Context context) {
         if (context instanceof Application)
             return (MainApplication) context;

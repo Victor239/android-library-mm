@@ -3,6 +3,8 @@ package com.github.axet.androidlibrary.widgets;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
+import android.app.Notification;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -21,6 +23,7 @@ import android.os.PowerManager;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
+import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v4.widget.TextViewCompat;
 import android.support.v7.app.AlertDialog;
@@ -40,7 +43,6 @@ import android.widget.TextView;
 
 import com.github.axet.androidlibrary.R;
 import com.github.axet.androidlibrary.app.AlarmManager;
-import com.github.axet.androidlibrary.app.MainApplication;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -85,6 +87,24 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
 
     // all service related code, for old phones, where AlarmManager will be used to keep app running
     protected Class<? extends Service> service;
+
+    public static ComponentName startService(Context context, Intent intent) {
+        if (Build.VERSION.SDK_INT >= 26 && context.getApplicationInfo().targetSdkVersion >= 26) {
+            Class k = context.getClass();
+            try {
+                Method m = k.getMethod("startForegroundService", Intent.class);
+                return (ComponentName) m.invoke(context, intent);
+            } catch (NoSuchMethodException e) {
+                throw new RuntimeException(e);
+            } catch (InvocationTargetException e) {
+                throw new RuntimeException(e);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            return context.startService(intent);
+        }
+    }
 
     public static void enable(Context context, long next, Class<? extends Service> service) {
         Intent intent = new Intent(context, service);
@@ -581,7 +601,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
             public void run() {
                 Intent intent = new Intent(context, service);
                 intent.setAction(SERVICE_RESTART);
-                MainApplication.startService(context, intent);
+                OptimizationPreferenceCompat.startService(context, intent);
             }
         };
 
@@ -715,6 +735,97 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
             if (json == null || json.isEmpty())
                 return;
             load(new JSONObject(json));
+        }
+    }
+
+    public static class NotificationIcon {
+        public Notification notification;
+        public NotificationChannelCompat channel;
+        public Service context;
+        public int iconId;
+        public String key;
+        public String text;
+        public String description;
+        public int theme = R.style.AppThemeDarkLib;
+        public int bigID = -1;
+        public int icon = R.drawable.ic_circle;
+
+        public NotificationIcon(Service context, int iconId) {
+            this.context = context;
+            this.iconId = iconId;
+            this.description = context.getString(R.string.optimization_alive);
+        }
+
+        public NotificationIcon(Service context, int iconId, String key, String text) {
+            this(context, iconId);
+            this.key = key;
+            this.text = text;
+        }
+
+        public NotificationIcon(Service context, int iconId, String key, String text, int theme) {
+            this(context, iconId, key, text);
+            this.theme = theme;
+        }
+
+        public NotificationIcon(Service context, int iconId, String key, String text, int theme, int bigID) {
+            this(context, iconId, key, text, theme);
+            this.bigID = bigID;
+        }
+
+        public void onCreate() {
+            channel = new NotificationChannelCompat(context, key, text, NotificationManagerCompat.IMPORTANCE_LOW);
+            if (Build.VERSION.SDK_INT >= 26 && context.getApplicationInfo().targetSdkVersion >= 26)
+                show(true);
+        }
+
+        public void onDestroy() {
+            if (Build.VERSION.SDK_INT >= 26 && context.getApplicationInfo().targetSdkVersion >= 26)
+                show(false);
+        }
+
+        @SuppressLint("RestrictedApi")
+        public Notification build() {
+            String title = context.getApplicationInfo().name;
+            String text = description;
+
+            RemoteNotificationCompat.Builder builder;
+
+            if (bigID == -1)
+                builder = new RemoteNotificationCompat.Low(context);
+            else
+                builder = new RemoteNotificationCompat.Low(context, bigID);
+
+            PackageManager pm = context.getPackageManager();
+            Intent intent = pm.getLaunchIntentForPackage(context.getPackageName());
+
+            PendingIntent main = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+            builder.setTheme(theme)
+                    .setChannel(channel)
+                    .setTitle(title)
+                    .setText(text)
+                    .setWhen(notification)
+                    .setMainIntent(main)
+                    .setOngoing(true)
+                    .setSmallIcon(icon);
+
+            return builder.build();
+        }
+
+        public void show(boolean show) {
+            NotificationManagerCompat nm = NotificationManagerCompat.from(context);
+            if (!show) {
+                context.stopForeground(false);
+                nm.cancel(iconId);
+                notification = null;
+            } else {
+                Notification n = build();
+                if (notification == null)
+                    context.startForeground(iconId, n);
+                else
+                    nm.notify(iconId, n);
+                notification = n;
+            }
         }
     }
 

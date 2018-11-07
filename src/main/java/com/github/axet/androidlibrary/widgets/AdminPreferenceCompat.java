@@ -1,5 +1,6 @@
 package com.github.axet.androidlibrary.widgets;
 
+import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.admin.DevicePolicyManager;
@@ -8,6 +9,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Typeface;
 import android.os.Build;
@@ -55,6 +57,20 @@ public class AdminPreferenceCompat extends SwitchPreferenceCompat {
     public int code;
     public String m; // description
     public String[] mm; // messages
+
+    public static ActivityInfo findReceiver(Context context, String permission) {
+        try {
+            PackageManager pm = context.getPackageManager();
+            PackageInfo info = pm.getPackageInfo(context.getPackageName(), PackageManager.GET_RECEIVERS);
+            for (ActivityInfo i : info.receivers) {
+                if (i.permission != null && i.permission.contains(permission))
+                    return i;
+            }
+        } catch (PackageManager.NameNotFoundException e) {
+            Log.e(TAG, "unable to find receiver", e);
+        }
+        return null;
+    }
 
     public static Installer getInstaller(Context context) {
         PackageManager pm = context.getPackageManager();
@@ -158,6 +174,10 @@ public class AdminPreferenceCompat extends SwitchPreferenceCompat {
     }
 
     public void onResume() {
+        if (findReceiver(getContext(), Manifest.permission.BIND_DEVICE_ADMIN) == null) {
+            setVisible(false);
+            return;
+        }
         updateAdmin();
         setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
             @Override

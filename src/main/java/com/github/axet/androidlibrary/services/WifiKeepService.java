@@ -1,12 +1,10 @@
 package com.github.axet.androidlibrary.services;
 
 import android.app.ActivityManager;
-import android.app.IntentService;
 import android.app.Service;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.DhcpInfo;
 import android.net.NetworkInfo;
@@ -16,9 +14,10 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import com.github.axet.androidlibrary.R;
 import com.github.axet.androidlibrary.app.AlarmManager;
-import com.github.axet.androidlibrary.app.MainApplication;
 import com.github.axet.androidlibrary.app.SuperUser;
+import com.github.axet.androidlibrary.widgets.OptimizationPreferenceCompat;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -32,16 +31,19 @@ import java.net.UnknownHostException;
  * &lt;uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" /&gt;
  */
 public class WifiKeepService extends Service {
-
     public static String TAG = WifiKeepService.class.getSimpleName();
 
     public static int REFRESH = 1 * 60 * 1000; // check every ms
+    public static int NOTIFICATION_ICON = 200; // notificaion icon id
+    public static int ICON = R.drawable.ic_circle;
+    public static String DESCRIPTION = null;
 
     public static final String WIFI = WifiKeepService.class.getCanonicalName() + ".WIFI";
 
     public static final String BIN_PING = SuperUser.which("ping");
 
-    Thread t;
+    public Thread t;
+    public OptimizationPreferenceCompat.NotificationIcon icon;
 
     public static void startIfEnabled(Context context, boolean b) {
         if (b) {
@@ -55,7 +57,7 @@ public class WifiKeepService extends Service {
         Intent intent = new Intent(context, WifiKeepService.class);
         intent.setPackage(context.getPackageName());
         intent.setAction(WIFI);
-        MainApplication.startService(context, intent);
+        OptimizationPreferenceCompat.startService(context, intent);
     }
 
     public static void stopService(Context context) {
@@ -95,8 +97,8 @@ public class WifiKeepService extends Service {
         }
     }
 
-    public static Thread wifi(final Context context, boolean keep) {
-        Intent intent = new Intent(context, WifiKeepService.class);
+    public static Thread wifi(final Context context, Class klass, boolean keep) {
+        Intent intent = new Intent(context, klass);
         intent.setPackage(context.getPackageName());
         intent.setAction(WIFI);
         if (keep) {
@@ -164,13 +166,27 @@ public class WifiKeepService extends Service {
         }
     }
 
+    public Thread wifi(boolean keep) {
+        return wifi(this, getClass(), keep);
+    }
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        icon = new OptimizationPreferenceCompat.NotificationIcon(this, NOTIFICATION_ICON, "wifi", "Wifi");
+        icon.icon = ICON;
+        if (DESCRIPTION != null)
+            icon.description = DESCRIPTION;
+        icon.onCreate();
+    }
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent != null) {
             String action = intent.getAction();
             if (action != null) {
                 if (action.equals(WIFI)) {
-                    t = wifi(this, true);
+                    t = wifi(true);
                 }
             }
         }
@@ -180,7 +196,8 @@ public class WifiKeepService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        t = wifi(this, false);
+        t = wifi(false);
+        icon.onDestroy();
     }
 
     @Nullable
