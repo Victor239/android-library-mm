@@ -188,7 +188,7 @@ public class NameFormatPreferenceCompat extends ListPreference {
         create();
     }
 
-    void create() {
+    public void create() {
         if (getPositiveButtonText() == null)
             setPositiveButtonText(getContext().getString(android.R.string.ok));
         if (getNegativeButtonText() == null)
