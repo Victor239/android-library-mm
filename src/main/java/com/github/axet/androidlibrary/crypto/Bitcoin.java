@@ -199,6 +199,11 @@ public class Bitcoin {
         return Base58.encode(getPubBuf());
     }
 
+    public void load64(String str) {
+        loadSec64(str);
+        loadPub(sec);
+    }
+
     public void loadSec64(String str) {
         try {
             PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(Base64.decode(str, Base64.DEFAULT));
@@ -208,6 +213,11 @@ public class Bitcoin {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public void load(String str) {
+        loadSec(str);
+        loadPub(sec);
     }
 
     public void loadSec(String str) {

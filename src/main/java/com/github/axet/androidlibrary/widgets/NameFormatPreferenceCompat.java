@@ -195,6 +195,18 @@ public class NameFormatPreferenceCompat extends ListPreference {
             setNegativeButtonText(getContext().getString(android.R.string.cancel));
     }
 
+    public String getPredefined(String str) {
+        CharSequence[] text = getEntries();
+        CharSequence[] values = getEntryValues();
+        for (int i = 0; i < text.length; i++) {
+            String t = text[i].toString();
+            String v = values[i].toString();
+            if (v.equals(str))
+                return t;
+        }
+        return null;
+    }
+
     public String getFormatted(String str) {
         return str;
     }

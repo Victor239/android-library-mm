@@ -106,6 +106,12 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         }
     }
 
+    public static void setIcon(Context context, boolean b) {
+        if (Build.VERSION.SDK_INT >= 26 && context.getApplicationInfo().targetSdkVersion >= 26)
+            b = false; // api 26 requires mandatory persistent icon
+        ICON = b;
+    }
+
     public static void enable(Context context, long next, Class<? extends Service> service) {
         Intent intent = new Intent(context, service);
         intent.setAction(SERVICE_CHECK);
@@ -591,12 +597,12 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
     }
 
     public static class ServiceReceiver extends BroadcastReceiver {
-        public  Context context;
-        public  String key;
-        public  Handler handler = new Handler();
-        public  Class<? extends Service> service;
-        public  long next;
-        public  Runnable check = new Runnable() {
+        public Context context;
+        public String key;
+        public Handler handler = new Handler();
+        public Class<? extends Service> service;
+        public long next;
+        public Runnable check = new Runnable() {
             @Override
             public void run() {
                 Intent intent = new Intent(context, service);
@@ -610,13 +616,13 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
             this.key = key;
             this.context = context;
             this.service = service;
-            disableKill(context, service);
             filters = new IntentFilter();
             filters.addAction(SERVICE_UPDATE);
             filters.addAction(service.getCanonicalName() + PONG);
         }
 
         public void create() {
+            disableKill(context, service);
             context.registerReceiver(this, filters);
             register();
         }
