@@ -33,6 +33,8 @@ import android.support.v7.preference.SwitchPreferenceCompat;
 import android.support.v7.view.WindowCallbackWrapper;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.util.TypedValue;
+import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -234,6 +236,15 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         return h;
     }
 
+    public static Context themedContext(Context context) {
+        final TypedValue tv = new TypedValue();
+        context.getTheme().resolveAttribute(android.support.v7.preference.R.attr.preferenceTheme, tv, true);
+        int theme = tv.resourceId;
+        if (theme == 0)
+            throw new IllegalStateException("Must specify preferenceTheme in theme");
+        return new ContextThemeWrapper(context, theme);
+    }
+
     public static void build(final WarningBuilder builder, String msg, DialogInterface.OnClickListener click) {
         final Context context = builder.getContext();
         builder.builder.setTitle(R.string.optimization_dialog);
@@ -254,7 +265,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
             TextViewCompat.setTextAppearance(desc, R.style.TextAppearance_AppCompat_Body1);
             desc.setText(msg);
             ll.addView(desc);
-            builder.icon = new SwitchPreferenceCompat(context);
+            builder.icon = new SwitchPreferenceCompat(themedContext(context));
             builder.icon.setTitle(context.getString(R.string.optimization_icon));
             builder.icon.setSummary(context.getString(R.string.optimization_icon_summary));
             builder.iconHolder = inflate(builder.icon, null);
@@ -279,7 +290,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
             builder.updateIcon();
             ll.addView(builder.iconHolder.itemView);
             if (Build.VERSION.SDK_INT >= 23) {
-                builder.optimization = new SwitchPreferenceCompat(context);
+                builder.optimization = new SwitchPreferenceCompat(themedContext(context));
                 builder.optimization.setTitle(context.getString(R.string.optimization_system));
                 builder.optimization.setSummary(context.getString(R.string.optimization_system_summary));
                 Drawable d = context.getDrawable(R.drawable.ic_open_in_new_black_24dp);
@@ -297,7 +308,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
                 builder.updateOptimization();
                 ll.addView(builder.optimizationHolder.itemView);
             } else {
-                final SwitchPreferenceCompat alive = new SwitchPreferenceCompat(context);
+                final SwitchPreferenceCompat alive = new SwitchPreferenceCompat(themedContext(context));
                 alive.setTitle(context.getString(R.string.optimization_alive));
                 alive.setSummary(context.getString(R.string.optimization_alive_summary));
                 State23 state = getState23(builder.context, builder.key);
