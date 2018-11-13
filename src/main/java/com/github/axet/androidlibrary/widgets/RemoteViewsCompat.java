@@ -63,8 +63,15 @@ public class RemoteViewsCompat {
                 if (ta.getValue(TINT, out))
                     setImageViewTint(view, id, getColor(context, out));
                 if (name.equals(Button.class.getSimpleName())) {
-                    if (Build.VERSION.SDK_INT <= 10) // seems like API10 and below does not support notification buttons
+                    if (Build.VERSION.SDK_INT <= 10) { // seems like API10 and below does not support notification buttons
                         view.setViewVisibility(id, View.GONE);
+                    } else {
+                        if (!ta.hasValue(BACKGROUND)) { // no background set
+                            int res = getButtonBackground(theme, context);
+                            if (res != 0)
+                                setBackgroundResource(view, id, res);
+                        }
+                    }
                 }
                 if (name.equals(ImageButton.class.getSimpleName())) {
                     if (Build.VERSION.SDK_INT <= 10) { // seems like API10 and below does not support notification buttons
@@ -86,6 +93,42 @@ public class RemoteViewsCompat {
             if (out.type == TypedValue.TYPE_STRING)
                 out.data = ContextCompat.getColor(context, out.resourceId); // xml color selector
             return out.data;
+        }
+
+        @SuppressLint("RestrictedApi")
+        public int getButtonStyle(Resources.Theme theme, Context context) {
+            TypedValue style = new TypedValue();
+            if (theme.resolveAttribute(R.attr.buttonStyle, style, true)) {
+                if (style.resourceId == R.style.Widget_AppCompat_Button) {
+                    ContextThemeWrapper w = new ContextThemeWrapper(context, style.resourceId);
+                    Resources.Theme t = w.getTheme();
+                    TypedValue out = new TypedValue();
+                    if (t.resolveAttribute(android.R.attr.background, out, true)) {
+                        if (out.string != null) {
+                            String[] ss = new String[]{
+                                    "res/drawable/btn_default_material.xml", // API21
+                                    "res/drawable/abc_btn_default_mtrl_shape.xml" // API16
+                            };
+                            for (String s : ss) {
+                                if (out.string.equals(s)) { // AppCompat material button
+                                    if (t.resolveAttribute(android.R.attr.buttonStyle, out, true)) { // which theme light or dark?
+                                        switch (out.resourceId) {
+                                            case android.R.style.Widget_Holo_Button:
+                                            case android.R.style.Widget_Material_Button:
+                                                return android.R.style.Widget_Material_Button;
+                                            case android.R.style.Widget_Holo_Light_Button:
+                                            case android.R.style.Widget_Material_Light_Button:
+                                                return android.R.style.Widget_Material_Light_Button;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                return style.resourceId;
+            }
+            return 0;
         }
 
         @SuppressLint("RestrictedApi")
@@ -120,6 +163,26 @@ public class RemoteViewsCompat {
                     }
                 }
                 return style.resourceId;
+            }
+            return 0;
+        }
+
+        @SuppressLint("RestrictedApi")
+        public int getButtonBackground(Resources.Theme theme, Context context) {
+            TypedValue out = new TypedValue();
+            int style = getButtonStyle(theme, context);
+            switch (style) {
+                case android.R.style.Widget_Material_Button:
+                    return R.drawable.remoteview_btn_dark;
+                case android.R.style.Widget_Material_Light_Button:
+                    return R.drawable.remoteview_btn_light;
+                case 0:
+                    break;
+                default:
+                    ContextThemeWrapper w = new ContextThemeWrapper(context, style);
+                    Resources.Theme t = w.getTheme();
+                    if (t.resolveAttribute(android.R.attr.background, out, true))
+                        return out.resourceId;
             }
             return 0;
         }
