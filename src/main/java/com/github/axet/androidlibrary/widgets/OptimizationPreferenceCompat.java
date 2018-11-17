@@ -272,16 +272,18 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
             builder.icon.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
                 @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
+                    State state;
                     if (Build.VERSION.SDK_INT < 23) {
-                        State23 state = getState23(context, builder.key);
+                        state = getState23(context, builder.key);
                         state.icon = (boolean) newValue;
                         saveState(context, state, builder.key);
                     } else {
-                        State state = getState(context, builder.key);
+                        state = getState(context, builder.key);
                         state.icon = (boolean) newValue;
                         saveState(context, state, builder.key);
                     }
-                    builder.updateIcon();
+                    builder.updateIcon(); // update icon switch
+                    builder.pref.setChecked(state.icon); // update pref switch
                     Intent intent = new Intent(ICON_UPDATE);
                     context.sendBroadcast(intent);
                     return false;
@@ -890,7 +892,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
             }
             if (service != null) { // 3) apps with service/ping mechanics below 23 getKey() used to store service and icon booleans
                 State23 state = getState23(getContext(), getKey());
-                setChecked(state.service);
+                setChecked(state.service || state.icon);
                 setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
                     @Override
                     public boolean onPreferenceChange(Preference preference, Object newValue) {
@@ -919,6 +921,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
                             WarningBuilder builder = buildWarning(getContext(), true, getKey());
                             builder.serviceEnable = enable;
                             builder.serviceDisable = disable;
+                            builder.pref = OptimizationPreferenceCompat.this;
                             showWarning(getContext(), builder); // show commons
                             return false;
                         }
@@ -958,6 +961,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
                                     setChecked(true);
                                 }
                             });
+                            builder.pref = OptimizationPreferenceCompat.this;
                             showWarning(getContext(), builder); // show commons
                         } else {
                             State state = getState(getContext(), getKey());
