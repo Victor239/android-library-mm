@@ -6,7 +6,9 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.ProviderInfo;
+import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.net.Uri;
@@ -17,15 +19,18 @@ import android.os.Handler;
 import android.os.ParcelFileDescriptor;
 import android.provider.DocumentsContract;
 import android.provider.OpenableColumns;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.webkit.MimeTypeMap;
 
+import com.github.axet.androidlibrary.R;
 import com.github.axet.androidlibrary.app.Storage;
 import com.github.axet.androidlibrary.widgets.OptimizationPreferenceCompat;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -48,6 +53,7 @@ public class StorageProvider extends ContentProvider {
     public static final int MD5_SIZE = 32;
 
     public static final String CONTENTTYPE_FOLDER = "resource/folder";
+    public static final String SCHEME_FOLDER = "folder";
 
     protected static HashMap<Class, StorageProvider> infos = new HashMap<>();
 
@@ -66,7 +72,19 @@ public class StorageProvider extends ContentProvider {
     protected Storage storage;
     protected ContentResolver resolver;
 
-    public static boolean isFolderCallable(Context context, Intent intent, String authory) {
+    public static <T> T[] concat(T[] first, T[] second) {
+        T[] result = Arrays.copyOf(first, first.length + second.length);
+        System.arraycopy(second, 0, result, first.length, second.length);
+        return result;
+    }
+
+    public static String getApplicationName(Context context) {
+        ApplicationInfo applicationInfo = context.getApplicationInfo();
+        int stringId = applicationInfo.labelRes;
+        return stringId == 0 ? applicationInfo.nonLocalizedLabel.toString() : context.getString(stringId);
+    }
+
+    public static boolean isCallable(Context context, Intent intent, String authory) {
         Uri p = intent.getData();
         String s = p.getScheme();
         if (s.equals(ContentResolver.SCHEME_CONTENT) && Build.VERSION.SDK_INT >= 21 && !p.getAuthority().equals(authory)) {
@@ -91,25 +109,24 @@ public class StorageProvider extends ContentProvider {
         return uri.getPathSegments().get(0).length() == MD5_SIZE;
     }
 
-    public StorageProvider() {
-    }
-
-    public Intent openFolderIntent(Uri p) {
-        if (Build.VERSION.SDK_INT >= 24 && getContext().getApplicationInfo().targetSdkVersion >= 24) { // 24+ failed to open file:// with FileUriExposedException
-            p = share(p);
+    public static Intent openFolderIntent(Context context, Uri uri) { // file:// only scheme
+        if (Build.VERSION.SDK_INT >= 24 && context.getApplicationInfo().targetSdkVersion >= 24) { // 24+ failed to open file:// with FileUriExposedException
+            Uri.Builder b = uri.buildUpon();
+            b.scheme(SCHEME_FOLDER); // replace file:// uri with folder://
+            uri = b.build();
             Intent intent = new Intent(Intent.ACTION_VIEW);
-            intent.setDataAndType(p, CONTENTTYPE_FOLDER);
-            FileProvider.grantPermissions(getContext(), intent, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
+            intent.setDataAndType(uri, CONTENTTYPE_FOLDER);
+            FileProvider.grantPermissions(context, intent, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
             return intent;
         } else { // 23 can open file://
-            return openFolderIntent23(p);
+            return openFolderIntent23(context, uri);
         }
     }
 
-    public Intent openFolderIntent23(Uri p) {
+    public static Intent openFolderIntent23(Context context, Uri p) {
         boolean perms = false;
         String s = p.getScheme();
-        if (s.equals(ContentResolver.SCHEME_CONTENT) && Build.VERSION.SDK_INT >= 21) { // convert content:///primary to file://
+        if (s.equals(ContentResolver.SCHEME_CONTENT) && Build.VERSION.SDK_INT >= 21 && p.getAuthority().startsWith(Storage.SAF)) { // convert content:///primary to file://
             String tree = DocumentsContract.getTreeDocumentId(p);
             String[] ss = tree.split(":"); // 1D13-0F08:private
             if (ss[0].equals(Storage.STORAGE_PRIMARY)) {
@@ -124,8 +141,107 @@ public class StorageProvider extends ContentProvider {
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setDataAndType(p, CONTENTTYPE_FOLDER);
         if (perms)
-            FileProvider.grantPermissions(getContext(), intent, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
+            FileProvider.grantPermissions(context, intent, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
         return intent;
+    }
+
+    public static String getName(Context context, Uri uri) {
+        String s = uri.getScheme();
+        if (s.equals(ContentResolver.SCHEME_CONTENT) && Build.VERSION.SDK_INT >= 21 && !uri.getAuthority().startsWith(Storage.SAF)) {
+            ContentResolver resolver = context.getContentResolver();
+            Cursor cursor = resolver.query(uri, null, null, null, null);
+            if (cursor != null) {
+                try {
+                    if (cursor.moveToNext())
+                        return cursor.getString(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_DISPLAY_NAME));
+                    else
+                        return uri.getLastPathSegment();
+                } finally {
+                    cursor.close();
+                }
+            }
+        }
+        return Storage.getDocumentName(uri);
+    }
+
+    public static Intent openIntent23(Context context, Uri uri) {
+        boolean perms = false;
+        String s = uri.getScheme();
+        if (s.equals(ContentResolver.SCHEME_CONTENT) && Build.VERSION.SDK_INT >= 21 && uri.getAuthority().startsWith(Storage.SAF)) { // convert content://.../primary to file://
+            String tree = DocumentsContract.getTreeDocumentId(uri);
+            String[] ss = tree.split(":"); // 'primary:Documents' or '1D13-0F08:Documents'
+            if (ss[0].equals(Storage.STORAGE_PRIMARY)) {
+                File f = Environment.getExternalStorageDirectory();
+                if (ss.length > 1)
+                    f = new File(f, ss[1]);
+                uri = Uri.fromFile(f);
+            } else {
+                perms = true;
+            }
+        } else {
+            perms = true;
+        }
+        String name = getName(context, uri);
+        String type = Storage.getTypeByName(name);
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setDataAndType(uri, type);
+        if (perms)
+            FileProvider.grantPermissions(context, intent, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
+        return intent;
+    }
+
+    public static Intent shareIntent23(Context context, Uri uri, String type, String name) {
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setType(type);
+        intent.putExtra(Intent.EXTRA_STREAM, uri);
+        intent.putExtra(Intent.EXTRA_EMAIL, "");
+        intent.putExtra(Intent.EXTRA_SUBJECT, name);
+        intent.putExtra(Intent.EXTRA_TEXT, context.getString(R.string.shared_via, getApplicationName(context)));
+        FileProvider.grantPermissions(context, intent, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        return intent;
+    }
+
+    public StorageProvider() {
+    }
+
+    public Intent openIntent(Uri uri) {
+        return openIntent(uri, null);
+    }
+
+    public Intent openIntent(Uri uri, String name) {
+        if (Build.VERSION.SDK_INT >= 24 && getContext().getApplicationInfo().targetSdkVersion >= 24) { // API24+ failed to open file:// with FileUriExposedException
+            String s = uri.getScheme();
+            if (s.equals(ContentResolver.SCHEME_FILE)) {
+                File f = Storage.getFile(uri);
+                File[] ff = concat(new File[]{getContext().getCacheDir()}, getContext().getExternalCacheDirs());
+                for (File k : ff) {
+                    if (f.getPath().startsWith(k.getPath()))
+                        return openIntent23(getContext(), uri);
+                }
+                if (f.isDirectory())
+                    return openFolderIntent(getContext(), uri);
+                uri = share(uri, name);
+                return openIntent23(getContext(), uri);
+            }
+        }
+        if (name != null)
+            uri = share(uri, name);
+        return openIntent23(getContext(), uri);
+    }
+
+    public Intent shareIntent(Uri uri, String type, String name) {
+        return shareIntent(uri, null, type, name);
+    }
+
+    public Intent shareIntent(Uri uri, String t, String type, String name) {
+        if (Build.VERSION.SDK_INT >= 24 && getContext().getApplicationInfo().targetSdkVersion >= 24) { // API24+ failed to open file:// with FileUriExposedException
+            uri = share(uri, t);
+            return shareIntent23(getContext(), uri, type, name);
+        } else { // API23 can open file://
+            if (t != null)
+                uri = share(uri, t);
+            return shareIntent23(getContext(), uri, type, name);
+        }
     }
 
     public Uri share(Uri u) { // original uri -> hased uri
@@ -324,18 +440,39 @@ public class StorageProvider extends ContentProvider {
         Uri f = find(uri);
         if (f == null)
             return null;
-
         freeUris();
-
-        final int fileMode = FileProvider.modeToMode(mode);
-
         try {
             String s = f.getScheme();
             if (s.startsWith(ContentResolver.SCHEME_CONTENT)) {
                 return resolver.openFileDescriptor(f, mode);
             } else if (s.startsWith(ContentResolver.SCHEME_FILE)) {
+                final int fileMode = FileProvider.modeToMode(mode);
                 File ff = Storage.getFile(f);
                 return ParcelFileDescriptor.open(ff, fileMode);
+            } else {
+                throw new Storage.UnknownUri();
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Nullable
+    @Override
+    public AssetFileDescriptor openAssetFile(@NonNull Uri uri, @NonNull String mode) throws FileNotFoundException {
+        Uri f = find(uri);
+        if (f == null)
+            return null;
+        freeUris();
+        try {
+            String s = f.getScheme();
+            if (s.startsWith(ContentResolver.SCHEME_CONTENT)) {
+                return resolver.openAssetFileDescriptor(f, mode);
+            } else if (s.startsWith(ContentResolver.SCHEME_FILE)) {
+                final int fileMode = FileProvider.modeToMode(mode);
+                File ff = Storage.getFile(f);
+                ParcelFileDescriptor fd = ParcelFileDescriptor.open(ff, fileMode);
+                return new AssetFileDescriptor(fd, 0, AssetFileDescriptor.UNKNOWN_LENGTH); // -1 means full file, check ContentResolver#openFileDescriptor
             } else {
                 throw new Storage.UnknownUri();
             }

@@ -66,9 +66,8 @@ public class FileProvider extends ContentProvider {
         if (uri == null)
             uri = intent.getData();
 
-        if (uri instanceof Uri) {
+        if (uri instanceof Uri)
             grantPermissions(context, intent, (Uri) uri, flags);
-        }
         if (uri instanceof ArrayList) {
             for (Uri u : (ArrayList<Uri>) uri)
                 grantPermissions(context, intent, u, flags);
@@ -80,9 +79,9 @@ public class FileProvider extends ContentProvider {
     }
 
     public static void grantPermissions(Context context, Intent intent, Uri u, int flags) {
-        List<ResolveInfo> resInfoList = context.getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
-        for (ResolveInfo resolveInfo : resInfoList) {
-            String packageName = resolveInfo.activityInfo.packageName;
+        List<ResolveInfo> rr = context.getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
+        for (ResolveInfo r : rr) {
+            String packageName = r.activityInfo.packageName;
             context.grantUriPermission(packageName, u, flags);
         }
     }
