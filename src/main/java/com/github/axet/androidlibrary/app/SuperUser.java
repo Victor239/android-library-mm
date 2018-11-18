@@ -92,6 +92,12 @@ public class SuperUser {
         }
     }
 
+    public static class ResultCodeError extends RuntimeException {
+        public ResultCodeError(String str) {
+            super(str);
+        }
+    }
+
     public static class Result {
         public int res;
         public String stdout;
@@ -136,9 +142,10 @@ public class SuperUser {
             return res == 0 && e == null;
         }
 
-        public void must() {
+        public Result must() {
             if (!ok())
-                throw new RuntimeException(message());
+                throw new ResultCodeError(message());
+            return this;
         }
 
         public String message() {
