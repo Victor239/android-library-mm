@@ -3,6 +3,7 @@ package com.github.axet.androidlibrary.app;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.net.Uri;
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import org.apache.commons.io.IOUtils;
@@ -11,6 +12,7 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.text.MessageFormat;
 
@@ -298,6 +300,11 @@ public class SuperUser {
                 }
 
                 @Override
+                public int read(@NonNull byte[] b, int off, int len) throws IOException {
+                    return is.read(b, off, len);
+                }
+
+                @Override
                 public void close() throws IOException {
                     super.close();
                     p.destroy();
@@ -308,11 +315,10 @@ public class SuperUser {
         }
     }
 
-    public static Result cat(InputStream is, Uri uri) {
+    public static Result write(InputStream is, Uri uri) {
         File f = Storage.getFile(uri);
         Process su = null;
-        Commands cmd = new Commands(MessageFormat.format(BIN_SU + " > {0}", escape(f)));
-        cmd.add(BIN_CAT);
+        Commands cmd = new Commands(MessageFormat.format(BIN_CAT + " > {0}", escape(f)));
         try {
             su = Runtime.getRuntime().exec(BIN_SU);
             DataOutputStream os = new DataOutputStream(su.getOutputStream());
@@ -332,5 +338,127 @@ public class SuperUser {
             Thread.currentThread().interrupt();
             return new Result(cmd, su, e);
         }
+    }
+
+    public static OutputStream write(final Uri uri) {
+        return new OutputStream() {
+            byte[] buf = new byte[BUF_SIZE];
+            int off = 0;
+            int len = 0; // from 0 .. len
+            final Thread thread = new Thread("cat write") {
+                @Override
+                public void run() {
+                    InputStream is = new InputStream() {
+                        @Override
+                        public int read() throws IOException {
+                            synchronized (thread) {
+                                try {
+                                    if (len == 0)
+                                        thread.wait();
+                                    if (len == -1)
+                                        return -1;
+                                    int b = buf[off++];
+                                    if (off >= len) {
+                                        len = 0;
+                                        off = 0;
+                                    }
+                                    thread.notifyAll();
+                                    return b;
+                                } catch (InterruptedException e) {
+                                    Thread.currentThread().interrupt();
+                                    throw new IOException(e);
+                                }
+                            }
+                        }
+
+                        @Override
+                        public int read(@NonNull byte[] b, int off1, int len1) throws IOException {
+                            synchronized (thread) {
+                                try {
+                                    if (len == 0)
+                                        thread.wait();
+                                    if (len == -1)
+                                        return -1;
+                                    int l = Math.min(len1, len - off);
+                                    System.arraycopy(buf, off, b, off1, l);
+                                    off += l;
+                                    if (off >= len) {
+                                        len = 0;
+                                        off = 0;
+                                    }
+                                    thread.notifyAll();
+                                    return l;
+                                } catch (InterruptedException e) {
+                                    Thread.currentThread().interrupt();
+                                    throw new IOException(e);
+                                }
+                            }
+                        }
+
+                        @Override
+                        public void close() throws IOException {
+                            super.close();
+                        }
+                    };
+                    SuperUser.write(is, uri);
+                }
+            };
+
+            {
+                thread.start();
+            }
+
+            @Override
+            public void write(int b) throws IOException {
+                synchronized (thread) {
+                    try {
+                        if (len >= buf.length)
+                            thread.wait();
+                        buf[len++] = (byte) b;
+                        thread.notifyAll();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        throw new IOException(e);
+                    }
+                }
+            }
+
+            @Override
+            public void write(@NonNull byte[] b, int off1, int len1) throws IOException {
+                synchronized (thread) {
+                    try {
+                        while (len1 > 0) {
+                            int l;
+                            while ((l = Math.min(len1, buf.length - len)) <= 0)
+                                thread.wait();
+                            System.arraycopy(b, off1, buf, len, l);
+                            len += l;
+                            off1 += l;
+                            len1 -= l;
+                            thread.notifyAll();
+                        }
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        throw new IOException(e);
+                    }
+                }
+            }
+
+            @Override
+            public void close() throws IOException {
+                super.close();
+                synchronized (thread) {
+                    try {
+                        if (len > 0)
+                            thread.wait();
+                        len = -1;
+                        thread.notifyAll();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        throw new IOException(e);
+                    }
+                }
+            }
+        };
     }
 }
