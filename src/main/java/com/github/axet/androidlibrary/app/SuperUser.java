@@ -8,7 +8,6 @@ import android.util.Log;
 
 import org.apache.commons.io.IOUtils;
 
-import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -193,9 +192,16 @@ public class SuperUser {
     }
 
     public static String escape(String p) {
-        p = p.replaceAll(" ", "\\ "); // ' ' -> '\'
-        p = p.replaceAll("\"", "\\\""); // '"' -> '\"'
+        p = p.replaceAll("\\)", "\\\\)");
+        p = p.replaceAll("\\(", "\\\\(");
+        p = p.replaceAll(" ", "\\\\ ");
+        p = p.replaceAll("\"", "\\\"");
         return p;
+    }
+
+    public static void writeUTF8(String str, OutputStream os) throws IOException {
+        os.write(str.getBytes(Charset.defaultCharset()));
+        os.flush();
     }
 
     public static Result su(String pattern, Object... args) {
@@ -210,15 +216,11 @@ public class SuperUser {
         Process su = null;
         try {
             su = Runtime.getRuntime().exec(BIN_SU);
-            DataOutputStream os = new DataOutputStream(su.getOutputStream());
-            if (cmd.sete) {
-                os.writeBytes(SETE + EOL);
-                os.flush();
-            }
-            os.writeBytes(cmd.build());
-            os.flush();
-            os.writeBytes(BIN_EXIT + EOL);
-            os.flush();
+            OutputStream os = su.getOutputStream();
+            if (cmd.sete)
+                writeUTF8(SETE + EOL, os);
+            writeUTF8(cmd.build(), os);
+            writeUTF8(BIN_EXIT + EOL, os);
             su.waitFor();
             return new Result(cmd, su);
         } catch (IOException e) {
@@ -285,11 +287,9 @@ public class SuperUser {
         Commands cmd = new Commands(MessageFormat.format("cat {0}", escape(f)));
         try {
             final Process su = Runtime.getRuntime().exec(BIN_SU);
-            DataOutputStream os = new DataOutputStream(su.getOutputStream());
-            os.writeBytes(cmd.build());
-            os.flush();
-            os.writeBytes(BIN_EXIT + EOL);
-            os.flush();
+            OutputStream os = su.getOutputStream();
+            writeUTF8(cmd.build(), os);
+            writeUTF8(BIN_EXIT + EOL, os);
             return new InputStream() {
                 Process p = su;
                 InputStream is = p.getInputStream();
@@ -315,149 +315,36 @@ public class SuperUser {
         }
     }
 
-    public static Result write(InputStream is, Uri uri) {
-        File f = Storage.getFile(uri);
-        Process su = null;
-        Commands cmd = new Commands(MessageFormat.format(BIN_CAT + " > {0}", escape(f)));
-        try {
-            su = Runtime.getRuntime().exec(BIN_SU);
-            DataOutputStream os = new DataOutputStream(su.getOutputStream());
-            os.writeBytes(cmd.build());
-            os.flush();
-            byte[] buf = new byte[BUF_SIZE];
-            int len;
-            while ((len = is.read(buf)) > 0) {
-                os.write(buf, 0, len);
-            }
-            os.close();
-            su.waitFor();
-            return new Result(cmd, su);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return new Result(cmd, su, e);
-        }
-    }
-
-    public static OutputStream write(final Uri uri) {
+    public static OutputStream write(final Uri uri) throws IOException {
         return new OutputStream() {
-            byte[] buf = new byte[BUF_SIZE];
-            int off = 0;
-            int len = 0; // from 0 .. len
-            final Thread thread = new Thread("cat write") {
-                @Override
-                public void run() {
-                    InputStream is = new InputStream() {
-                        @Override
-                        public int read() throws IOException {
-                            synchronized (thread) {
-                                try {
-                                    if (len == 0)
-                                        thread.wait();
-                                    if (len == -1)
-                                        return -1;
-                                    int b = buf[off++];
-                                    if (off >= len) {
-                                        len = 0;
-                                        off = 0;
-                                    }
-                                    thread.notifyAll();
-                                    return b;
-                                } catch (InterruptedException e) {
-                                    Thread.currentThread().interrupt();
-                                    throw new IOException(e);
-                                }
-                            }
-                        }
-
-                        @Override
-                        public int read(@NonNull byte[] b, int off1, int len1) throws IOException {
-                            synchronized (thread) {
-                                try {
-                                    if (len == 0)
-                                        thread.wait();
-                                    if (len == -1)
-                                        return -1;
-                                    int l = Math.min(len1, len - off);
-                                    System.arraycopy(buf, off, b, off1, l);
-                                    off += l;
-                                    if (off >= len) {
-                                        len = 0;
-                                        off = 0;
-                                    }
-                                    thread.notifyAll();
-                                    return l;
-                                } catch (InterruptedException e) {
-                                    Thread.currentThread().interrupt();
-                                    throw new IOException(e);
-                                }
-                            }
-                        }
-
-                        @Override
-                        public void close() throws IOException {
-                            super.close();
-                        }
-                    };
-                    SuperUser.write(is, uri);
-                }
-            };
+            Process su;
+            OutputStream os;
 
             {
-                thread.start();
+                File f = Storage.getFile(uri);
+
+                Commands cmd = new Commands(MessageFormat.format(BIN_CAT + " > {0}", escape(f)));
+                su = Runtime.getRuntime().exec(BIN_SU);
+
+                os = su.getOutputStream();
+
+                writeUTF8(cmd.build(), os);
             }
 
             @Override
             public void write(int b) throws IOException {
-                synchronized (thread) {
-                    try {
-                        if (len >= buf.length)
-                            thread.wait();
-                        buf[len++] = (byte) b;
-                        thread.notifyAll();
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        throw new IOException(e);
-                    }
-                }
+                os.write(b);
             }
 
             @Override
-            public void write(@NonNull byte[] b, int off1, int len1) throws IOException {
-                synchronized (thread) {
-                    try {
-                        while (len1 > 0) {
-                            int l;
-                            while ((l = Math.min(len1, buf.length - len)) <= 0)
-                                thread.wait();
-                            System.arraycopy(b, off1, buf, len, l);
-                            len += l;
-                            off1 += l;
-                            len1 -= l;
-                            thread.notifyAll();
-                        }
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        throw new IOException(e);
-                    }
-                }
+            public void write(@NonNull byte[] b, int off, int len) throws IOException {
+                os.write(b, off, len);
             }
 
             @Override
             public void close() throws IOException {
                 super.close();
-                synchronized (thread) {
-                    try {
-                        if (len > 0)
-                            thread.wait();
-                        len = -1;
-                        thread.notifyAll();
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        throw new IOException(e);
-                    }
-                }
+                su.destroy();
             }
         };
     }
