@@ -127,8 +127,12 @@ public class StorageProvider extends ContentProvider {
         boolean perms = false;
         String s = p.getScheme();
         if (s.equals(ContentResolver.SCHEME_CONTENT) && Build.VERSION.SDK_INT >= 21 && p.getAuthority().startsWith(Storage.SAF)) { // convert content:///primary to file://
-            String tree = DocumentsContract.getTreeDocumentId(p);
-            String[] ss = tree.split(":"); // 1D13-0F08:private
+            String tree;
+            if (DocumentsContract.isDocumentUri(context, p))
+                tree = DocumentsContract.getDocumentId(p);
+            else
+                tree = DocumentsContract.getTreeDocumentId(p);
+            String[] ss = tree.split(":", 2); // 1D13-0F08:private
             if (ss[0].equals(Storage.STORAGE_PRIMARY)) {
                 File f = Environment.getExternalStorageDirectory();
                 if (ss.length > 1)

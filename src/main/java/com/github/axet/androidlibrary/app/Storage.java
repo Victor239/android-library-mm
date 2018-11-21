@@ -819,11 +819,11 @@ public class Storage {
             String saf = "sdcard";
             if (DocumentsContract.isDocumentUri(context, uri)) {
                 String id = DocumentsContract.getDocumentId(uri);
-                String[] ss = id.split(":"); // 1D13-0F08:private
+                String[] ss = id.split(":", 2); // 1D13-0F08:private
                 return saf + getDocumentStorage(ss[0]) + "://" + getDocumentPath(uri);
             } else {
                 String tree = DocumentsContract.getTreeDocumentId(uri);
-                String[] ss = tree.split(":"); // 1D13-0F08:private
+                String[] ss = tree.split(":", 2); // 1D13-0F08:private
                 String path;
                 if (ss.length > 1) {
                     path = getDocumentStorage(ss[0]) + "://" + ss[1];
