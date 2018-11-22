@@ -84,7 +84,7 @@ public class StorageProvider extends ContentProvider {
         return stringId == 0 ? applicationInfo.nonLocalizedLabel.toString() : context.getString(stringId);
     }
 
-    public static boolean isCallable(Context context, Intent intent, String authory) {
+    public static boolean isFolderCallable(Context context, Intent intent, String authory) {
         Uri p = intent.getData();
         String s = p.getScheme();
         if (s.equals(ContentResolver.SCHEME_CONTENT) && Build.VERSION.SDK_INT >= 21 && !p.getAuthority().equals(authory)) {
