@@ -18,6 +18,7 @@ import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.provider.DocumentFile;
 import android.system.Os;
 import android.system.StructStatVfs;
 import android.util.Log;
@@ -244,7 +245,6 @@ public class Storage {
         return to;
     }
 
-
     public static File copy(File f, File to) {
         long last = f.lastModified();
         try {
@@ -354,6 +354,14 @@ public class Storage {
     }
 
     @TargetApi(21)
+    public static DocumentFile getDocumentFile(Context context, Uri uri) {
+        if (DocumentsContract.isDocumentUri(context, uri))
+            return DocumentFile.fromSingleUri(context, uri);
+        else
+            return DocumentFile.fromTreeUri(context, uri);
+    }
+
+    @TargetApi(21)
     public static String getDocumentPath(Uri uri) {
         String s = uri.getScheme();
         if (s.startsWith(ContentResolver.SCHEME_CONTENT)) {
@@ -370,11 +378,91 @@ public class Storage {
     }
 
     @TargetApi(21)
+    public static Uri getDocumentChild(Context context, Uri uri, String name) {
+        File f;
+        if (DocumentsContract.isDocumentUri(context, uri)) {
+            f = new File(DocumentsContract.getDocumentId(uri));
+        } else {
+            f = new File(DocumentsContract.getTreeDocumentId(uri));
+        }
+        f = new File(f, name);
+        return DocumentsContract.buildDocumentUriUsingTree(uri, f.getPath());
+    }
+
+    @TargetApi(21)
     public static String getDocumentChildPath(Uri uri) {
         String id = DocumentsContract.getDocumentId(uri);
         String parent = DocumentsContract.getTreeDocumentId(uri);
         id = id.substring(parent.length() + 1);
         return id;
+    }
+
+    @TargetApi(21)
+    public static String getDisplayName(Context context, Uri uri) {
+        String saf = "sdcard";
+        if (DocumentsContract.isDocumentUri(context, uri)) {
+            String id = DocumentsContract.getDocumentId(uri);
+            String[] ss = id.split(":", 2); // 1D13-0F08:private
+            return saf + getDocumentStorage(ss[0]) + "://" + getDocumentPath(uri);
+        } else {
+            String tree = DocumentsContract.getTreeDocumentId(uri);
+            String[] ss = tree.split(":", 2); // 1D13-0F08:private
+            String path;
+            if (ss.length > 1) {
+                path = getDocumentStorage(ss[0]) + "://" + ss[1];
+            } else {
+                path = getDocumentStorage(ss[0]) + "://";
+            }
+            return saf + path;
+        }
+    }
+
+    @TargetApi(19)
+    public static boolean isDocumentExists(Context context, Uri uri) {
+        return getDocumentFile(context, uri).exists();
+    }
+
+    @TargetApi(21)
+    public static long getDocumentFree(Context context, Uri uri) {
+        ContentResolver resolver = context.getContentResolver();
+        Uri docTreeUri = DocumentsContract.buildDocumentUriUsingTree(uri, DocumentsContract.getTreeDocumentId(uri));
+        try {
+            ParcelFileDescriptor pfd = resolver.openFileDescriptor(docTreeUri, "r");
+            StructStatVfs stats = Os.fstatvfs(pfd.getFileDescriptor());
+            return stats.f_bavail * stats.f_bsize;
+        } catch (Exception e) { // IllegalArgumentException | FileNotFoundException | ErrnoException | NullPointerException (readExceptionWithFileNotFoundExceptionFromParcel)
+            return 0;
+        }
+    }
+
+    @TargetApi(21)
+    public static boolean isEjected(Context context, Uri uri, int takeFlags) { // check folder existes and childs can be read
+        ContentResolver resolver = context.getContentResolver();
+        try {
+            resolver.takePersistableUriPermission(uri, takeFlags);
+            Cursor childCursor = null;
+            Cursor childCursor2 = null;
+            try {
+                Uri doc = DocumentsContract.buildDocumentUriUsingTree(uri, DocumentsContract.getTreeDocumentId(uri));
+                childCursor = resolver.query(doc, null, null, null, null); // check target folder
+                if (childCursor != null && childCursor.moveToNext()) {
+                    Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(uri, DocumentsContract.getTreeDocumentId(uri));
+                    childCursor2 = resolver.query(childrenUri, null, null, null, null); // check read directory content
+                    if (childCursor2 != null) {
+                        return false;
+                    }
+                }
+            } finally {
+                if (childCursor != null)
+                    childCursor.close();
+                if (childCursor2 != null)
+                    childCursor2.close();
+            }
+            return true;
+        } catch (RuntimeException e) {
+            Log.d(TAG, "open SAF failed", e);
+        }
+        return true;
     }
 
     @TargetApi(21)
@@ -536,20 +624,7 @@ public class Storage {
     public boolean exists(Uri uri) { // document query uri
         String s = uri.getScheme();
         if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
-            Cursor childCursor = null;
-            try {
-                childCursor = resolver.query(uri, null, null, null, null);
-                if (childCursor != null) {
-                    if (childCursor.moveToNext())
-                        return true;
-                }
-            } catch (RuntimeException e) { // not found catched here
-                ;
-            } finally {
-                if (childCursor != null)
-                    childCursor.close();
-            }
-            return false;
+            return isDocumentExists(context, uri);
         } else if (s.startsWith(ContentResolver.SCHEME_FILE)) {
             File f1 = getFile(uri);
             if (!f1.canRead())
@@ -563,14 +638,7 @@ public class Storage {
     public Uri child(Uri uri, String name) {
         String s = uri.getScheme();
         if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
-            File f;
-            if (DocumentsContract.isDocumentUri(context, uri)) {
-                f = new File(DocumentsContract.getDocumentId(uri));
-            } else {
-                f = new File(DocumentsContract.getTreeDocumentId(uri));
-            }
-            f = new File(f, name);
-            return DocumentsContract.buildDocumentUriUsingTree(uri, f.getPath());
+            return getDocumentChild(context, uri, name);
         } else if (s.startsWith(ContentResolver.SCHEME_FILE)) {
             File f1 = new File(getFile(uri), name);
             return Uri.fromFile(f1);
@@ -661,14 +729,7 @@ public class Storage {
     public long getFree(Uri uri) {
         String s = uri.getScheme();
         if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
-            Uri docTreeUri = DocumentsContract.buildDocumentUriUsingTree(uri, DocumentsContract.getTreeDocumentId(uri));
-            try {
-                ParcelFileDescriptor pfd = resolver.openFileDescriptor(docTreeUri, "r");
-                StructStatVfs stats = Os.fstatvfs(pfd.getFileDescriptor());
-                return stats.f_bavail * stats.f_bsize;
-            } catch (Exception e) { // IllegalArgumentException | FileNotFoundException | ErrnoException | NullPointerException (readExceptionWithFileNotFoundExceptionFromParcel)
-                return 0;
-            }
+            return getDocumentFree(context, uri);
         } else if (s.equals(ContentResolver.SCHEME_FILE)) {
             try {
                 File file = getFile(uri);
@@ -681,40 +742,10 @@ public class Storage {
         }
     }
 
-    @TargetApi(21)
-    public boolean ejected(Uri uri, int takeFlags) { // check folder existes and childs can be read
-        ContentResolver resolver = context.getContentResolver();
-        try {
-            resolver.takePersistableUriPermission(uri, takeFlags);
-            Cursor childCursor = null;
-            Cursor childCursor2 = null;
-            try {
-                Uri doc = DocumentsContract.buildDocumentUriUsingTree(uri, DocumentsContract.getTreeDocumentId(uri));
-                childCursor = resolver.query(doc, null, null, null, null); // check target folder
-                if (childCursor != null && childCursor.moveToNext()) {
-                    Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(uri, DocumentsContract.getTreeDocumentId(uri));
-                    childCursor2 = resolver.query(childrenUri, null, null, null, null); // check read directory content
-                    if (childCursor2 != null) {
-                        return false;
-                    }
-                }
-            } finally {
-                if (childCursor != null)
-                    childCursor.close();
-                if (childCursor2 != null)
-                    childCursor2.close();
-            }
-            return true;
-        } catch (RuntimeException e) {
-            Log.d(TAG, "open SAF failed", e);
-        }
-        return true;
-    }
-
     public boolean ejected(Uri path) { // check target 'parent RW' access if child does not exist, and 'child R' if exists
         String s = path.getScheme();
         if (Build.VERSION.SDK_INT >= 21 && s.startsWith(ContentResolver.SCHEME_CONTENT)) {
-            return ejected(path, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            return isEjected(context, path, Intent.FLAG_GRANT_READ_URI_PERMISSION);
         } else if (s.startsWith(ContentResolver.SCHEME_FILE)) {
             return ejected(getFile(path));
         } else {
@@ -726,7 +757,7 @@ public class Storage {
         File f;
         if (Build.VERSION.SDK_INT >= 21 && path.startsWith(ContentResolver.SCHEME_CONTENT)) {
             Uri u = Uri.parse(path);
-            if (!ejected(u, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION))
+            if (!isEjected(context, u, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION))
                 return u;
             f = fallbackStorage(); // we need to fallback to local storage internal or exernal
         } else if (path.startsWith(ContentResolver.SCHEME_FILE)) {
@@ -741,45 +772,21 @@ public class Storage {
         }
     }
 
-    public String getName(Uri f) {
-        String s = f.getScheme();
+    public String getName(Uri uri) {
+        String s = uri.getScheme();
         if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
-            Cursor childCursor = null;
-            try {
-                childCursor = resolver.query(f, null, null, null, null);
-                if (childCursor != null && childCursor.moveToNext()) {
-                    return childCursor.getString(childCursor.getColumnIndex(DocumentsContract.Document.COLUMN_DISPLAY_NAME));
-                }
-            } catch (RuntimeException e) { // ignore
-                ;
-            } finally {
-                if (childCursor != null)
-                    childCursor.close();
-            }
+            return getDocumentFile(context, uri).getName();
         } else if (s.equals(ContentResolver.SCHEME_FILE)) {
-            return getFile(f).getName();
+            return getFile(uri).getName();
         } else {
             throw new UnknownUri();
         }
-        return null;
     }
 
     public long getLength(Uri uri) {
         String s = uri.getScheme();
-        if (s.startsWith(ContentResolver.SCHEME_CONTENT)) {
-            Cursor childCursor = null;
-            try {
-                childCursor = resolver.query(uri, null, null, null, null);
-                if (childCursor != null && childCursor.moveToNext()) {
-                    return childCursor.getLong(childCursor.getColumnIndex(DocumentsContract.Document.COLUMN_SIZE));
-                }
-            } catch (RuntimeException e) { // ignore
-                ;
-            } finally {
-                if (childCursor != null)
-                    childCursor.close();
-            }
-            return -1;
+        if (Build.VERSION.SDK_INT >= 21 && s.startsWith(ContentResolver.SCHEME_CONTENT)) {
+            return getDocumentFile(context, uri).length();
         } else if (s.startsWith(ContentResolver.SCHEME_FILE)) {
             File f = getFile(uri);
             return f.length();
@@ -790,20 +797,8 @@ public class Storage {
 
     public long getLastModified(Uri uri) {
         String s = uri.getScheme();
-        if (s.startsWith(ContentResolver.SCHEME_CONTENT)) {
-            Cursor childCursor = null;
-            try {
-                childCursor = resolver.query(uri, null, null, null, null);
-                if (childCursor != null && childCursor.moveToNext()) {
-                    return childCursor.getLong(childCursor.getColumnIndex(DocumentsContract.Document.COLUMN_LAST_MODIFIED));
-                }
-            } catch (RuntimeException e) {
-                ;
-            } finally {
-                if (childCursor != null)
-                    childCursor.close();
-            }
-            return 0;
+        if (Build.VERSION.SDK_INT >= 21 && s.startsWith(ContentResolver.SCHEME_CONTENT)) {
+            return getDocumentFile(context, uri).lastModified();
         } else if (s.startsWith(ContentResolver.SCHEME_FILE)) {
             File f = getFile(uri);
             return f.lastModified();
@@ -816,22 +811,7 @@ public class Storage {
     public String getDisplayName(Uri uri) {
         String s = uri.getScheme();
         if (s.startsWith(ContentResolver.SCHEME_CONTENT)) { // saf folder for content
-            String saf = "sdcard";
-            if (DocumentsContract.isDocumentUri(context, uri)) {
-                String id = DocumentsContract.getDocumentId(uri);
-                String[] ss = id.split(":", 2); // 1D13-0F08:private
-                return saf + getDocumentStorage(ss[0]) + "://" + getDocumentPath(uri);
-            } else {
-                String tree = DocumentsContract.getTreeDocumentId(uri);
-                String[] ss = tree.split(":", 2); // 1D13-0F08:private
-                String path;
-                if (ss.length > 1) {
-                    path = getDocumentStorage(ss[0]) + "://" + ss[1];
-                } else {
-                    path = getDocumentStorage(ss[0]) + "://";
-                }
-                return saf + path;
-            }
+            return getDisplayName(context, uri);
         } else if (s.startsWith(ContentResolver.SCHEME_FILE)) { // full destionation for files
             File f = getFile(uri);
             return f.getAbsolutePath();
