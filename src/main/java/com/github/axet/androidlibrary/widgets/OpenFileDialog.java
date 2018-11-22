@@ -55,7 +55,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class OpenFileDialog extends AlertDialog.Builder {
-    public static final String ANDROID_STORAGE = "ANDROID_STORAGE";
+    public static final String ANDROID_STORAGE = "ANDROID_STORAGE"; // environment variable, TODO: add 'EXTERNAL_STORAGE' and 'SECONDARY_STORAGE'. do not have device to test
     public static final String DEFAULT_STORAGE_PATH = "/storage";
     public static final Pattern DEFAULT_STORAGE_PATTERN = Pattern.compile("\\w\\w\\w\\w-\\w\\w\\w\\w");
 

@@ -109,10 +109,30 @@ public class StorageProvider extends ContentProvider {
         return uri.getPathSegments().get(0).length() == MD5_SIZE;
     }
 
-    public static Intent openFolderIntent(Context context, Uri uri) { // file:// only scheme
-        if (Build.VERSION.SDK_INT >= 24 && context.getApplicationInfo().targetSdkVersion >= 24) { // 24+ failed to open file:// with FileUriExposedException
+    @TargetApi(21)
+    public static Uri filterFolderIntent(Context context, Uri uri) { // convert content:///primary to file://
+        String tree;
+        if (DocumentsContract.isDocumentUri(context, uri))
+            tree = DocumentsContract.getDocumentId(uri);
+        else
+            tree = DocumentsContract.getTreeDocumentId(uri);
+        String[] ss = tree.split(":", 2); // 1D13-0F08:folder_name
+        if (ss[0].equals(Storage.STORAGE_PRIMARY)) {
+            File f = Environment.getExternalStorageDirectory();
+            if (ss.length > 1)
+                f = new File(f, ss[1]);
+            uri = Uri.fromFile(f);
+        } // else TODO: convert content://.../1D13-0F08:folder_name into file:// uris. do not have device to test...
+        return uri;
+    }
+
+    public static Intent openFolderIntent(Context context, Uri uri) {
+        String s = uri.getScheme();
+        if (s.equals(ContentResolver.SCHEME_CONTENT) && Build.VERSION.SDK_INT >= 21 && uri.getAuthority().startsWith(Storage.SAF))
+            uri = filterFolderIntent(context, uri);
+        if (s.equals(ContentResolver.SCHEME_FILE) && Build.VERSION.SDK_INT >= 24 && context.getApplicationInfo().targetSdkVersion >= 24) { // 24+ failed to open file:// with FileUriExposedException
             Uri.Builder b = uri.buildUpon();
-            b.scheme(SCHEME_FOLDER); // replace file:// uri with folder://
+            b.scheme(SCHEME_FOLDER); // replace file:// with folder://
             uri = b.build();
             Intent intent = new Intent(Intent.ACTION_VIEW);
             intent.setDataAndType(uri, CONTENTTYPE_FOLDER);
@@ -123,27 +143,17 @@ public class StorageProvider extends ContentProvider {
         }
     }
 
-    public static Intent openFolderIntent23(Context context, Uri p) {
+    public static Intent openFolderIntent23(Context context, Uri uri) {
         boolean perms = false;
-        String s = p.getScheme();
-        if (s.equals(ContentResolver.SCHEME_CONTENT) && Build.VERSION.SDK_INT >= 21 && p.getAuthority().startsWith(Storage.SAF)) { // convert content:///primary to file://
-            String tree;
-            if (DocumentsContract.isDocumentUri(context, p))
-                tree = DocumentsContract.getDocumentId(p);
-            else
-                tree = DocumentsContract.getTreeDocumentId(p);
-            String[] ss = tree.split(":", 2); // 1D13-0F08:private
-            if (ss[0].equals(Storage.STORAGE_PRIMARY)) {
-                File f = Environment.getExternalStorageDirectory();
-                if (ss.length > 1)
-                    f = new File(f, ss[1]);
-                p = Uri.fromFile(f);
-            } else {
+        String s = uri.getScheme();
+        if (s.equals(ContentResolver.SCHEME_CONTENT) && Build.VERSION.SDK_INT >= 21 && uri.getAuthority().startsWith(Storage.SAF)) { // convert content:///primary to file://
+            Uri old = uri;
+            uri = filterFolderIntent(context, uri);
+            if (old == uri) // content:// uri not converted by filter, set perms
                 perms = true;
-            }
         }
         Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.setDataAndType(p, CONTENTTYPE_FOLDER);
+        intent.setDataAndType(uri, CONTENTTYPE_FOLDER);
         if (perms)
             FileProvider.grantPermissions(context, intent, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
         return intent;
