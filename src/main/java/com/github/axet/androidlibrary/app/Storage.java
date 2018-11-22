@@ -39,6 +39,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
+import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -68,6 +69,12 @@ public class Storage {
             builder.append(String.format("%02x", b));
         }
         return builder.toString();
+    }
+
+    public static String stripRight(String str, String right) {
+        if (str.endsWith(right))
+            str = str.substring(0, str.length() - right.length());
+        return str;
     }
 
     public static String md5(String str) {
@@ -530,6 +537,56 @@ public class Storage {
     public static class UnknownUri extends RuntimeException {
     }
 
+    public static class Node {
+        public Uri uri;
+        public String name;
+        public boolean dir;
+        public long size;
+        public long last;
+
+        public Node() {
+        }
+
+        public Node(Uri uri, String n, boolean dir, long size, long last) {
+            this.uri = uri;
+            this.name = n;
+            this.dir = dir;
+            this.size = size;
+            this.last = last;
+        }
+
+        public Node(File f) {
+            this.uri = Uri.fromFile(f);
+            this.name = f.getName();
+            this.dir = f.isDirectory();
+            this.size = f.length();
+            this.last = f.lastModified();
+        }
+
+        public Node(DocumentFile f) {
+            this.uri = f.getUri();
+            this.name = f.getName();
+            this.dir = f.isDirectory();
+            this.size = f.length();
+            this.last = f.lastModified();
+        }
+
+        @TargetApi(21)
+        public Node(Uri doc, Cursor cursor) {
+            String id = cursor.getString(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_DOCUMENT_ID));
+            String type = cursor.getString(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_MIME_TYPE));
+            name = cursor.getString(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_DISPLAY_NAME));
+            size = cursor.getLong(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_SIZE));
+            last = cursor.getLong(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_LAST_MODIFIED));
+            uri = DocumentsContract.buildDocumentUriUsingTree(doc, id);
+            dir = type.equals(DocumentsContract.Document.MIME_TYPE_DIR);
+        }
+
+        public String toString() {
+            return (dir ? "" : "@") + name;
+        }
+    }
+
     public Storage(Context context) {
         this.context = context;
         this.resolver = context.getContentResolver();
@@ -966,4 +1023,158 @@ public class Storage {
         return DocumentsContract.createDocument(resolver, docUri, DocumentsContract.Document.MIME_TYPE_DIR, p.getName());
     }
 
+    public boolean touch(Uri uri) {
+        String s = uri.getScheme();
+        if (s.equals(ContentResolver.SCHEME_FILE)) {
+            File k = Storage.getFile(uri);
+            try {
+                new FileOutputStream(k, true).close();
+                return true;
+            } catch (IOException e) {
+                return false;
+            }
+        } else if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
+            DocumentFile file = getDocumentFile(context, uri);
+            if (file.exists()) {
+                try {
+                    ContentResolver resolver = context.getContentResolver();
+                    OutputStream os = resolver.openOutputStream(uri, "wa");
+                    os.close();
+                    return true;
+                } catch (IOException e) {
+                    return false;
+                }
+            } else {
+                String ext = getExt(uri);
+                String n = getDocumentName(uri);
+                String mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext);
+                Uri doc = DocumentsContract.createDocument(resolver, uri, mime, n);
+                return doc != null;
+            }
+        } else {
+            throw new Storage.UnknownUri();
+        }
+    }
+
+    public Uri mkdir(Uri to, String name) {
+        String s = to.getScheme();
+        if (s.equals(ContentResolver.SCHEME_FILE)) {
+            File k = Storage.getFile(to);
+            File m = new File(k, name);
+            if (m.exists() || m.mkdir())
+                return Uri.fromFile(m);
+        } else if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
+            return DocumentsContract.createDocument(resolver, to, DocumentsContract.Document.MIME_TYPE_DIR, name); // createFolder() 'mkdirs' mode
+        } else {
+            throw new Storage.UnknownUri();
+        }
+        return null;
+    }
+
+    public interface NodeFilter {
+        boolean accept(Node n);
+    }
+
+    public ArrayList<Node> list(Uri uri) {
+        return list(uri, null);
+    }
+
+    public ArrayList<Node> list(Uri uri, NodeFilter filter) { // Node.name = file name _no_ root uris
+        ArrayList<Node> files = new ArrayList<>();
+        String s = uri.getScheme();
+        if (s.equals(ContentResolver.SCHEME_FILE)) {
+            File file = Storage.getFile(uri);
+            File[] ff = file.listFiles();
+            if (ff != null) {
+                for (File f : ff) {
+                    Node n = new Node(f);
+                    if (filter == null || filter.accept(n))
+                        files.add(n);
+                }
+            }
+        } else if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
+            String id;
+            if (DocumentsContract.isDocumentUri(getContext(), uri))
+                id = DocumentsContract.getDocumentId(uri);
+            else
+                id = DocumentsContract.getTreeDocumentId(uri);
+            Uri doc = DocumentsContract.buildChildDocumentsUriUsingTree(uri, id);
+            ContentResolver resolver = getContext().getContentResolver();
+            Cursor cursor = resolver.query(doc, null, null, null, null);
+            if (cursor != null) {
+                while (cursor.moveToNext()) {
+                    Node n = new Node(doc, cursor);
+                    if (filter == null || filter.accept(n))
+                        files.add(n);
+                }
+                cursor.close();
+            }
+        } else {
+            throw new Storage.UnknownUri();
+        }
+        return files;
+    }
+
+    public ArrayList<Node> walk(Uri root, Uri uri) {
+        return walk(root, uri, null);
+    }
+
+    public ArrayList<Node> walk(Uri root, Uri uri, NodeFilter filter) { // Node.name = path relative to 'root' and _return_ root uris
+        ArrayList<Node> files = new ArrayList<>();
+        String s = uri.getScheme();
+        if (s.equals(ContentResolver.SCHEME_FILE)) {
+            int r = Storage.getFile(root).getPath().length();
+            File f = Storage.getFile(uri);
+            files.add(new Storage.Node(uri, f.getPath().substring(r), f.isDirectory(), f.length(), f.lastModified()));
+            File[] kk = f.listFiles();
+            if (kk != null) {
+                for (File k : kk) {
+                    Node n = new Node(Uri.fromFile(k), k.getPath().substring(r), k.isDirectory(), k.length(), k.lastModified());
+                    if (filter == null || filter.accept(n))
+                        files.add(n);
+                }
+            }
+        } else if (Build.VERSION.SDK_INT >= 23 && s.equals(ContentResolver.SCHEME_CONTENT)) {
+            String id;
+            if (DocumentsContract.isDocumentUri(context, root))
+                id = DocumentsContract.getDocumentId(root);
+            else
+                id = DocumentsContract.getTreeDocumentId(root);
+            id = stripRight(id, "/"); // sometimes root folder has name '/', sometimes ''.
+            int r = id.length();
+            ContentResolver resolver = context.getContentResolver();
+            Cursor cursor = resolver.query(uri, null, null, null, null);
+            if (cursor != null) {
+                while (cursor.moveToNext()) {
+                    id = cursor.getString(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_DOCUMENT_ID));
+                    String type = cursor.getString(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_MIME_TYPE));
+                    long size = cursor.getLong(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_SIZE));
+                    long last = cursor.getLong(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_LAST_MODIFIED));
+                    boolean d = type.equals(DocumentsContract.Document.MIME_TYPE_DIR);
+                    files.add(new Storage.Node(uri, id.substring(r), d, size, last)); // root
+                    if (d) {
+                        Uri doc = DocumentsContract.buildChildDocumentsUriUsingTree(uri, id);
+                        Cursor cursor2 = resolver.query(doc, null, null, null, null);
+                        if (cursor2 != null) {
+                            while (cursor2.moveToNext()) {
+                                id = cursor2.getString(cursor2.getColumnIndex(DocumentsContract.Document.COLUMN_DOCUMENT_ID));
+                                type = cursor.getString(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_MIME_TYPE));
+                                size = cursor.getLong(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_SIZE));
+                                last = cursor.getLong(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_LAST_MODIFIED));
+                                d = type.equals(DocumentsContract.Document.MIME_TYPE_DIR);
+                                Node n = new Node(DocumentsContract.buildDocumentUriUsingTree(doc, id), id.substring(r), d, size, last);
+                                if (filter == null || filter.accept(n))
+                                    files.add(n);
+                            }
+                            cursor2.close();
+                        }
+                    }
+                }
+                cursor.close();
+            }
+        } else {
+            throw new Storage.UnknownUri();
+        }
+        return files;
+    }
 }
