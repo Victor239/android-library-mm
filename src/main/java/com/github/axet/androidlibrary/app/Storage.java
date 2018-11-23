@@ -87,8 +87,8 @@ public class Storage {
         String f = file.getPath();
         if (f.startsWith(b)) {
             f = f.substring(b.length());
-            if (f.startsWith("/"))
-                f = f.substring(1);
+            if (f.startsWith(OpenFileDialog.ROOT))
+                f = f.substring(OpenFileDialog.ROOT.length());
         }
         return new File(f);
     }
