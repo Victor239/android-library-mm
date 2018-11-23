@@ -1136,6 +1136,10 @@ public class Storage {
             if (m.exists() || m.mkdir())
                 return Uri.fromFile(m);
         } else if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
+            Uri e = child(to, name);
+            DocumentFile m = DocumentFile.fromSingleUri(context, e);
+            if (m.exists() && m.isDirectory())
+                return e;
             File f = new File(name);
             File p = f.getParentFile();
             if (p != null) {
