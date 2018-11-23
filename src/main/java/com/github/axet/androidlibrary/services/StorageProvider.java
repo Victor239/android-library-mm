@@ -175,7 +175,7 @@ public class StorageProvider extends ContentProvider {
                 }
             }
         }
-        return Storage.getDocumentName(uri);
+        return Storage.getName(context, uri);
     }
 
     public static Intent openIntent23(Context context, Uri uri) {
@@ -276,7 +276,7 @@ public class StorageProvider extends ContentProvider {
                 File f = new File(id);
                 name = f.getName();
             } else {
-                name = Storage.getDocumentName(u);
+                name = storage.getName(u);
             }
         }
 

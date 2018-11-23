@@ -71,12 +71,6 @@ public class Storage {
         return builder.toString();
     }
 
-    public static String stripRight(String str, String right) {
-        if (str.endsWith(right))
-            str = str.substring(0, str.length() - right.length());
-        return str;
-    }
-
     public static String md5(String str) {
         try {
             byte[] bytesOfMessage = str.getBytes(Charset.defaultCharset());
@@ -369,16 +363,65 @@ public class Storage {
     }
 
     @TargetApi(21)
-    public static String getDocumentPath(Uri uri) {
+    public static String getDocumentPath(Context context, Uri uri) { // for display purpose
+        String pid = DocumentsContract.getTreeDocumentId(uri);
+        String[] pss = pid.split(":", 2);
+        if (!DocumentsContract.isDocumentUri(context, uri))
+            return pss[1];
+        String did = DocumentsContract.getDocumentId(uri);
+        if (pid.equals(did))
+            return pss[1];
+        String[] dss = did.split(":", 2);
+        if (!pss[0].equals(dss[0])) {
+            Uri doc = DocumentsContract.buildDocumentUriUsingTree(uri, dss[0] + ":");
+            String n = DocumentFile.fromSingleUri(context, doc).getName();
+            if (pss[1].isEmpty())
+                pss[1] = n;
+            else
+                pss[1] = new File(pss[1], n).getPath();
+        }
+        File d;
+        if (dss[1].isEmpty())
+            return pss[1];
+        else if (pss[1].isEmpty())
+            return dss[1];
+        return new File(pss[1], dss[1]).getPath();
+    }
+
+    @TargetApi(21)
+    public static Uri getDocumentParent(Context context, Uri uri) {
+        String pid = DocumentsContract.getTreeDocumentId(uri);
+        String[] pss = pid.split(":", 2);
+        if (!DocumentsContract.isDocumentUri(context, uri)) {
+            File p = new File(pss[1]);
+            p = p.getParentFile();
+            if (p == null)
+                return null;
+            return DocumentsContract.buildDocumentUriUsingTree(uri, p.getPath());
+        }
+        String did = DocumentsContract.getDocumentId(uri);
+        String[] dss = did.split(":", 2);
+        File p = new File(dss[1]);
+        p = p.getParentFile();
+        if (p == null) {
+            if (pid.equals(did))
+                return null;
+            if (pss[0].equals(dss[0]) || dss[1].isEmpty())
+                return DocumentsContract.buildDocumentUriUsingTree(uri, pid);
+            return DocumentsContract.buildDocumentUriUsingTree(uri, dss[0] + ":");
+        }
+        return DocumentsContract.buildDocumentUriUsingTree(uri, dss[0] + ":" + p.getPath());
+    }
+
+    public static Uri getParent(Context context, Uri uri) {
         String s = uri.getScheme();
-        if (s.startsWith(ContentResolver.SCHEME_CONTENT)) {
-            String id = DocumentsContract.getDocumentId(uri);
-            id = id.substring(id.indexOf(":") + 1);
-            File f = new File(id);
-            return f.getPath();
-        } else if (s.startsWith(ContentResolver.SCHEME_FILE)) {
-            File f = getFile(uri);
-            return f.getPath();
+        if (s.equals(ContentResolver.SCHEME_FILE)) {
+            File f = getFile(uri).getParentFile();
+            if (f == null)
+                return null;
+            return Uri.fromFile(f);
+        } else if (s.equals(ContentResolver.SCHEME_CONTENT)) {
+            return getDocumentParent(context, uri);
         } else {
             throw new UnknownUri();
         }
@@ -386,14 +429,14 @@ public class Storage {
 
     @TargetApi(21)
     public static Uri getDocumentChild(Context context, Uri uri, String name) {
-        File f;
-        if (DocumentsContract.isDocumentUri(context, uri)) {
-            f = new File(DocumentsContract.getDocumentId(uri));
-        } else {
-            f = new File(DocumentsContract.getTreeDocumentId(uri));
-        }
-        f = new File(f, name);
-        return DocumentsContract.buildDocumentUriUsingTree(uri, f.getPath());
+        String id;
+        if (DocumentsContract.isDocumentUri(context, uri))
+            id = DocumentsContract.getDocumentId(uri);
+        else
+            id = DocumentsContract.getTreeDocumentId(uri);
+        String[] ss = id.split(":", 2);
+        File f = new File(ss[1], name);
+        return DocumentsContract.buildDocumentUriUsingTree(uri, ss[0] + ":" + f.getPath());
     }
 
     @TargetApi(21)
@@ -408,18 +451,13 @@ public class Storage {
     public static String getDisplayName(Context context, Uri uri) {
         String saf = "sdcard";
         if (DocumentsContract.isDocumentUri(context, uri)) {
-            String id = DocumentsContract.getDocumentId(uri);
+            String id = DocumentsContract.getTreeDocumentId(uri);
             String[] ss = id.split(":", 2); // 1D13-0F08:private
-            return saf + getDocumentStorage(ss[0]) + "://" + getDocumentPath(uri);
+            return saf + getDocumentStorage(ss[0]) + "://" + getDocumentPath(context, uri);
         } else {
             String tree = DocumentsContract.getTreeDocumentId(uri);
             String[] ss = tree.split(":", 2); // 1D13-0F08:private
-            String path;
-            if (ss.length > 1) {
-                path = getDocumentStorage(ss[0]) + "://" + ss[1];
-            } else {
-                path = getDocumentStorage(ss[0]) + "://";
-            }
+            String path = getDocumentStorage(ss[0]) + "://" + ss[1];
             return saf + path;
         }
     }
@@ -472,19 +510,37 @@ public class Storage {
         return true;
     }
 
-    @TargetApi(21)
-    public static String getDocumentName(Uri uri) {
+    public static String getName(Context context, Uri uri) {
         String s = uri.getScheme();
-        if (s.startsWith(ContentResolver.SCHEME_CONTENT)) {
-            String id = DocumentsContract.getDocumentId(uri);
-            id = id.substring(id.indexOf(":") + 1);
-            File f = new File(id);
-            return f.getName();
+        if (Build.VERSION.SDK_INT >= 21 && s.startsWith(ContentResolver.SCHEME_CONTENT)) {
+            return getDocumentName(context, uri);
         } else if (s.startsWith(ContentResolver.SCHEME_FILE)) {
-            File f = getFile(uri);
-            return f.getName();
+            return getFile(uri).getName();
         } else {
             throw new UnknownUri();
+        }
+    }
+
+    @TargetApi(21)
+    public static String getDocumentName(Context context, Uri uri) { // DocumentFile.getName() works with existed files only
+        if (DocumentsContract.isDocumentUri(context, uri)) {
+            String id = DocumentsContract.getDocumentId(uri);
+            String[] ss = id.split(":", 2);
+            if (ss[1].isEmpty()) {
+                String pid = DocumentsContract.getTreeDocumentId(uri);
+                if (pid.equals(id))
+                    return OpenFileDialog.ROOT;
+                DocumentFile f = DocumentFile.fromSingleUri(context, uri);
+                return f.getName();
+            }
+            return new File(ss[1]).getName();
+        } else {
+            String id = DocumentsContract.getTreeDocumentId(uri);
+            String[] ss = id.split(":", 2);
+            if (ss[1].isEmpty())
+                return OpenFileDialog.ROOT;
+            DocumentFile f = DocumentFile.fromTreeUri(context, uri);
+            return f.getName();
         }
     }
 
@@ -719,7 +775,7 @@ public class Storage {
     public String getNameNoExt(Uri f) {
         String s = f.getScheme();
         if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
-            return getNameNoExt(new File(getDocumentName(f)));
+            return getNameNoExt(new File(getDocumentName(context, f)));
         } else if (s.equals(ContentResolver.SCHEME_FILE)) {
             return getNameNoExt(getFile(f));
         } else {
@@ -730,7 +786,7 @@ public class Storage {
     public String getExt(Uri f) {
         String s = f.getScheme();
         if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
-            return getExt(new File(getDocumentName(f)));
+            return getExt(new File(getDocumentName(context, f)));
         } else if (s.equals(ContentResolver.SCHEME_FILE)) {
             return getExt(getFile(f));
         } else {
@@ -830,14 +886,7 @@ public class Storage {
     }
 
     public String getName(Uri uri) {
-        String s = uri.getScheme();
-        if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
-            return getDocumentFile(context, uri).getName();
-        } else if (s.equals(ContentResolver.SCHEME_FILE)) {
-            return getFile(uri).getName();
-        } else {
-            throw new UnknownUri();
-        }
+        return getName(context, uri);
     }
 
     public long getLength(Uri uri) {
@@ -870,8 +919,7 @@ public class Storage {
         if (s.startsWith(ContentResolver.SCHEME_CONTENT)) { // saf folder for content
             return getDisplayName(context, uri);
         } else if (s.startsWith(ContentResolver.SCHEME_FILE)) { // full destionation for files
-            File f = getFile(uri);
-            return f.getAbsolutePath();
+            return getFile(uri).getPath();
         } else {
             throw new UnknownUri();
         }
@@ -935,7 +983,7 @@ public class Storage {
             String e = getExt(f);
             Uri t = getNextFile(dir, n, e);
             if (f.isDirectory()) {
-                Uri tt = createFolder(dir, getDocumentName(t));
+                Uri tt = createFolder(dir, getDocumentName(context, t));
                 File[] files = f.listFiles();
                 if (files != null) {
                     for (File m : files) {
@@ -988,13 +1036,12 @@ public class Storage {
         Uri docUri = DocumentsContract.buildDocumentUriUsingTree(parent, id);
 
         String p = new File(path).getParent();
-        if (p != null && !p.isEmpty()) {
+        if (p != null && !p.isEmpty())
             docUri = createFolder(docUri, p);
-        }
 
         Log.d(TAG, "createFile " + path);
         String ext = getExt(u);
-        String n = getDocumentName(u);
+        String n = getDocumentName(context, u);
         String mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext);
         return DocumentsContract.createDocument(resolver, docUri, mime, n);
     }
@@ -1023,32 +1070,31 @@ public class Storage {
         return DocumentsContract.createDocument(resolver, docUri, DocumentsContract.Document.MIME_TYPE_DIR, p.getName());
     }
 
-    public boolean touch(Uri uri) {
+    public boolean touch(Uri uri, String name) {
         String s = uri.getScheme();
         if (s.equals(ContentResolver.SCHEME_FILE)) {
             File k = Storage.getFile(uri);
+            File m = new File(k, name);
             try {
-                new FileOutputStream(k, true).close();
+                new FileOutputStream(m, true).close();
                 return true;
             } catch (IOException e) {
                 return false;
             }
         } else if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
-            DocumentFile file = getDocumentFile(context, uri);
+            Uri doc = child(uri, name);
+            DocumentFile file = getDocumentFile(context, doc);
             if (file.exists()) {
                 try {
                     ContentResolver resolver = context.getContentResolver();
-                    OutputStream os = resolver.openOutputStream(uri, "wa");
+                    OutputStream os = resolver.openOutputStream(doc, "wa");
                     os.close();
                     return true;
                 } catch (IOException e) {
                     return false;
                 }
             } else {
-                String ext = getExt(uri);
-                String n = getDocumentName(uri);
-                String mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext);
-                Uri doc = DocumentsContract.createDocument(resolver, uri, mime, n);
+                doc = createFile(uri, name);
                 return doc != null;
             }
         } else {
@@ -1115,6 +1161,61 @@ public class Storage {
         return files;
     }
 
+    @TargetApi(21)
+    public String buildDocumentPath(Uri end) {
+        return buildDocumentPath(DocumentsContract.buildDocumentUriUsingTree(end, DocumentsContract.getTreeDocumentId(end)), end);
+    }
+
+    @TargetApi(21)
+    public String buildDocumentPath(Uri start, Uri end) {
+        if (!DocumentsContract.isDocumentUri(context, end))
+            return OpenFileDialog.ROOT;
+        String eid = DocumentsContract.getDocumentId(end);
+        String path = "";
+        ContentResolver resolver = context.getContentResolver();
+        if (!DocumentsContract.isDocumentUri(context, start))
+            start = DocumentsContract.buildDocumentUriUsingTree(start, DocumentsContract.getTreeDocumentId(start));
+        Cursor cursor = resolver.query(start, null, null, null, null);
+        if (cursor != null) {
+            try {
+                while (cursor.moveToNext()) {
+                    String id = cursor.getString(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_DOCUMENT_ID));
+                    String name = cursor.getString(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_DISPLAY_NAME));
+                    String type = cursor.getString(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_MIME_TYPE));
+                    boolean d = type.equals(DocumentsContract.Document.MIME_TYPE_DIR);
+                    if (d) {
+                        Uri doc = DocumentsContract.buildChildDocumentsUriUsingTree(start, id);
+                        Cursor cursor2 = resolver.query(doc, null, null, null, null);
+                        if (cursor2 != null) {
+                            try {
+                                while (cursor2.moveToNext()) {
+                                    id = cursor2.getString(cursor2.getColumnIndex(DocumentsContract.Document.COLUMN_DOCUMENT_ID));
+                                    name = cursor2.getString(cursor2.getColumnIndex(DocumentsContract.Document.COLUMN_DISPLAY_NAME));
+                                    type = cursor2.getString(cursor2.getColumnIndex(DocumentsContract.Document.COLUMN_MIME_TYPE));
+                                    d = type.equals(DocumentsContract.Document.MIME_TYPE_DIR);
+                                    if (eid.startsWith(id)) {
+                                        path = new File(path, name).getPath();
+                                        if (d) {
+                                            Uri uri = DocumentsContract.buildDocumentUriUsingTree(doc, id);
+                                            return new File(path, buildDocumentPath(uri, end)).getPath();
+                                        }
+                                    }
+                                }
+                            } finally {
+                                cursor2.close();
+                            }
+                        }
+                    } else {
+                        return new File(name).getPath();
+                    }
+                }
+            } finally {
+                cursor.close();
+            }
+        }
+        return path;
+    }
+
     public ArrayList<Node> walk(Uri root, Uri uri) {
         return walk(root, uri, null);
     }
@@ -1135,34 +1236,36 @@ public class Storage {
                 }
             }
         } else if (Build.VERSION.SDK_INT >= 23 && s.equals(ContentResolver.SCHEME_CONTENT)) {
-            String id;
-            if (DocumentsContract.isDocumentUri(context, root))
-                id = DocumentsContract.getDocumentId(root);
-            else
-                id = DocumentsContract.getTreeDocumentId(root);
-            id = stripRight(id, "/"); // sometimes root folder has name '/', sometimes ''.
-            int r = id.length();
+            String p = buildDocumentPath(root, uri);
             ContentResolver resolver = context.getContentResolver();
-            Cursor cursor = resolver.query(uri, null, null, null, null);
+            Uri doc;
+            if (DocumentsContract.isDocumentUri(getContext(), uri))
+                doc = uri;
+            else
+                doc = DocumentsContract.buildDocumentUriUsingTree(uri, DocumentsContract.getTreeDocumentId(uri));
+            Cursor cursor = resolver.query(doc, null, null, null, null);
             if (cursor != null) {
                 while (cursor.moveToNext()) {
-                    id = cursor.getString(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_DOCUMENT_ID));
+                    String id = cursor.getString(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_DOCUMENT_ID));
+                    String name = cursor.getString(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_DISPLAY_NAME));
                     String type = cursor.getString(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_MIME_TYPE));
                     long size = cursor.getLong(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_SIZE));
                     long last = cursor.getLong(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_LAST_MODIFIED));
                     boolean d = type.equals(DocumentsContract.Document.MIME_TYPE_DIR);
-                    files.add(new Storage.Node(uri, id.substring(r), d, size, last)); // root
+                    p = new File(p, name).getPath();
+                    files.add(new Storage.Node(uri, p, d, size, last)); // root uri (unchanged)
                     if (d) {
-                        Uri doc = DocumentsContract.buildChildDocumentsUriUsingTree(uri, id);
+                        doc = DocumentsContract.buildChildDocumentsUriUsingTree(uri, id);
                         Cursor cursor2 = resolver.query(doc, null, null, null, null);
                         if (cursor2 != null) {
                             while (cursor2.moveToNext()) {
                                 id = cursor2.getString(cursor2.getColumnIndex(DocumentsContract.Document.COLUMN_DOCUMENT_ID));
-                                type = cursor.getString(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_MIME_TYPE));
-                                size = cursor.getLong(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_SIZE));
-                                last = cursor.getLong(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_LAST_MODIFIED));
+                                name = cursor2.getString(cursor2.getColumnIndex(DocumentsContract.Document.COLUMN_DISPLAY_NAME));
+                                type = cursor2.getString(cursor2.getColumnIndex(DocumentsContract.Document.COLUMN_MIME_TYPE));
+                                size = cursor2.getLong(cursor2.getColumnIndex(DocumentsContract.Document.COLUMN_SIZE));
+                                last = cursor2.getLong(cursor2.getColumnIndex(DocumentsContract.Document.COLUMN_LAST_MODIFIED));
                                 d = type.equals(DocumentsContract.Document.MIME_TYPE_DIR);
-                                Node n = new Node(DocumentsContract.buildDocumentUriUsingTree(doc, id), id.substring(r), d, size, last);
+                                Node n = new Node(DocumentsContract.buildDocumentUriUsingTree(doc, id), new File(p, name).getPath(), d, size, last);
                                 if (filter == null || filter.accept(n))
                                     files.add(n);
                             }
