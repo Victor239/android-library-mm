@@ -1121,6 +1121,12 @@ public class Storage {
             if (m.exists() || m.mkdir())
                 return Uri.fromFile(m);
         } else if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
+            File f = new File(name);
+            File p = f.getParentFile();
+            if (p != null) {
+                to = child(to, p.getPath());
+                name = f.getName();
+            }
             return DocumentsContract.createDocument(resolver, to, DocumentsContract.Document.MIME_TYPE_DIR, name); // createFolder() 'mkdirs' mode
         } else {
             throw new Storage.UnknownUri();
