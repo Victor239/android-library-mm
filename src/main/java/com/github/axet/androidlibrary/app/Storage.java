@@ -82,6 +82,17 @@ public class Storage {
         }
     }
 
+    public static File relative(File base, File file) {
+        String b = base.getPath();
+        String f = file.getPath();
+        if (f.startsWith(b)) {
+            f = f.substring(b.length());
+            if (f.startsWith("/"))
+                f = f.substring(1);
+        }
+        return new File(f);
+    }
+
     public static String formatNextFile(String name, int i, String ext) {
         if (i == 0) {
             if (ext == null || ext.isEmpty())
@@ -1224,13 +1235,13 @@ public class Storage {
         ArrayList<Node> files = new ArrayList<>();
         String s = uri.getScheme();
         if (s.equals(ContentResolver.SCHEME_FILE)) {
-            int r = Storage.getFile(root).getPath().length();
+            File r = Storage.getFile(root);
             File f = Storage.getFile(uri);
-            files.add(new Storage.Node(uri, f.getPath().substring(r), f.isDirectory(), f.length(), f.lastModified()));
+            files.add(new Storage.Node(uri, relative(r, f).getPath(), f.isDirectory(), f.length(), f.lastModified()));
             File[] kk = f.listFiles();
             if (kk != null) {
                 for (File k : kk) {
-                    Node n = new Node(Uri.fromFile(k), k.getPath().substring(r), k.isDirectory(), k.length(), k.lastModified());
+                    Node n = new Node(Uri.fromFile(k), relative(r, k).getPath(), k.isDirectory(), k.length(), k.lastModified());
                     if (filter == null || filter.accept(n))
                         files.add(n);
                 }
@@ -1247,7 +1258,6 @@ public class Storage {
             if (cursor != null) {
                 while (cursor.moveToNext()) {
                     String id = cursor.getString(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_DOCUMENT_ID));
-                    String name = cursor.getString(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_DISPLAY_NAME));
                     String type = cursor.getString(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_MIME_TYPE));
                     long size = cursor.getLong(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_SIZE));
                     long last = cursor.getLong(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_LAST_MODIFIED));
@@ -1259,7 +1269,7 @@ public class Storage {
                         if (cursor2 != null) {
                             while (cursor2.moveToNext()) {
                                 id = cursor2.getString(cursor2.getColumnIndex(DocumentsContract.Document.COLUMN_DOCUMENT_ID));
-                                name = cursor2.getString(cursor2.getColumnIndex(DocumentsContract.Document.COLUMN_DISPLAY_NAME));
+                                String name = cursor2.getString(cursor2.getColumnIndex(DocumentsContract.Document.COLUMN_DISPLAY_NAME));
                                 type = cursor2.getString(cursor2.getColumnIndex(DocumentsContract.Document.COLUMN_MIME_TYPE));
                                 size = cursor2.getLong(cursor2.getColumnIndex(DocumentsContract.Document.COLUMN_SIZE));
                                 last = cursor2.getLong(cursor2.getColumnIndex(DocumentsContract.Document.COLUMN_LAST_MODIFIED));
