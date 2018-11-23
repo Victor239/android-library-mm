@@ -82,15 +82,30 @@ public class Storage {
         }
     }
 
-    public static File relative(File base, File file) {
+    public static File relative(File base, File file) { // system/test64/123 - system/test64 == 123, but not 'system/test'
         String b = base.getPath();
         String f = file.getPath();
         if (f.startsWith(b)) {
-            f = f.substring(b.length());
-            if (f.startsWith(OpenFileDialog.ROOT))
-                f = f.substring(OpenFileDialog.ROOT.length());
+            int l = b.length();
+            if (f.length() > l) { // same path or relative?
+                if (f.charAt(l) != File.separatorChar)
+                    return null;
+                else
+                    l++;
+            }
+            f = f.substring(l);
         }
         return new File(f);
+    }
+
+    public static boolean isDocumentIdRelative(String base, String id) { // home:system64 <-> home:system64/test, but not home:system
+        if (id.startsWith(base)) {
+            int l = base.length();
+            if (id.length() > l) // same path or relative?
+                return id.charAt(l) == File.separatorChar;
+            return true;
+        }
+        return false;
     }
 
     public static String formatNextFile(String name, int i, String ext) {
@@ -1210,7 +1225,7 @@ public class Storage {
                                     name = cursor2.getString(cursor2.getColumnIndex(DocumentsContract.Document.COLUMN_DISPLAY_NAME));
                                     type = cursor2.getString(cursor2.getColumnIndex(DocumentsContract.Document.COLUMN_MIME_TYPE));
                                     d = type.equals(DocumentsContract.Document.MIME_TYPE_DIR);
-                                    if (eid.startsWith(id)) {
+                                    if (isDocumentIdRelative(id, eid)) {
                                         path = new File(path, name).getPath();
                                         if (d) {
                                             Uri uri = DocumentsContract.buildDocumentUriUsingTree(doc, id);
