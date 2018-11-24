@@ -44,6 +44,8 @@ public class SuperUser {
     public static final String BIN_AM = which("am");
     public static final String BIN_EXIT = "exit"; // build-in
     public static final String BIN_SET = "set"; // build-in
+    public static final String BIN_TRAP = "trap"; //build-in
+    public static final String BIN_FALSE = which("false");
 
     public static final String SETE = BIN_SET + " -e";
     public static final String CAT_TO = BIN_CAT + " << 'EOF' > {0}\n{1}\nEOF";
@@ -51,18 +53,21 @@ public class SuperUser {
     public static final String MKDIRS = BIN_MKDIR + " -p {0}";
     public static final String TOUCH = BIN_TOUCH + " -a {0}";
     public static final String DELETE = BIN_RM + " -rf {0}";
-    public static final String MV = BIN_MV + " {0} {1} || ( " + BIN_CP + " {0} {1} && " + BIN_RM + " {0} )";
+    public static final String MV = BIN_MV + " {0} {1} || " + BIN_CP + " {0} {1} && " + BIN_RM + " {0}";
 
     public static final String KILL_SELF = BIN_KILL + " -9 $$";
     public static final String SU1 = " || " + KILL_SELF; // some su does not return error codes for pipe scripts, kill it from inside pipe if script fails
 
     public static final String EOL = "\n";
 
+    public static boolean EXITCODE = false; // does su support for exit code? run exitText()
+
     public static class Commands {
         public StringBuilder sb = new StringBuilder();
-        public boolean sete = true;
+        public boolean sete = true; // handle exit codes during script execution
         public boolean stdout = false;
         public Boolean stderr = null; // null means get error only on error
+        public boolean exit = false; // does exit code matters?
 
         public Commands() {
         }
@@ -83,6 +88,11 @@ public class SuperUser {
 
         public Commands stderr(boolean b) {
             stderr = b;
+            return this;
+        }
+
+        public Commands exit(boolean b) {
+            exit = b;
             return this;
         }
 
@@ -199,7 +209,7 @@ public class SuperUser {
         return p;
     }
 
-    public static void writeUTF8(String str, OutputStream os) throws IOException {
+    public static void writeString(String str, OutputStream os) throws IOException {
         os.write(str.getBytes(Charset.defaultCharset()));
         os.flush();
     }
@@ -209,7 +219,7 @@ public class SuperUser {
     }
 
     public static Result su(String cmd) {
-        return su(new Commands(cmd));
+        return su(new Commands(cmd).exit(true));
     }
 
     public static Result su(Commands cmd) {
@@ -218,9 +228,11 @@ public class SuperUser {
             su = Runtime.getRuntime().exec(BIN_SU);
             OutputStream os = su.getOutputStream();
             if (cmd.sete)
-                writeUTF8(SETE + EOL, os);
-            writeUTF8(cmd.build(), os);
-            writeUTF8(BIN_EXIT + EOL, os);
+                writeString(SETE + EOL, os);
+            if (cmd.exit && !EXITCODE) // without 'trap' scrips with or without (set -e) will exit with '0'
+                writeString(BIN_TRAP + " '" + KILL_SELF + "' ERR" + EOL, os);
+            writeString(cmd.build(), os);
+            writeString(BIN_EXIT + EOL, os);
             su.waitFor();
             return new Result(cmd, su);
         } catch (IOException e) {
@@ -236,13 +248,11 @@ public class SuperUser {
     }
 
     public static boolean isRooted() {
-        File f = new File(BIN_SU);
-        return f.exists();
+        return new File(BIN_SU).exists();
     }
 
-    public static boolean rootTest() {
-        Result r = su(BIN_TRUE);
-        return r.ok();
+    public static Result rootTest() {
+        return su(BIN_TRUE);
     }
 
     public static Result startService(Intent intent) {
@@ -284,12 +294,12 @@ public class SuperUser {
 
     public static InputStream cat(Uri uri) {
         File f = Storage.getFile(uri);
-        Commands cmd = new Commands(MessageFormat.format("cat {0}", escape(f)));
+        Commands cmd = new Commands(MessageFormat.format("cat {0}", escape(f))).exit(true);
         try {
             final Process su = Runtime.getRuntime().exec(BIN_SU);
             OutputStream os = su.getOutputStream();
-            writeUTF8(cmd.build(), os);
-            writeUTF8(BIN_EXIT + EOL, os);
+            writeString(cmd.build(), os);
+            writeString(BIN_EXIT + EOL, os);
             return new InputStream() {
                 Process p = su;
                 InputStream is = p.getInputStream();
@@ -323,12 +333,12 @@ public class SuperUser {
             {
                 File f = Storage.getFile(uri);
 
-                Commands cmd = new Commands(MessageFormat.format(BIN_CAT + " > {0}", escape(f)));
+                Commands cmd = new Commands(MessageFormat.format(BIN_CAT + " > {0}", escape(f))).exit(true);
                 su = Runtime.getRuntime().exec(BIN_SU);
 
                 os = su.getOutputStream();
 
-                writeUTF8(cmd.build(), os);
+                writeString(cmd.build(), os);
             }
 
             @Override
@@ -347,5 +357,9 @@ public class SuperUser {
                 su.destroy();
             }
         };
+    }
+
+    public static boolean exitTest() {
+        return EXITCODE = !su(new Commands(BIN_FALSE)).ok();
     }
 }

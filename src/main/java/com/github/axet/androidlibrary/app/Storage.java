@@ -478,20 +478,21 @@ public class Storage {
     @TargetApi(21)
     public static String getDisplayName(Context context, Uri uri) {
         String saf = "sdcard";
+        String unk = "sdcard[x]://";
         if (DocumentsContract.isDocumentUri(context, uri)) {
             String id = DocumentsContract.getTreeDocumentId(uri);
             String[] ss = id.split(COLON, 2); // 1D13-0F08:private
             if (ss.length > 1)
                 return saf + getDocumentStorage(ss[0]) + "://" + getDocumentPath(context, uri);
             else
-                return "sdcard[x]://" + id; // uknown device path. new saf location?
+                return unk + id; // uknown device path. new saf location?
         } else {
             String id = DocumentsContract.getTreeDocumentId(uri);
             String[] ss = id.split(COLON, 2); // 1D13-0F08:private
             if (ss.length > 1) // has colon
                 return saf + getDocumentStorage(ss[0]) + "://" + ss[1];
             else
-                return "sdcard[x]://" + id; // uknown device path. new saf location?
+                return unk + id; // uknown device path. new saf location?
         }
     }
 
