@@ -481,7 +481,10 @@ public class Storage {
         if (DocumentsContract.isDocumentUri(context, uri)) {
             String id = DocumentsContract.getTreeDocumentId(uri);
             String[] ss = id.split(COLON, 2); // 1D13-0F08:private
-            return saf + getDocumentStorage(ss[0]) + "://" + getDocumentPath(context, uri);
+            if (ss.length > 1)
+                return saf + getDocumentStorage(ss[0]) + "://" + getDocumentPath(context, uri);
+            else
+                return "sdcard[x]://" + id; // uknown device path. new saf location?
         } else {
             String id = DocumentsContract.getTreeDocumentId(uri);
             String[] ss = id.split(COLON, 2); // 1D13-0F08:private
