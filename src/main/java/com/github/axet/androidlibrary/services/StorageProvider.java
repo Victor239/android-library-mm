@@ -90,7 +90,7 @@ public class StorageProvider extends ContentProvider {
         String s = p.getScheme();
         if (s.equals(ContentResolver.SCHEME_CONTENT) && Build.VERSION.SDK_INT >= 21 && !p.getAuthority().equals(authory)) {
             String tree = DocumentsContract.getTreeDocumentId(p);
-            String[] ss = tree.split(":"); // 1D13-0F08:private
+            String[] ss = tree.split(Storage.COLON); // 1D13-0F08:private
             if (!ss[0].equals(Storage.STORAGE_PRIMARY)) {
                 return false;
             }
@@ -117,7 +117,7 @@ public class StorageProvider extends ContentProvider {
             tree = DocumentsContract.getDocumentId(uri);
         else
             tree = DocumentsContract.getTreeDocumentId(uri);
-        String[] ss = tree.split(":", 2); // 1D13-0F08:folder_name
+        String[] ss = tree.split(Storage.COLON, 2); // 1D13-0F08:folder_name
         if (ss[0].equals(Storage.STORAGE_PRIMARY)) {
             File f = new File(Environment.getExternalStorageDirectory(), ss[1]);
             uri = Uri.fromFile(f);
@@ -192,7 +192,7 @@ public class StorageProvider extends ContentProvider {
         String s = uri.getScheme();
         if (s.equals(ContentResolver.SCHEME_CONTENT) && Build.VERSION.SDK_INT >= 21 && uri.getAuthority().startsWith(Storage.SAF)) { // convert content://.../primary to file://
             String tree = DocumentsContract.getTreeDocumentId(uri);
-            String[] ss = tree.split(":"); // 'primary:Documents' or '1D13-0F08:Documents'
+            String[] ss = tree.split(Storage.COLON); // 'primary:Documents' or '1D13-0F08:Documents'
             if (ss[0].equals(Storage.STORAGE_PRIMARY)) {
                 File f = Environment.getExternalStorageDirectory();
                 if (ss.length > 1)
@@ -281,7 +281,7 @@ public class StorageProvider extends ContentProvider {
             String s = u.getScheme();
             if (Build.VERSION.SDK_INT >= 21 && s.startsWith(ContentResolver.SCHEME_CONTENT) && !DocumentsContract.isDocumentUri(getContext(), u)) {
                 String id = DocumentsContract.getTreeDocumentId(u);
-                id = id.substring(id.indexOf(":") + 1);
+                id = id.substring(id.indexOf(Storage.COLON) + 1);
                 File f = new File(id);
                 name = f.getName();
             } else {

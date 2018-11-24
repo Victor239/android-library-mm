@@ -60,6 +60,8 @@ public class Storage {
     public static final String CONTENTTYPE_OGG = "audio/ogg";
     public static final String CONTENTTYPE_FB2 = "application/x-fictionbook";
 
+    public static final String COLON = ":";
+
     protected Context context;
     protected ContentResolver resolver;
 
@@ -367,7 +369,7 @@ public class Storage {
     @TargetApi(21)
     public static String getDocumentStorage(Uri uri) {
         String id = DocumentsContract.getDocumentId(uri);
-        id = id.substring(0, id.indexOf(":"));
+        id = id.substring(0, id.indexOf(COLON));
         return getDocumentStorage(id);
     }
 
@@ -391,15 +393,15 @@ public class Storage {
     @TargetApi(21)
     public static String getDocumentPath(Context context, Uri uri) { // for display purpose
         String pid = DocumentsContract.getTreeDocumentId(uri);
-        String[] pss = pid.split(":", 2);
+        String[] pss = pid.split(COLON, 2);
         if (!DocumentsContract.isDocumentUri(context, uri))
             return pss[1];
         String did = DocumentsContract.getDocumentId(uri);
         if (pid.equals(did))
             return pss[1];
-        String[] dss = did.split(":", 2);
+        String[] dss = did.split(COLON, 2);
         if (!pss[0].equals(dss[0])) {
-            Uri doc = DocumentsContract.buildDocumentUriUsingTree(uri, dss[0] + ":");
+            Uri doc = DocumentsContract.buildDocumentUriUsingTree(uri, dss[0] + COLON);
             String n = DocumentFile.fromSingleUri(context, doc).getName();
             if (pss[1].isEmpty())
                 pss[1] = n;
@@ -417,7 +419,7 @@ public class Storage {
     @TargetApi(21)
     public static Uri getDocumentParent(Context context, Uri uri) {
         String pid = DocumentsContract.getTreeDocumentId(uri);
-        String[] pss = pid.split(":", 2);
+        String[] pss = pid.split(COLON, 2);
         if (!DocumentsContract.isDocumentUri(context, uri)) {
             File p = new File(pss[1]);
             p = p.getParentFile();
@@ -426,7 +428,7 @@ public class Storage {
             return DocumentsContract.buildDocumentUriUsingTree(uri, p.getPath());
         }
         String did = DocumentsContract.getDocumentId(uri);
-        String[] dss = did.split(":", 2);
+        String[] dss = did.split(COLON, 2);
         File p = new File(dss[1]);
         p = p.getParentFile();
         if (p == null) {
@@ -434,9 +436,9 @@ public class Storage {
                 return null;
             if (pss[0].equals(dss[0]) || dss[1].isEmpty())
                 return DocumentsContract.buildDocumentUriUsingTree(uri, pid);
-            return DocumentsContract.buildDocumentUriUsingTree(uri, dss[0] + ":");
+            return DocumentsContract.buildDocumentUriUsingTree(uri, dss[0] + COLON);
         }
-        return DocumentsContract.buildDocumentUriUsingTree(uri, dss[0] + ":" + p.getPath());
+        return DocumentsContract.buildDocumentUriUsingTree(uri, dss[0] + COLON + p.getPath());
     }
 
     public static Uri getParent(Context context, Uri uri) {
@@ -460,9 +462,9 @@ public class Storage {
             id = DocumentsContract.getDocumentId(uri);
         else
             id = DocumentsContract.getTreeDocumentId(uri);
-        String[] ss = id.split(":", 2);
+        String[] ss = id.split(COLON, 2);
         File f = new File(ss[1], name);
-        return DocumentsContract.buildDocumentUriUsingTree(uri, ss[0] + ":" + f.getPath());
+        return DocumentsContract.buildDocumentUriUsingTree(uri, ss[0] + COLON + f.getPath());
     }
 
     @TargetApi(21)
@@ -478,13 +480,15 @@ public class Storage {
         String saf = "sdcard";
         if (DocumentsContract.isDocumentUri(context, uri)) {
             String id = DocumentsContract.getTreeDocumentId(uri);
-            String[] ss = id.split(":", 2); // 1D13-0F08:private
+            String[] ss = id.split(COLON, 2); // 1D13-0F08:private
             return saf + getDocumentStorage(ss[0]) + "://" + getDocumentPath(context, uri);
         } else {
-            String tree = DocumentsContract.getTreeDocumentId(uri);
-            String[] ss = tree.split(":", 2); // 1D13-0F08:private
-            String path = getDocumentStorage(ss[0]) + "://" + ss[1];
-            return saf + path;
+            String id = DocumentsContract.getTreeDocumentId(uri);
+            String[] ss = id.split(COLON, 2); // 1D13-0F08:private
+            if (ss.length > 1) // has colon
+                return saf + getDocumentStorage(ss[0]) + "://" + ss[1];
+            else
+                return "sdcard[x]://" + id; // uknown device path. new saf location?
         }
     }
 
@@ -551,7 +555,7 @@ public class Storage {
     public static String getDocumentName(Context context, Uri uri) { // DocumentFile.getName() works with existed files only
         if (DocumentsContract.isDocumentUri(context, uri)) {
             String id = DocumentsContract.getDocumentId(uri);
-            String[] ss = id.split(":", 2);
+            String[] ss = id.split(COLON, 2);
             if (ss[1].isEmpty()) {
                 String pid = DocumentsContract.getTreeDocumentId(uri);
                 if (pid.equals(id))
@@ -562,7 +566,7 @@ public class Storage {
             return new File(ss[1]).getName();
         } else {
             String id = DocumentsContract.getTreeDocumentId(uri);
-            String[] ss = id.split(":", 2);
+            String[] ss = id.split(COLON, 2);
             if (ss[1].isEmpty())
                 return OpenFileDialog.ROOT;
             DocumentFile f = DocumentFile.fromTreeUri(context, uri);
@@ -939,10 +943,9 @@ public class Storage {
         }
     }
 
-    @TargetApi(21)
     public String getDisplayName(Uri uri) {
         String s = uri.getScheme();
-        if (s.startsWith(ContentResolver.SCHEME_CONTENT)) { // saf folder for content
+        if (Build.VERSION.SDK_INT >= 21 && s.startsWith(ContentResolver.SCHEME_CONTENT)) { // saf folder for content
             return getDisplayName(context, uri);
         } else if (s.startsWith(ContentResolver.SCHEME_FILE)) { // full destionation for files
             return getFile(uri).getPath();
