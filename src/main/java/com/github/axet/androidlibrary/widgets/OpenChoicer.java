@@ -274,7 +274,7 @@ public class OpenChoicer {
                         if (!ff.isDirectory())
                             ff = ff.getParentFile();
                         Button b2 = d.getButton(AlertDialog.BUTTON_POSITIVE);
-                        if (!ff.canWrite()) {
+                        if (!f.adapter.canWrite(ff)) {
                             b2.setEnabled(false);
                         } else {
                             b2.setEnabled(true);

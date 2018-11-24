@@ -1133,13 +1133,13 @@ public class Storage {
         if (s.equals(ContentResolver.SCHEME_FILE)) {
             File k = Storage.getFile(to);
             File m = new File(k, name);
-            if (m.exists() || m.mkdir())
+            if (m.mkdir())
                 return Uri.fromFile(m);
         } else if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
             Uri e = child(to, name);
             DocumentFile m = DocumentFile.fromSingleUri(context, e);
-            if (m.exists() && m.isDirectory())
-                return e;
+            if (m.exists()) // directory or file == failed
+                return null;
             File f = new File(name);
             File p = f.getParentFile();
             if (p != null) {
