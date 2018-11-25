@@ -10,7 +10,6 @@ import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -20,7 +19,6 @@ import android.view.ViewParent;
 import android.view.Window;
 import android.view.WindowManager;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 public abstract class AppCompatThemeActivity extends AppCompatActivity {
@@ -166,9 +164,8 @@ public abstract class AppCompatThemeActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (themeId != getAppTheme()) {
+        if (themeId != getAppTheme())
             restartActivity();
-        }
     }
 
     public void restartActivity() {
@@ -182,8 +179,12 @@ public abstract class AppCompatThemeActivity extends AppCompatActivity {
         super.setSupportActionBar(toolbar);
         Context theme = getSupportActionBar().getThemedContext();
         int id = getAppThemeBar(toolbar);
-        if (theme != null && id != 0)
-            theme.setTheme(id);
+        if (theme != null && id != 0) {
+            if (theme == this)
+                Log.e(TAG, "set 'theme' attribute for for Toolbar");
+            else
+                theme.setTheme(id);
+        }
         toolbar.setPopupTheme(getAppThemePopup());
     }
 }
