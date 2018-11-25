@@ -3,16 +3,12 @@ package com.github.axet.androidlibrary.app;
 import android.app.Activity;
 import android.app.Application;
 import android.app.Service;
-import android.content.ComponentName;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.Build;
 import android.support.v7.preference.PreferenceManager;
 
 import com.github.axet.androidlibrary.R;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 

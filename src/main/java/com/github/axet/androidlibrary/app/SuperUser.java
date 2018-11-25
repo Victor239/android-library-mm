@@ -130,6 +130,12 @@ public class SuperUser {
                 this.e = e;
                 return;
             }
+            p.destroy();
+            try {
+                p.waitFor();
+            } catch (InterruptedException ignore) {
+                Thread.currentThread().interrupt();
+            }
             this.res = p.exitValue();
             this.e = e;
             captureOutputs(cmd, p);
@@ -163,6 +169,8 @@ public class SuperUser {
         }
 
         public String message() {
+            if (stderr != null && !stderr.isEmpty())
+                return stderr;
             if (e != null) {
                 while (e.getCause() != null)
                     e = e.getCause();
@@ -170,8 +178,6 @@ public class SuperUser {
                     return e.getClass().getSimpleName();
                 return e.getMessage();
             }
-            if (stderr != null && !stderr.isEmpty())
-                return stderr;
             return "error: " + res;
         }
     }
@@ -198,7 +204,7 @@ public class SuperUser {
     }
 
     public static String escape(File p) {
-        return escape(p.getAbsolutePath());
+        return escape(p.getPath());
     }
 
     public static String escape(String p) {
@@ -325,7 +331,7 @@ public class SuperUser {
         }
     }
 
-    public static OutputStream write(final Uri uri) throws IOException {
+    public static OutputStream open(final Uri uri) throws IOException {
         return new OutputStream() {
             Process su;
             OutputStream os;
