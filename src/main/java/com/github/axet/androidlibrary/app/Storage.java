@@ -54,6 +54,7 @@ public class Storage {
     public static final String SAF = "com.android.externalstorage";
 
     public final static String STORAGE_PRIMARY = "primary"; // sdcard name
+    public final static String STORAGE_HOME = "home"; // 'Documents' folder on internal sdcard
 
     public static final String CONTENTTYPE_OCTETSTREAM = "application/octet-stream";
     public static final String CONTENTTYPE_OPUS = "audio/opus";
@@ -367,16 +368,22 @@ public class Storage {
     }
 
     @TargetApi(21)
-    public static String getDocumentStorage(Uri uri) {
-        String id = DocumentsContract.getDocumentId(uri);
-        id = id.substring(0, id.indexOf(COLON));
-        return getDocumentStorage(id);
+    public static String getDocumentStorage(Context context, Uri uri) { // tree uri can points to 'home:'
+        String id;
+        if (DocumentsContract.isDocumentUri(context, uri))
+            id = DocumentsContract.getDocumentId(uri);
+        else
+            id = DocumentsContract.getTreeDocumentId(uri);
+        String[] ss = id.split(COLON, 2);
+        return getDocumentStorage(ss[0]);
     }
 
     public static String getDocumentStorage(String s) {
         String path;
         if (s.equals(STORAGE_PRIMARY))
             path = "[i]";
+        else if (s.equals(STORAGE_HOME))
+            path = "[h]";
         else
             path = "[e]";
         return path;
