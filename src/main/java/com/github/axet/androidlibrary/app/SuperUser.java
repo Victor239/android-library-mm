@@ -13,11 +13,14 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.text.MessageFormat;
+import java.text.SimpleDateFormat;
 
 public class SuperUser {
     public static String TAG = SuperUser.class.getSimpleName();
 
     public static int BUF_SIZE = 4 * 1024; // IOUtils#DEFAULT_BUFFER_SIZE
+
+    public static final SimpleDateFormat TOUCHDATE = new SimpleDateFormat("yyyyMMddHHmm.ss");
 
     public static final String SYSTEM = "/system";
     public static final String ETC = "/etc";
@@ -45,14 +48,21 @@ public class SuperUser {
     public static final String BIN_SET = "set"; // build-in
     public static final String BIN_TRAP = "trap"; //build-in
     public static final String BIN_FALSE = which("false");
+    public static final String BIN_READLINK = which("readlink");
+    public static final String BIN_LN = which("ln");
 
     public static final String SETE = BIN_SET + " -e";
     public static final String CAT_TO = BIN_CAT + " << 'EOF' > {0}\n{1}\nEOF";
     public static final String REMOUNT_SYSTEM = BIN_MOUNT + " -o remount,rw " + SYSTEM;
     public static final String MKDIRS = BIN_MKDIR + " -p {0}";
-    public static final String TOUCH = BIN_TOUCH + " -a {0}";
+    public static final String TOUCH = BIN_TOUCH + " -a {0}"; // a = change access time
     public static final String DELETE = BIN_RM + " -rf {0}";
     public static final String MV = BIN_MV + " {0} {1} || " + BIN_CP + " {0} {1} && " + BIN_RM + " {0}";
+    public static final String RENAME = BIN_MV + " {0} {1}";
+    public static final String MKDIR = BIN_MKDIR + " {0}";
+    public static final String READLINK = BIN_READLINK + " {0}";
+    public static final String LNS = BIN_LN + " -s {0} {1}";
+    public static final String TOUCHMCT = BIN_TOUCH + " -mct {0} {1}"; // m = modification time, c = do not create file, t = set date/time
 
     public static final String KILL_SELF = BIN_KILL + " -9 $$";
     public static final String SU1 = " || " + KILL_SELF; // some su does not return error codes for pipe scripts, kill it from inside pipe if script fails
@@ -285,6 +295,10 @@ public class SuperUser {
         return su(TOUCH, escape(f));
     }
 
+    public static Result touch(File f, long last) {
+        return su(TOUCHMCT, TOUCHDATE.format(last), escape(f));
+    }
+
     public static Result mkdirs(File f) {
         return su(MKDIRS, escape(f));
     }
@@ -363,5 +377,34 @@ public class SuperUser {
 
     public static boolean exitTest() {
         return EXITCODE = !su(new Commands(BIN_FALSE)).ok();
+    }
+
+    public static Result rename(File f, File t) {
+        return su(RENAME, escape(f), escape(t));
+    }
+
+    public static Result mkdir(File f) {
+        return su(MKDIR, escape(f));
+    }
+
+    public static long length(File f) {
+        Result r = su(new Commands(MessageFormat.format("stat -Lc%s {0}", escape(f))).stdout(true).exit(true)).must();
+        return Long.valueOf(r.stdout.trim());
+    }
+
+    public static Result readlink(File f) {
+        return su(READLINK, escape(f));
+    }
+
+    public static Result ln(File target, File file) {
+        return su(LNS, escape(target), escape(file));
+    }
+
+    public static boolean isDirectory(File f) {
+        return su("[ -d {0} ]", escape(f)).ok();
+    }
+
+    public static boolean exists(File f) {
+        return su("[ -e {0} ]", escape(f)).ok();
     }
 }

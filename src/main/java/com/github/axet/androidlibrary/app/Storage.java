@@ -86,30 +86,23 @@ public class Storage {
     }
 
     public static File relative(File base, File file) { // system/test64/123 - system/test64 == 123, but not 'system/test'
-        String b = base.getPath();
-        String f = file.getPath();
+        String r = relative(base.getPath(), file.getPath());
+        if (r == null)
+            return null;
+        return new File(r);
+    }
+
+    public static String relative(String b, String f) { // home:system64 <-> home:system64/test, but not home:system
         if (f.startsWith(b)) {
             int l = b.length();
             if (f.length() > l) { // same path or relative?
                 if (f.charAt(l) != File.separatorChar)
                     return null; // not relative
-                else
-                    l++;
+                l++;
             }
-            f = f.substring(l);
-            return new File(f); // "" or relative path
+            return f.substring(l); // "" or relative path
         }
         return null; // not relative
-    }
-
-    public static boolean isDocumentIdRelative(String base, String id) { // home:system64 <-> home:system64/test, but not home:system
-        if (id.startsWith(base)) {
-            int l = base.length();
-            if (id.length() > l) // same path or relative?
-                return id.charAt(l) == File.separatorChar;
-            return true;
-        }
-        return false;
     }
 
     public static String formatNextFile(String name, int i, String ext) {
@@ -173,10 +166,10 @@ public class Storage {
                 return 0;
         }
         StatFs fsi = new StatFs(f.getPath());
-        if (Build.VERSION.SDK_INT < 18)
-            return fsi.getBlockSize() * (long) fsi.getAvailableBlocks();
-        else
+        if (Build.VERSION.SDK_INT >= 18)
             return fsi.getBlockSizeLong() * fsi.getAvailableBlocksLong();
+        else
+            return fsi.getBlockSize() * (long) fsi.getAvailableBlocks();
     }
 
     public static String getNameNoExt(File f) {
@@ -552,20 +545,10 @@ public class Storage {
         return true;
     }
 
-    public static String getName(Context context, Uri uri) {
+    public static String getName(Context context, Uri uri) { // [Content,SAF] or File
         String s = uri.getScheme();
         if (Build.VERSION.SDK_INT >= 21 && s.startsWith(ContentResolver.SCHEME_CONTENT)) {
-            ContentResolver resolver = context.getContentResolver();
-            Cursor cursor = resolver.query(uri, null, null, null, null);
-            if (cursor != null) {
-                try {
-                    if (cursor.moveToNext())
-                        return cursor.getString(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_DISPLAY_NAME)); // getDocumentName() SAF only
-                } finally {
-                    cursor.close();
-                }
-            }
-            return uri.getLastPathSegment();
+            return getContentName(context, uri);
         } else if (s.startsWith(ContentResolver.SCHEME_FILE)) {
             return getFile(uri).getName();
         } else {
@@ -573,8 +556,23 @@ public class Storage {
         }
     }
 
+    @TargetApi(19)
+    public static String getContentName(Context context, Uri uri) { // ContentResolver or SAF document
+        ContentResolver resolver = context.getContentResolver();
+        Cursor cursor = resolver.query(uri, null, null, null, null);
+        if (cursor != null) {
+            try {
+                if (cursor.moveToNext())
+                    return cursor.getString(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_DISPLAY_NAME)); // getDocumentName() SAF only
+            } finally {
+                cursor.close();
+            }
+        }
+        return uri.getLastPathSegment();
+    }
+
     @TargetApi(21)
-    public static String getDocumentName(Context context, Uri uri) { // DocumentFile.getName() works with existed files only
+    public static String getDocumentName(Context context, Uri uri) { // SAF document name by ID
         if (DocumentsContract.isDocumentUri(context, uri)) {
             String id = DocumentsContract.getDocumentId(uri);
             String[] ss = id.split(COLON, 2);
@@ -829,7 +827,7 @@ public class Storage {
     public String getNameNoExt(Uri f) {
         String s = f.getScheme();
         if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
-            return getNameNoExt(new File(getDocumentName(context, f)));
+            return getNameNoExt(new File(getContentName(context, f)));
         } else if (s.equals(ContentResolver.SCHEME_FILE)) {
             return getNameNoExt(getFile(f));
         } else {
@@ -840,7 +838,7 @@ public class Storage {
     public String getExt(Uri f) {
         String s = f.getScheme();
         if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
-            return getExt(new File(getDocumentName(context, f)));
+            return getExt(new File(getContentName(context, f)));
         } else if (s.equals(ContentResolver.SCHEME_FILE)) {
             return getExt(getFile(f));
         } else {
@@ -1036,7 +1034,7 @@ public class Storage {
             String e = getExt(f);
             Uri t = getNextFile(dir, n, e);
             if (f.isDirectory()) {
-                Uri tt = createFolder(dir, getDocumentName(context, t));
+                Uri tt = createFolder(dir, getContentName(context, t));
                 File[] files = f.listFiles();
                 if (files != null) {
                     for (File m : files) {
@@ -1256,7 +1254,7 @@ public class Storage {
                                     name = cursor2.getString(cursor2.getColumnIndex(DocumentsContract.Document.COLUMN_DISPLAY_NAME));
                                     type = cursor2.getString(cursor2.getColumnIndex(DocumentsContract.Document.COLUMN_MIME_TYPE));
                                     d = type.equals(DocumentsContract.Document.MIME_TYPE_DIR);
-                                    if (isDocumentIdRelative(id, eid)) {
+                                    if (relative(id, eid) != null) {
                                         path = new File(path, name).getPath();
                                         if (d) {
                                             Uri uri = DocumentsContract.buildDocumentUriUsingTree(doc, id);
