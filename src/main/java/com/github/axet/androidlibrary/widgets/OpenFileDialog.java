@@ -716,6 +716,11 @@ public class OpenFileDialog extends AlertDialog.Builder {
         main.setMinimumHeight(getLinearLayoutMinHeight(getContext()));
         main.setPadding(paddingLeft, 0, paddingRight, 0);
 
+        if (adapter == null) {
+            adapter = new FileAdapter(getContext(), currentPath);
+            adapter.registerAdapterDataObserver(observer);
+        }
+
         // add toolbar (UP / NEWFOLDER)
         {
             LinearLayout toolbar = new LinearLayout(getContext());
@@ -880,10 +885,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
         setView(main);
         setNegativeButton(android.R.string.cancel, null);
 
-        if (adapter != null)
-            listView.setAdapter(adapter);
-        else
-            setAdapter(new FileAdapter(getContext(), currentPath));
+        listView.setAdapter(adapter);
 
         final AlertDialog d = super.create();
 
