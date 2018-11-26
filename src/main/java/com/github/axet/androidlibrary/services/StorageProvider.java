@@ -626,7 +626,7 @@ public class StorageProvider extends ContentProvider {
             };
             Arrays.sort(ss);
             if (Arrays.binarySearch(ss, getCallingPackage()) >= 0)
-                return new AssetFileDescriptor(fd, 0, -1); // -1 means full file, check ContentResolver#openFileDescriptor
+                return new AssetFileDescriptor(fd, 0, AssetFileDescriptor.UNKNOWN_LENGTH); // -1 means full file, check ContentResolver#openFileDescriptor
         }
         return new AssetFileDescriptor(fd, 0, size);
     }
