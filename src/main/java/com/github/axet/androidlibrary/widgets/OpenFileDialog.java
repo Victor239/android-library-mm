@@ -68,6 +68,13 @@ public class OpenFileDialog extends AlertDialog.Builder {
     protected static int FOLDER_ICON = R.drawable.ic_folder;
     protected static int FILE_ICON = R.drawable.ic_file;
 
+    public static long getTotalBytes(StatFs fs) {
+        if (Build.VERSION.SDK_INT >= 18)
+            return fs.getTotalBytes();
+        else
+            return fs.getBlockCount() * (long) fs.getBlockSize();
+    }
+
     public enum DIALOG_TYPE {
         FILE_DIALOG,
         FOLDER_DIALOG,
@@ -123,9 +130,8 @@ public class OpenFileDialog extends AlertDialog.Builder {
         cache(context.getExternalCacheDir());
         if (Build.VERSION.SDK_INT >= 19) {
             File[] ff = context.getExternalCacheDirs();
-            for (File f : ff) {
+            for (File f : ff)
                 cache(f);
-            }
         }
     }
 
@@ -255,9 +261,8 @@ public class OpenFileDialog extends AlertDialog.Builder {
                             while (f != null) {
                                 pp.add(f);
                                 StatFs fs = new StatFs(f.getPath());
-                                if (fs.getTotalBytes() != stat.getTotalBytes()) {
+                                if (getTotalBytes(fs) != getTotalBytes(stat))
                                     add(p); // add sdcard root
-                                }
                                 p = f;
                                 f = f.getParentFile();
                             }
@@ -265,23 +270,19 @@ public class OpenFileDialog extends AlertDialog.Builder {
                                 for (int i = pp.size() - 1; i >= 0; i--) {
                                     p = pp.get(i);
                                     if (p.canWrite()) {
-                                        if (data != null && p.getAbsolutePath().startsWith(data.getAbsolutePath())) { // skip default /storage/.../data
+                                        if (data != null && p.getPath().startsWith(data.getPath())) // skip default /storage/.../data
                                             continue;
-                                        }
-                                        if (datae != null && p.getAbsolutePath().startsWith(datae.getAbsolutePath())) { // skip default /storage/.../data
+                                        if (datae != null && p.getPath().startsWith(datae.getPath())) // skip default /storage/.../data
                                             continue;
-                                        }
                                         if (add(p))
                                             break; // add first root
                                     }
                                 }
                             }
-                            if (data != null && a.getAbsolutePath().startsWith(data.getAbsolutePath())) { // skip default /storage/.../files
+                            if (data != null && a.getPath().startsWith(data.getPath())) // skip default /storage/.../files
                                 continue;
-                            }
-                            if (datae != null && a.getAbsolutePath().startsWith(datae.getAbsolutePath())) { // skip default /storage/.../files
+                            if (datae != null && a.getPath().startsWith(datae.getPath())) // skip default /storage/.../files
                                 continue;
-                            }
                             add(a);
                         }
                     }
@@ -290,9 +291,8 @@ public class OpenFileDialog extends AlertDialog.Builder {
             File[] ff = getPortableList();
             if (ff == null)
                 return;
-            for (File f : ff) {
+            for (File f : ff)
                 add(f);
-            }
         }
 
         boolean add(File f) {
@@ -301,8 +301,16 @@ public class OpenFileDialog extends AlertDialog.Builder {
             if (!builder.readonly && !f.canWrite())
                 return false;
             for (int i = 0; i < list.size(); i++) {
-                if (list.get(i).getAbsolutePath().equals(f.getAbsolutePath()))
+                String s = list.get(i).getPath();
+                String k = f.getPath();
+                if (s.equals(k))
                     return true;
+                if (Storage.relative(s, k) != null || Storage.relative(k, s) != null) {
+                    StatFs fs = new StatFs(f.getPath());
+                    StatFs ss = new StatFs(s);
+                    if (getTotalBytes(ss) == getTotalBytes(fs))
+                        return true;
+                }
             }
             list.add(f);
             return true;
@@ -311,7 +319,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
         public int find(File c) {
             for (int i = 0; i < list.size(); i++) {
                 File f = list.get(i);
-                if (c.getAbsolutePath().startsWith(f.getAbsolutePath()))
+                if (c.getPath().startsWith(f.getPath()))
                     return i;
             }
             return -1;
@@ -386,7 +394,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
 
             File f = list.get(position);
             TextView title = (TextView) convertView.findViewWithTag("text");
-            title.setText(f.getAbsolutePath());
+            title.setText(f.getPath());
             TextView free = (TextView) convertView.findViewWithTag("free");
             free.setText(MainApplication.formatSize(builder.getContext(), Storage.getFree(f)));
 

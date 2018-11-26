@@ -50,6 +50,7 @@ public class SuperUser {
     public static final String BIN_FALSE = which("false");
     public static final String BIN_READLINK = which("readlink");
     public static final String BIN_LN = which("ln");
+    public static final String BIN_LS = which("ls");
 
     public static final String SETE = BIN_SET + " -e";
     public static final String CAT_TO = BIN_CAT + " << 'EOF' > {0}\n{1}\nEOF";
