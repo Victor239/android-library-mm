@@ -550,11 +550,11 @@ public class Storage {
         return true;
     }
 
-    public static String getName(Context context, Uri uri) { // [Content,SAF] or File
+    public static String getName(Context context, Uri uri) {
         String s = uri.getScheme();
-        if (Build.VERSION.SDK_INT >= 21 && s.startsWith(ContentResolver.SCHEME_CONTENT)) {
+        if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
             return getContentName(context, uri);
-        } else if (s.startsWith(ContentResolver.SCHEME_FILE)) {
+        } else if (s.equals(ContentResolver.SCHEME_FILE)) {
             return getFile(uri).getName();
         } else {
             throw new UnknownUri();
@@ -562,15 +562,20 @@ public class Storage {
     }
 
     @TargetApi(19)
-    public static String getContentName(Context context, Uri uri) { // ContentResolver or SAF document
+    public static String getContentName(Context context, Uri uri) {
         if (uri.getAuthority().startsWith(SAF)) // query crashed for DocumentsContract.isTreeUri() uris
             return getDocumentName(context, uri);
+        else
+            return getQueryName(context, uri);
+    }
+
+    public static String getQueryName(Context context, Uri uri) {
         ContentResolver resolver = context.getContentResolver();
         Cursor cursor = resolver.query(uri, null, null, null, null);
         if (cursor != null) {
             try {
                 if (cursor.moveToNext())
-                    return cursor.getString(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_DISPLAY_NAME)); // getDocumentName() SAF only
+                    return cursor.getString(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_DISPLAY_NAME));
             } finally {
                 cursor.close();
             }
@@ -579,22 +584,21 @@ public class Storage {
     }
 
     @TargetApi(21)
-    public static String getDocumentName(Context context, Uri uri) { // DocumentFile return null name for non existent files
+    public static String getDocumentName(Context context, Uri uri) {
         if (DocumentsContract.isDocumentUri(context, uri)) {
             String id = DocumentsContract.getDocumentId(uri);
             String[] ss = id.split(COLON, 2);
-            if (ss[1].isEmpty()) { // unknown id format
+            if (ss[1].isEmpty()) { // unknown id format or root
                 String pid = DocumentsContract.getTreeDocumentId(uri);
                 if (pid.equals(id))
                     return OpenFileDialog.ROOT;
-                DocumentFile f = DocumentFile.fromSingleUri(context, uri);
-                return f.getName();
+                return getQueryName(context, uri); // DocumentFile.getName() return null for non existent files
             }
             return new File(ss[1]).getName(); // not using query when it is possible
         } else {
             String id = DocumentsContract.getTreeDocumentId(uri);
             String[] ss = id.split(COLON, 2);
-            if (ss[1].isEmpty()) // we except true here
+            if (ss[1].isEmpty()) // always true here
                 return OpenFileDialog.ROOT;
             DocumentFile f = DocumentFile.fromTreeUri(context, uri);
             return f.getName(); // unknown id format
