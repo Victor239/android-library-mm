@@ -2,18 +2,18 @@
     <!--OpenFileDialog-->
     <string name="filedialog_rename">Zmień nazwę</string>
     <string name="filedialog_delete">Usuń</string>
-    <string name="filedialog_newfolder">Nowy Folder</string>
-    <string name="filedialog_foldername">Nazwa Folderu</string>
+    <string name="filedialog_newfolder">Nowy folder</string>
+    <string name="filedialog_foldername">Nazwa folderu</string>
     <string name="filedialog_unablecreatefolder">Nie można utworzyć folderu: \'%1$s\'</string>
     <string name="filedialog_foldercreated">Utworzono folder \'%1$s\'</string>
     <string name="filedialog_folderdeleted">Usunięto: \'%1$s\'</string>
     <string name="filedialog_renameto">Zmieniono nazwę na: \'%1$s\'</string>
     <string name="filedialog_empty">Pusta Lista</string>
     <string name="filedialog_readonly">Katalog tylko do odczytu</string>
-    <string name="filedialog_selectfolder">Proszę wybierz folder</string>
+    <string name="filedialog_selectfolder">Wybierz folder</string>
 
     <string name="ShareAction">Udostępnij</string>
-    <string name="shared_via">Udostępnione przez %1$s</string>
+    <string name="shared_via">Udostępniono przez %1$s</string>
 
     <plurals name="days">
         <item quantity="one">%d dzień</item>
@@ -41,34 +41,34 @@
     <string name="size_mb">%1$.1f MB</string>
     <string name="size_kb">%1$.1f kb</string>
 
-    <string name="optimization_dialog">Ustawienia Optymalizacji</string>
-    <string name="optimization_message">Rozważ dodanie aplikacji do białej listy menedżera baterii telefonu, aby zapobiec usunięciu z pamięci.</string>
-    <string name="optimization_killed">Aplikacja została zabita przez system. Rozważ dodanie aplikacji do białej listy.</string>
+    <string name="optimization_dialog">Ustawienia optymalizacji</string>
+    <string name="optimization_message">Rozważ dodanie aplikacji do białej listy menedżera baterii telefonu, aby zapobiec usunięciu jej z pamięci.</string>
+    <string name="optimization_killed">Aplikacja została zabita przez system. Rozważ dodanie aplikacji do białej listy.</string>
+    <string name="optimization_alive">Działanie w tle</string>
+    <string name="optimization_alive_summary">Usługa umożliwiająca działanie aplikacji w tle</string>
+    <string name="optimization_icon">Nieznikająca ikona</string>
+    <string name="optimization_icon_summary">Wymagana na niektórych urządzeniach, jeśli aplikacja jest ciągle usuwana z pamięci</string>
+    <string name="optimization_system">Optymalizacja baterii</string>
+    <string name="optimization_system_summary">Otwórz okno dialogowe optymalizacji baterii</string>
 
     <string name="menu_settings">Ustawienia</string>
     <string name="menu_about">O aplikacji</string>
 
-    <string name="open_browser">Otwórz Przeglądarkę</string>
-	<string name="are_you_sure">Czy jesteś pewny/a?</string>
+    <string name="open_browser">Otwórz przeglądarkę</string>
+    <string name="are_you_sure">Czy jesteś pewny?</string>
     <string name="default_button">Domyślnie</string>
 
-	<string name="not_permitted">Niedozwolone</string>
+    <string name="not_permitted">Niedozwolone</string>
     <string name="close">Zamknij</string>
 
     <string-array name="screen_lock_text">
-        <item>Domyślnie Systemowo</item>
-        <item>Zostaw Włączony</item>
+        <item>System</item>
+        <item>Pozostaw włączony</item>
         <item>Wyłącz po 30 sek</item>
         <item>Wyłącz po 1 min</item>
         <item>Wyłącz po 5 min</item>
         <item>Wyłącz po 30 min</item>
     </string-array>
 
-    <string name="pref_screenlock_title">Zostaw Ekran Włączony</string>
-    <string name="optimization_alive">Keep Alive Service</string>
-    <string name="optimization_alive_summary">Background service keep application running</string>
-    <string name="optimization_icon">Persistent Icon</string>
-    <string name="optimization_icon_summary">Requires on some devices when application constantly get removed</string>
-    <string name="optimization_system">Battery Optimization</string>
-    <string name="optimization_system_summary">Open system battery optimization dialog</string>
+    <string name="pref_screenlock_title">Wygaszenie ekranu</string>
 </resources>
