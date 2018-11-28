@@ -95,19 +95,27 @@ public class Storage {
         return new File(r);
     }
 
-    public static String relative(String base, String file) { // home:system64 <-> home:system64/test, but not home:system
+    public static String relative(String base, String file) {
+        return relative(base, file, File.separatorChar);
+    }
+
+    public static String relative(String base, String file, char s) { // home:system64 <-> home:system64/test, but not home:system
         if (file.startsWith(base)) {
             int l = base.length();
             if (l == 0) // base is ""
                 return file;
-            if (base.charAt(l - 1) != File.separatorChar && file.length() > l) { // base not ends with '/', same path or relative?
-                if (file.charAt(l) != File.separatorChar)
+            if (base.charAt(l - 1) != s && file.length() > l) { // base not ends with '/', same path or relative?
+                if (file.charAt(l) != s)
                     return null; // not relative
                 l++; // 'l' points to '/'
             }
             return file.substring(l); // "" or relative path
         }
         return null; // not relative
+    }
+
+    public static String[] splitPath(String s) {
+        return s.split("[//\\\\]");
     }
 
     public static String formatNextFile(String name, int i, String ext) {
