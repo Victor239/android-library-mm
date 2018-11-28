@@ -7,12 +7,16 @@ import android.util.Log;
 
 import org.apache.commons.io.IOUtils;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.text.MessageFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
 public class SuperUser {
@@ -51,6 +55,7 @@ public class SuperUser {
     public static final String BIN_READLINK = which("readlink");
     public static final String BIN_LN = which("ln");
     public static final String BIN_LS = which("ls");
+    public static final String BIN_STAT = which("stat");
 
     public static final String SETE = BIN_SET + " -e";
     public static final String CAT_TO = BIN_CAT + " << 'EOF' > {0}\n{1}\nEOF";
@@ -64,6 +69,7 @@ public class SuperUser {
     public static final String READLINK = BIN_READLINK + " {0}";
     public static final String LNS = BIN_LN + " -s {0} {1}";
     public static final String TOUCHMCT = BIN_TOUCH + " -mct {0} {1}"; // m = modification time, c = do not create file, t = set date/time
+    public static final String STATLCS = BIN_STAT + " -Lc%s {0}"; // L = follow symlinks, c = custom format, %s = file size
 
     public static final String KILL_SELF = BIN_KILL + " -9 $$";
     public static final String SU1 = " || " + KILL_SELF; // some su does not return error codes for pipe scripts, kill it from inside pipe if script fails
@@ -242,10 +248,12 @@ public class SuperUser {
         Process su = null;
         try {
             su = Runtime.getRuntime().exec(BIN_SU);
+            if (cmd.stderr != null && !cmd.stderr)
+                su.getErrorStream().close();
             OutputStream os = su.getOutputStream();
             if (cmd.sete)
                 writeString(SETE + EOL, os);
-            if (cmd.exit && !EXITCODE) // without 'trap' scrips with or without (set -e) will exit with '0'
+            if (cmd.exit && !EXITCODE) // without 'trap' scrips with or without (set -e) always exit with '0'
                 writeString(BIN_TRAP + " '" + KILL_SELF + "' ERR" + EOL, os);
             writeString(cmd.build(), os);
             writeString(BIN_EXIT + EOL, os);
@@ -344,38 +352,6 @@ public class SuperUser {
         }
     }
 
-    public static OutputStream open(final File f) throws IOException {
-        return new OutputStream() {
-            Process su;
-            OutputStream os;
-
-            {
-                Commands cmd = new Commands(MessageFormat.format(BIN_CAT + " > {0}", escape(f))).exit(true);
-                su = Runtime.getRuntime().exec(BIN_SU);
-
-                os = su.getOutputStream();
-
-                writeString(cmd.build(), os);
-            }
-
-            @Override
-            public void write(int b) throws IOException {
-                os.write(b);
-            }
-
-            @Override
-            public void write(@NonNull byte[] b, int off, int len) throws IOException {
-                os.write(b, off, len);
-            }
-
-            @Override
-            public void close() throws IOException {
-                super.close();
-                su.destroy();
-            }
-        };
-    }
-
     public static boolean exitTest() {
         return EXITCODE = !su(new Commands(BIN_FALSE)).ok();
     }
@@ -407,5 +383,161 @@ public class SuperUser {
 
     public static boolean exists(File f) {
         return su("[ -e {0} ]", escape(f)).ok();
+    }
+
+    public static long lastModified(File f) {
+        Result r = su(new Commands(MessageFormat.format("stat -Lc%y {0}", escape(f))).stdout(true).exit(true)).must();
+        try {
+            return TOUCHDATE.parse(r.stdout.trim()).getTime();
+        } catch (ParseException e) {
+            return 0;
+        }
+    }
+
+    public static class FileOutputStream extends OutputStream {
+        Process su;
+        OutputStream os;
+
+        public FileOutputStream(File f) throws IOException {
+            Commands cmd = new Commands(MessageFormat.format(BIN_CAT + " > {0}", escape(f))).exit(true);
+            su = Runtime.getRuntime().exec(BIN_SU);
+
+            os = su.getOutputStream();
+
+            writeString(cmd.build(), os);
+        }
+
+        @Override
+        public void write(int b) throws IOException {
+            os.write(b);
+        }
+
+        @Override
+        public void write(@NonNull byte[] b, int off, int len) throws IOException {
+            os.write(b, off, len);
+        }
+
+        @Override
+        public void close() throws IOException {
+            super.close();
+            su.destroy();
+        }
+    }
+
+    public static class RandomAccessFile {
+        public int bs;
+
+        public InputStream is;
+        public OutputStream os;
+        public long size;
+        public long offset;
+
+        public RandomAccessFile() {
+        }
+
+        public RandomAccessFile(int bs) {
+            this.bs = bs;
+        }
+
+        public RandomAccessFile(File f, int bs) {
+            this(bs);
+            Commands cmd = new Commands(MessageFormat.format(STATLCS + "; while read offset size; do dd if={0} iseek=$offset count=$size bs={1}; done", escape(f), bs)).exit(true);
+            try {
+                final Process su = Runtime.getRuntime().exec(BIN_SU);
+                su.getErrorStream().close();
+                os = new BufferedOutputStream(su.getOutputStream());
+                writeString(cmd.build(), os);
+                is = new BufferedInputStream(new InputStream() {
+                    InputStream is = su.getInputStream();
+
+                    @Override
+                    public int read() throws IOException {
+                        return is.read();
+                    }
+
+                    @Override
+                    public int read(@NonNull byte[] b, int off, int len) throws IOException {
+                        return is.read(b, off, len);
+                    }
+
+                    @Override
+                    public void close() throws IOException {
+                        super.close();
+                        su.destroy();
+                    }
+                });
+                size = Long.valueOf(readLine().trim());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        public RandomAccessFile(File f) {
+            this(f, 512);
+        }
+
+        public String readLine() throws IOException {
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            int b;
+            while ((b = is.read()) > 0) {
+                if (b == 0x0a)
+                    break;
+                os.write(b);
+            }
+            return os.toString();
+        }
+
+        public int read(byte[] buf, int off, int size) throws IOException {
+            long fs = offset / bs; // first sector
+            long ls = (offset + size) / bs; // last sector
+            int sc = (int) (ls - fs + 1); // sectors count
+            long so = fs * bs; // first sector offset in bytes
+            int skip = (int) (offset - so); // bytes to skip from first reading sector
+            int length = sc * bs; // to read from pipe
+            long eof = so + length;
+            if (eof > this.size)
+                length = (int) (this.size - so); // do not cross end of file
+            writeString(fs + " " + sc + EOL, os);
+            long len;
+            while (skip > 0) {
+                len = is.skip(skip);
+                if (len <= 0)
+                    throw new RuntimeException("unable to skip");
+                skip -= len;
+                length -= len;
+            }
+            int read = 0;
+            while ((len = is.read(buf, off, size)) > 0) {
+                off += len;
+                offset += len;
+                size -= len;
+                length -= len;
+                read += len;
+            }
+            while (length > 0) {
+                len = is.skip(length);
+                if (len <= 0)
+                    throw new RuntimeException("unable to skip");
+                length -= len;
+            }
+            return read;
+        }
+
+        public long getSize() {
+            return size;
+        }
+
+        public void seek(long l) {
+            offset = l;
+        }
+
+        public long getPosition() {
+            return offset;
+        }
+
+        public void close() throws IOException {
+            is.close();
+            os.close();
+        }
     }
 }

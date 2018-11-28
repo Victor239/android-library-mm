@@ -28,7 +28,7 @@ import java.util.zip.ZipInputStream;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
-public class FileTypeDetector {
+public class FileTypeDetector { // take a look at tika from 'apache commons'
     public static final String TAG = FileTypeDetector.class.getSimpleName();
 
     ArrayList<Handler> list = new ArrayList<>();
