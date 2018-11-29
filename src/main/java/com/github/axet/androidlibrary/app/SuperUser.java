@@ -241,11 +241,11 @@ public class SuperUser {
         p = p.replaceAll(";", "\\\\;");
         p = p.replaceAll("&", "\\\\&");
         p = p.replaceAll("#", "\\\\#");
-        p = p.replaceAll("'", "\\\\'");
         p = p.replaceAll("\\)", "\\\\)");
         p = p.replaceAll("\\(", "\\\\(");
         p = p.replaceAll(" ", "\\\\ ");
         p = p.replaceAll("\"", "\\\"");
+        p = p.replaceAll("'", "\\\'");
         p = p.replaceAll("\\\\", "\\\\\\\\");
         return p;
     }
