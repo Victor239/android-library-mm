@@ -70,6 +70,7 @@ public class SuperUser {
     public static final String LNS = BIN_LN + " -s {0} {1}";
     public static final String TOUCHMCT = BIN_TOUCH + " -mct {0} {1}"; // m = modification time, c = do not create file, t = set date/time
     public static final String STATLCS = BIN_STAT + " -Lc%s {0}"; // L = follow symlinks, c = custom format, %s = file size
+    public static final String STATLCY = BIN_STAT + "-Lc%y {0}"; // y = last modifed
 
     public static final String KILL_SELF = BIN_KILL + " -9 $$";
     public static final String SU1 = " || " + KILL_SELF; // some su does not return error codes for pipe scripts, kill it from inside pipe if script fails
@@ -226,13 +227,14 @@ public class SuperUser {
     public static String escape(String p) { // https://unix.stackexchange.com/questions/347332
         if (p.startsWith("-"))
             p += "./";
+        p = p.replaceAll("\\\\", "\\\\\\\\"); // has go first
         p = p.replaceAll("\\$", "\\\\\\$");
         p = p.replaceAll("\\*", "\\\\*");
         p = p.replaceAll("<", "\\\\<");
         p = p.replaceAll(">", "\\\\>");
         p = p.replaceAll("=", "\\\\=");
         p = p.replaceAll("\\[", "\\\\[");
-        p = p.replaceAll("]", "\\\\]");
+        p = p.replaceAll("\\]", "\\\\]");
         p = p.replaceAll("\\{", "\\\\{");
         p = p.replaceAll("\\}", "\\\\}");
         p = p.replaceAll("\\|", "\\\\|");
@@ -244,9 +246,8 @@ public class SuperUser {
         p = p.replaceAll("\\)", "\\\\)");
         p = p.replaceAll("\\(", "\\\\(");
         p = p.replaceAll(" ", "\\\\ ");
-        p = p.replaceAll("\"", "\\\"");
-        p = p.replaceAll("'", "\\\'");
-        p = p.replaceAll("\\\\", "\\\\\\\\");
+        p = p.replaceAll("'", "\\\\'");
+        p = p.replaceAll("\"", "\\\\\"");
         return p;
     }
 
@@ -405,7 +406,7 @@ public class SuperUser {
     }
 
     public static long lastModified(File f) {
-        Result r = su(new Commands(MessageFormat.format("stat -Lc%y {0}", escape(f))).stdout(true).exit(true)).must();
+        Result r = su(new Commands(MessageFormat.format(STATLCY, escape(f))).stdout(true).exit(true)).must();
         try {
             return TOUCHDATE.parse(r.stdout.trim()).getTime();
         } catch (ParseException e) {
