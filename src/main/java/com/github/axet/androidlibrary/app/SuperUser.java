@@ -224,10 +224,11 @@ public class SuperUser {
     }
 
     public static String escape(String p) {
+        p = p.replaceAll("'", "\\\\'");
         p = p.replaceAll("\\)", "\\\\)");
         p = p.replaceAll("\\(", "\\\\(");
         p = p.replaceAll(" ", "\\\\ ");
-        p = p.replaceAll("\"", "\\\"");
+        p = p.replaceAll("\"", "\\\\\"");
         return p;
     }
 
