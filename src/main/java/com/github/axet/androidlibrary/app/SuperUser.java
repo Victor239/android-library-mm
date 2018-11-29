@@ -223,12 +223,30 @@ public class SuperUser {
         return escape(p.getPath());
     }
 
-    public static String escape(String p) {
+    public static String escape(String p) { // https://unix.stackexchange.com/questions/347332
+        if (p.startsWith("-"))
+            p += "./";
+        p = p.replaceAll("\\$", "\\\\\\$");
+        p = p.replaceAll("\\*", "\\\\*");
+        p = p.replaceAll("<", "\\\\<");
+        p = p.replaceAll(">", "\\\\>");
+        p = p.replaceAll("=", "\\\\=");
+        p = p.replaceAll("\\[", "\\\\[");
+        p = p.replaceAll("]", "\\\\]");
+        p = p.replaceAll("\\{", "\\\\{");
+        p = p.replaceAll("\\}", "\\\\}");
+        p = p.replaceAll("\\|", "\\\\|");
+        p = p.replaceAll("~", "\\\\~");
+        p = p.replaceAll("`", "\\\\`");
+        p = p.replaceAll(";", "\\\\;");
+        p = p.replaceAll("&", "\\\\&");
+        p = p.replaceAll("#", "\\\\#");
         p = p.replaceAll("'", "\\\\'");
         p = p.replaceAll("\\)", "\\\\)");
         p = p.replaceAll("\\(", "\\\\(");
         p = p.replaceAll(" ", "\\\\ ");
         p = p.replaceAll("\"", "\\\\\"");
+        p = p.replaceAll("\\\\", "\\\\\\\\");
         return p;
     }
 
