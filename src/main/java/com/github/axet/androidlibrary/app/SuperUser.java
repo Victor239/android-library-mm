@@ -77,7 +77,20 @@ public class SuperUser {
 
     public static final String EOL = "\n";
 
-    public static boolean EXITCODE = false; // does su support for exit code? run exitText()
+    public static boolean EXITCODE = false; // does su support for exit code for pipe scripts? run exitTest()
+
+    public static String toMessage(Throwable e) {
+        String msg = e.getMessage();
+        if (msg == null || msg.isEmpty()) {
+            Throwable p = e;
+            while (p != null) {
+                e = p;
+                p = p.getCause();
+            }
+            msg = e.getClass().getCanonicalName();
+        }
+        return msg;
+    }
 
     public static class Commands {
         public StringBuilder sb = new StringBuilder();
@@ -122,11 +135,19 @@ public class SuperUser {
         public String build() {
             return sb.toString();
         }
+
+        public String toString() {
+            return build();
+        }
     }
 
     public static class ResultCodeError extends RuntimeException {
-        public ResultCodeError(String str) {
-            super(str);
+        public ResultCodeError(Result e) {
+            super(e.message());
+        }
+
+        public ResultCodeError(Commands cmd, Process p, Throwable e) {
+            this(new Result(cmd, p, e));
         }
     }
 
@@ -136,26 +157,32 @@ public class SuperUser {
         public String stderr;
         public Throwable e;
 
+        public Result(int res) {
+            this.res = res;
+        }
+
+        public Result(Result r) {
+            res = r.res;
+            stdout = r.stdout;
+            stderr = r.stderr;
+            e = r.e;
+        }
+
         public Result(Commands cmd, Process p) {
             res = p.exitValue();
             captureOutputs(cmd, p);
         }
 
-        public Result(Commands cmd, Process p, Exception e) {
+        public Result(Commands cmd, Process p, Throwable e) {
             if (p == null) {
                 this.res = 1;
                 this.e = e;
                 return;
             }
-            p.destroy();
-            try {
-                p.waitFor();
-            } catch (InterruptedException ignore) {
-                Thread.currentThread().interrupt();
-            }
-            this.res = p.exitValue();
             this.e = e;
             captureOutputs(cmd, p);
+            p.destroy();
+            this.res = p.exitValue();
         }
 
         public void captureOutputs(Commands cmd, Process p) {
@@ -163,14 +190,14 @@ public class SuperUser {
                 try {
                     stdout = IOUtils.toString(p.getInputStream(), Charset.defaultCharset());
                 } catch (IOException e1) {
-                    Log.d(TAG, "unable to get error", e1);
+                    Log.e(TAG, "unable to get error", e1);
                 }
             }
             if ((cmd.stderr != null && cmd.stderr) || (cmd.stderr == null && !ok())) {
                 try {
                     stderr = IOUtils.toString(p.getErrorStream(), Charset.defaultCharset());
                 } catch (IOException e) {
-                    Log.d(TAG, "unable to get error", e);
+                    Log.e(TAG, "unable to get error", e);
                 }
             }
         }
@@ -181,20 +208,15 @@ public class SuperUser {
 
         public Result must() {
             if (!ok())
-                throw new ResultCodeError(message());
+                throw new ResultCodeError(this);
             return this;
         }
 
         public String message() {
             if (stderr != null && !stderr.isEmpty())
-                return stderr;
-            if (e != null) {
-                while (e.getCause() != null)
-                    e = e.getCause();
-                if (e.getMessage() == null)
-                    return e.getClass().getSimpleName();
-                return e.getMessage();
-            }
+                return stderr + " (error:" + res + ")";
+            if (e != null)
+                return toMessage(e) + " (error:" + res + ")";
             return "error: " + res;
         }
     }
@@ -373,7 +395,7 @@ public class SuperUser {
     }
 
     public static boolean exitTest() {
-        return EXITCODE = !su(new Commands(BIN_FALSE)).ok();
+        return EXITCODE = !su(new Commands(BIN_FALSE)).ok(); // && su(new Commands(BIN_TRUE)).ok();
     }
 
     public static Result rename(File f, File t) {
@@ -385,7 +407,7 @@ public class SuperUser {
     }
 
     public static long length(File f) {
-        Result r = su(new Commands(MessageFormat.format("stat -Lc%s {0}", escape(f))).stdout(true).exit(true)).must();
+        Result r = su(new Commands(MessageFormat.format(STATLCS, escape(f))).stdout(true).exit(true)).must();
         return Long.valueOf(r.stdout.trim());
     }
 
@@ -421,9 +443,7 @@ public class SuperUser {
         public FileOutputStream(File f) throws IOException {
             Commands cmd = new Commands(MessageFormat.format(BIN_CAT + " > {0}", escape(f))).exit(true);
             su = Runtime.getRuntime().exec(BIN_SU);
-
             os = su.getOutputStream();
-
             writeString(cmd.build(), os);
         }
 
@@ -461,10 +481,11 @@ public class SuperUser {
 
         public RandomAccessFile(File f, int bs) {
             this(bs);
-            Commands cmd = new Commands(MessageFormat.format(STATLCS + "; while read offset size; do dd if={0} iseek=$offset count=$size bs={1}; done", escape(f), bs)).exit(true);
+            Commands cmd = new Commands(MessageFormat.format(STATLCS + "; while read offset size; do dd if={0} iseek=$offset count=$size bs={1}; done", escape(f), bs)).exit(true).stderr(false);
             try {
                 final Process su = Runtime.getRuntime().exec(BIN_SU);
-                su.getErrorStream().close();
+                if (cmd.stderr != null && !cmd.stderr)
+                    su.getErrorStream().close();
                 os = new BufferedOutputStream(su.getOutputStream());
                 writeString(cmd.build(), os);
                 is = new BufferedInputStream(new InputStream() {

@@ -758,8 +758,10 @@ public class Storage {
             dir = type.equals(DocumentsContract.Document.MIME_TYPE_DIR);
         }
 
-        public String toString() {
-            return (dir ? "" : "@") + name;
+        public String toString() { // display version of file name
+            if (dir)
+                return name.endsWith(OpenFileDialog.ROOT) ? name : name + OpenFileDialog.ROOT;
+            return name;
         }
     }
 
