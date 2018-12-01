@@ -11,6 +11,8 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileFilter;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -18,6 +20,10 @@ import java.nio.charset.Charset;
 import java.text.MessageFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class SuperUser {
     public static String TAG = SuperUser.class.getSimpleName();
@@ -25,6 +31,7 @@ public class SuperUser {
     public static int BUF_SIZE = 4 * 1024; // IOUtils#DEFAULT_BUFFER_SIZE
 
     public static final SimpleDateFormat TOUCHDATE = new SimpleDateFormat("yyyyMMddHHmm.ss");
+    public static final SimpleDateFormat LSDATE = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 
     public static final String SYSTEM = "/system";
     public static final String ETC = "/etc";
@@ -71,11 +78,16 @@ public class SuperUser {
     public static final String TOUCHMCT = BIN_TOUCH + " -mct {0} {1}"; // m = modification time, c = do not create file, t = set date/time
     public static final String STATLCS = BIN_STAT + " -Lc%s {0}"; // L = follow symlinks, c = custom format, %s = file size
     public static final String STATLCY = BIN_STAT + "-Lc%y {0}"; // y = last modifed
+    public static final String LSA = BIN_LS + " -AlH {0}"; // -A = all entries except "." and ".." -l = long format -H = follow symlinks
+    public static final String LSa = BIN_LS + " -alH {0}"; // -a = all including starting with "." -l = long format -H = follow symlinks
 
     public static final String KILL_SELF = BIN_KILL + " -9 $$";
     public static final String SU1 = " || " + KILL_SELF; // some su does not return error codes for pipe scripts, kill it from inside pipe if script fails
 
     public static final String EOL = "\n";
+
+    public static final File DOT = new File(".");
+    public static final File DOTDOT = new File("..");
 
     public static boolean EXITCODE = false; // does su support for exit code for pipe scripts? run exitTest()
 
@@ -90,147 +102,6 @@ public class SuperUser {
             msg = e.getClass().getCanonicalName();
         }
         return msg;
-    }
-
-    public static class Commands {
-        public StringBuilder sb = new StringBuilder();
-        public boolean sete = true; // handle exit codes during script execution
-        public boolean stdout = false;
-        public Boolean stderr = null; // null means get error only on error
-        public boolean exit = false; // does exit code matters?
-
-        public Commands() {
-        }
-
-        public Commands(String cmd) {
-            add(cmd);
-        }
-
-        public Commands sete(boolean b) {
-            this.sete = b;
-            return this;
-        }
-
-        public Commands stdout(boolean b) {
-            stdout = b;
-            return this;
-        }
-
-        public Commands stderr(boolean b) {
-            stderr = b;
-            return this;
-        }
-
-        public Commands exit(boolean b) {
-            exit = b;
-            return this;
-        }
-
-        public Commands add(String cmd) {
-            sb.append(cmd);
-            sb.append(EOL);
-            return this;
-        }
-
-        public String build() {
-            return sb.toString();
-        }
-
-        public String toString() {
-            return build();
-        }
-    }
-
-    public static class ResultCodeError extends RuntimeException {
-        public ResultCodeError(Result e) {
-            super(e.message());
-        }
-
-        public ResultCodeError(Commands cmd, Process p, Throwable e) {
-            this(new Result(cmd, p, e));
-        }
-    }
-
-    public static class Result {
-        public int res;
-        public String stdout;
-        public String stderr;
-        public Throwable e;
-
-        public Result(int res) {
-            this.res = res;
-        }
-
-        public Result(Result r) {
-            res = r.res;
-            stdout = r.stdout;
-            stderr = r.stderr;
-            e = r.e;
-        }
-
-        public Result(Commands cmd, Process p) {
-            res = p.exitValue();
-            captureOutputs(cmd, p);
-        }
-
-        public Result(Commands cmd, Process p, Throwable e) {
-            if (p == null) {
-                this.res = 1;
-                this.e = e;
-                return;
-            }
-            this.e = e;
-            captureOutputs(cmd, p);
-            p.destroy();
-            this.res = p.exitValue();
-        }
-
-        public void captureOutputs(Commands cmd, Process p) {
-            if (cmd.stdout) {
-                try {
-                    stdout = IOUtils.toString(p.getInputStream(), Charset.defaultCharset());
-                } catch (IOException e1) {
-                    Log.e(TAG, "unable to get error", e1);
-                }
-            }
-            if ((cmd.stderr != null && cmd.stderr) || (cmd.stderr == null && !ok())) {
-                try {
-                    stderr = IOUtils.toString(p.getErrorStream(), Charset.defaultCharset());
-                } catch (IOException e) {
-                    Log.e(TAG, "unable to get error", e);
-                }
-            }
-        }
-
-        public boolean ok() {
-            return res == 0 && e == null;
-        }
-
-        public Result must() {
-            if (!ok())
-                throw new ResultCodeError(this);
-            return this;
-        }
-
-        public String message() {
-            if (stderr != null && !stderr.isEmpty())
-                return stderr + " (error:" + res + ")";
-            if (e != null)
-                return toMessage(e) + " (error:" + res + ")";
-            return "error: " + res;
-        }
-    }
-
-    public static String which(String cmd) {
-        for (String s : new String[]{SYSTEM + XBIN, SYSTEM + SBIN, SYSTEM + BIN,
-                SYSTEM + USR + SBIN, SYSTEM + USR + BIN,
-                USR + SBIN, USR + BIN,
-                SBIN, BIN}) {
-            String f = find(s + "/" + cmd);
-            if (f != null)
-                return f;
-        }
-        return cmd;
     }
 
     public static String find(String... args) {
@@ -362,38 +233,6 @@ public class SuperUser {
         return su(MV, escape(f), escape(to));
     }
 
-    public static InputStream cat(File f) {
-        Commands cmd = new Commands(MessageFormat.format("cat {0}", escape(f))).exit(true);
-        try {
-            final Process su = Runtime.getRuntime().exec(BIN_SU);
-            OutputStream os = su.getOutputStream();
-            writeString(cmd.build(), os);
-            writeString(BIN_EXIT + EOL, os);
-            return new InputStream() {
-                Process p = su;
-                InputStream is = p.getInputStream();
-
-                @Override
-                public int read() throws IOException {
-                    return is.read();
-                }
-
-                @Override
-                public int read(@NonNull byte[] b, int off, int len) throws IOException {
-                    return is.read(b, off, len);
-                }
-
-                @Override
-                public void close() throws IOException {
-                    super.close();
-                    p.destroy();
-                }
-            };
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public static boolean exitTest() {
         return EXITCODE = !su(new Commands(BIN_FALSE)).ok(); // && su(new Commands(BIN_TRUE)).ok();
     }
@@ -423,6 +262,19 @@ public class SuperUser {
         return su("[ -d {0} ]", escape(f)).ok();
     }
 
+    public static ArrayList<File> isDirectory(ArrayList<File> ff) {
+        Commands cmd = new Commands();
+        for (File f : ff)
+            cmd.add("[ -d " + escape(f) + " ] && echo " + escape(f));
+        Result r = su(cmd.stdout(true));
+        ArrayList<File> a = new ArrayList<>();
+        Scanner s = new Scanner(r.stdout);
+        while (s.hasNextLine())
+            a.add(new File(s.nextLine()));
+        s.close();
+        return a;
+    }
+
     public static boolean exists(File f) {
         return su("[ -e {0} ]", escape(f)).ok();
     }
@@ -433,6 +285,453 @@ public class SuperUser {
             return TOUCHDATE.parse(r.stdout.trim()).getTime();
         } catch (ParseException e) {
             return 0;
+        }
+    }
+
+    public static String which(String cmd) {
+        for (String s : new String[]{SYSTEM + XBIN, SYSTEM + SBIN, SYSTEM + BIN,
+                SYSTEM + USR + SBIN, SYSTEM + USR + BIN,
+                USR + SBIN, USR + BIN,
+                SBIN, BIN}) {
+            String f = find(s + "/" + cmd);
+            if (f != null)
+                return f;
+        }
+        return cmd;
+    }
+
+    public static ArrayList<File> lsA(File f) { // list
+        return ls(LSA, f, new FileFilter() {
+            @Override
+            public boolean accept(File f) {
+                return !f.equals(DOT);
+            }
+        });
+    }
+
+    public static ArrayList<File> lsa(File f) { // walk
+        return ls(LSa, f, null);
+    }
+
+    public static ArrayList<File> ls(String opt, File f, FileFilter filter) {
+        ArrayList<File> ff = new ArrayList<>();
+        Commands cmd = new Commands(MessageFormat.format(opt, escape(f))).stdout(true).exit(true);
+        OutputStream os = null;
+        InputStream is = null;
+        Process su = null;
+        try {
+            su = Runtime.getRuntime().exec(BIN_SU);
+            os = new BufferedOutputStream(su.getOutputStream());
+            writeString(cmd.build(), os);
+            writeString(BIN_EXIT + EOL, os);
+            is = new BufferedInputStream(su.getInputStream());
+            Scanner scanner = new Scanner(is);
+            Pattern p = Pattern.compile("^([^\\s]+)\\s+([^\\s]+)\\s+([^\\s]+)\\s+([^\\s]+)\\s+([^\\s]+)\\s+([^\\s]+\\s+[^\\s]+)\\s(.*?)$");
+            while (scanner.hasNextLine()) {
+                String line = scanner.nextLine();
+                Matcher m = p.matcher(line);
+                if (m.matches()) {
+                    String perms = m.group(1);
+                    long size = 0;
+                    try {
+                        size = Long.valueOf(m.group(5));
+                    } catch (NumberFormatException ignore) {
+                    }
+                    long last = 0;
+                    try {
+                        last = LSDATE.parse(m.group(6)).getTime();
+                    } catch (ParseException ignore) {
+                    }
+                    String name = m.group(7);
+                    File k = new File(name);
+                    if (!k.equals(DOTDOT) && (filter == null || filter.accept(k))) {
+                        if (perms.startsWith("d")) {
+                            if (k.equals(DOT))
+                                k = f;
+                            else
+                                k = new File(f, name);
+                            ff.add(new Directory(k, last));
+                        } else if (perms.startsWith("l")) {
+                            String[] ss = name.split("->", 2);
+                            name = ss[0].trim();
+                            if (k.equals(DOT))
+                                k = f;
+                            else
+                                k = new File(f, name);
+                            ff.add(new SymLink(k, size, new File(ss[1].trim())));
+                        } else {
+                            if (k.equals(DOT))
+                                k = f;
+                            if (!f.equals(k)) // ls file return full path, ls dir return relative path
+                                k = new File(f, name);
+                            ff.add(new NativeFile(k, size, last));
+                        }
+                    }
+                }
+            }
+            scanner.close();
+            su.waitFor();
+            new Result(cmd, su).must();
+        } catch (InterruptedException | IOException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (su != null)
+                su.destroy();
+            try {
+                if (is != null)
+                    is.close();
+            } catch (IOException e) {
+                Log.d(TAG, "close exception", e);
+            }
+            try {
+                if (os != null)
+                    os.close();
+            } catch (IOException e) {
+                Log.d(TAG, "close exception", e);
+            }
+        }
+        return ff;
+    }
+
+    public static class NativeFile extends File {
+        long size;
+        long last;
+
+        public NativeFile(File f, long size, long last) {
+            super(f.getPath());
+            this.size = size;
+            this.last = last;
+        }
+
+        @Override
+        public boolean exists() {
+            return true;
+        }
+
+        @Override
+        public boolean isDirectory() {
+            return false;
+        }
+
+        @Override
+        public boolean canWrite() {
+            return true;
+        }
+
+        @Override
+        public long length() {
+            return size;
+        }
+
+        @Override
+        public long lastModified() {
+            return last;
+        }
+
+        @Override
+        public boolean delete() {
+            return SuperUser.delete(this).ok();
+        }
+
+        @Override
+        public boolean renameTo(File dest) {
+            return SuperUser.rename(this, dest).ok();
+        }
+    }
+
+    public static class Directory extends File {
+        long last;
+
+        public Directory(File f, long last) {
+            super(f.getPath());
+            this.last = last;
+        }
+
+        @Override
+        public boolean exists() {
+            return true;
+        }
+
+        @Override
+        public boolean isDirectory() {
+            return true;
+        }
+
+        @Override
+        public boolean canWrite() {
+            return true;
+        }
+
+        @Override
+        public long length() {
+            return 0;
+        }
+
+        @Override
+        public long lastModified() {
+            return last;
+        }
+
+        @Override
+        public boolean delete() {
+            return SuperUser.delete(this).ok();
+        }
+
+        @Override
+        public boolean mkdir() {
+            return SuperUser.mkdir(this).ok();
+        }
+
+        @Override
+        public boolean mkdirs() {
+            return SuperUser.mkdirs(this).ok();
+        }
+
+        @Override
+        public boolean renameTo(File dest) {
+            return SuperUser.rename(this, dest).ok();
+        }
+
+        @Override
+        public File[] listFiles() {
+            return listFiles((FileFilter) null);
+        }
+
+        @Override
+        public File[] listFiles(final FilenameFilter filter) {
+            return listFiles(filter == null ? null : new FileFilter() {
+                @Override
+                public boolean accept(File pathname) {
+                    return filter.accept(pathname.getParentFile(), pathname.getName());
+                }
+            });
+        }
+
+        @Override
+        public File[] listFiles(FileFilter filter) {
+            ArrayList<File> all = SuperUser.lsA(this);
+            if (filter != null) {
+                ArrayList<File> ff = new ArrayList<>();
+                for (File f : all) {
+                    if (filter.accept(f))
+                        ff.add(f);
+                }
+                all = ff;
+            }
+            return all.toArray(new File[]{});
+        }
+    }
+
+    public static class SymLink extends Directory {
+        File target;
+
+        public SymLink(File f, long last, File target) {
+            super(f, last);
+            this.target = target;
+        }
+
+        @Override
+        public boolean isDirectory() {
+            return false; // false, but target may be
+        }
+
+        @Override
+        public boolean exists() {
+            return true; // symlink exists, but target may not
+        }
+
+        public File getTarget() {
+            return target;
+        }
+
+        @Override
+        public String toString() { // display name
+            return super.toString() + " -> " + target;
+        }
+    }
+
+    public static class SymDirLink extends SymLink {
+        public SymDirLink(File f, long last, File target) {
+            super(f, last, target);
+        }
+    }
+
+    public static class VirtualFile extends SuperUser.Directory { // has no information about attrs (size, last, exists)
+        boolean exists;
+
+        public VirtualFile(File f) {
+            super(f, 0);
+            exists = true;
+        }
+
+        public VirtualFile(File f, String name) {
+            this(new File(f, name));
+            exists = SuperUser.exists(this);
+        }
+
+        @Override
+        public File getParentFile() {
+            String p = getParent();
+            if (p == null)
+                return null;
+            return new VirtualFile(new File(p));
+        }
+
+        @Override
+        public boolean exists() {
+            return exists;
+        }
+    }
+
+    public static class Commands {
+        public StringBuilder sb = new StringBuilder();
+        public boolean sete = true; // handle exit codes during script execution
+        public boolean stdout = false;
+        public Boolean stderr = null; // null means get error only on error
+        public boolean exit = false; // does exit code matters?
+
+        public Commands() {
+        }
+
+        public Commands(String cmd) {
+            add(cmd);
+        }
+
+        public Commands sete(boolean b) {
+            this.sete = b;
+            return this;
+        }
+
+        public Commands stdout(boolean b) {
+            stdout = b;
+            return this;
+        }
+
+        public Commands stderr(boolean b) {
+            stderr = b;
+            return this;
+        }
+
+        public Commands exit(boolean b) {
+            exit = b;
+            return this;
+        }
+
+        public Commands add(String cmd) {
+            sb.append(cmd);
+            sb.append(EOL);
+            return this;
+        }
+
+        public String build() {
+            return sb.toString();
+        }
+
+        public String toString() {
+            return build();
+        }
+    }
+
+    public static class Result extends RuntimeException {
+        public int res;
+        public String stdout;
+        public String stderr;
+        public Throwable e;
+
+        public Result(int res) {
+            this.res = res;
+        }
+
+        public Result(Result r) {
+            res = r.res;
+            stdout = r.stdout;
+            stderr = r.stderr;
+            e = r.e;
+        }
+
+        public Result(Commands cmd, Process p) {
+            res = p.exitValue();
+            captureOutputs(cmd, p);
+        }
+
+        public Result(Commands cmd, Process p, Throwable e) {
+            if (p == null) {
+                this.res = 1;
+                this.e = e;
+                return;
+            }
+            this.e = e;
+            captureOutputs(cmd, p);
+            p.destroy();
+            this.res = p.exitValue();
+        }
+
+        public void captureOutputs(Commands cmd, Process p) {
+            if (cmd.stdout) {
+                try {
+                    stdout = IOUtils.toString(p.getInputStream(), Charset.defaultCharset());
+                } catch (IOException e1) {
+                    Log.e(TAG, "unable to get error", e1);
+                }
+            }
+            if ((cmd.stderr != null && cmd.stderr) || (cmd.stderr == null && !ok())) {
+                try {
+                    stderr = IOUtils.toString(p.getErrorStream(), Charset.defaultCharset());
+                } catch (IOException e) {
+                    Log.e(TAG, "unable to get error", e);
+                }
+            }
+        }
+
+        public boolean ok() {
+            return res == 0 && e == null;
+        }
+
+        public Result must() {
+            if (!ok())
+                throw this;
+            return this;
+        }
+
+        @Override
+        public String getMessage() {
+            if (stderr != null && !stderr.isEmpty())
+                return stderr + " (error:" + res + ")";
+            if (e != null)
+                return toMessage(e) + " (error:" + res + ")";
+            return "error: " + res;
+        }
+    }
+
+    public static class FileInputStream extends InputStream {
+        Process su;
+        InputStream is;
+
+        public FileInputStream(File f) {
+            Commands cmd = new Commands(MessageFormat.format("cat {0}", escape(f))).exit(true);
+            try {
+                su = Runtime.getRuntime().exec(BIN_SU);
+                OutputStream os = su.getOutputStream();
+                writeString(cmd.build(), os);
+                writeString(BIN_EXIT + EOL, os);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
+        public int read() throws IOException {
+            return is.read();
+        }
+
+        @Override
+        public int read(@NonNull byte[] b, int off, int len) throws IOException {
+            return is.read(b, off, len);
+        }
+
+        @Override
+        public void close() throws IOException {
+            su.destroy();
         }
     }
 
@@ -467,6 +766,7 @@ public class SuperUser {
     public static class RandomAccessFile {
         public int bs;
 
+        Process su;
         public InputStream is;
         public OutputStream os;
         public long size;
@@ -483,30 +783,12 @@ public class SuperUser {
             this(bs);
             Commands cmd = new Commands(MessageFormat.format(STATLCS + "; while read offset size; do dd if={0} iseek=$offset count=$size bs={1}; done", escape(f), bs)).exit(true).stderr(false);
             try {
-                final Process su = Runtime.getRuntime().exec(BIN_SU);
+                su = Runtime.getRuntime().exec(BIN_SU);
                 if (cmd.stderr != null && !cmd.stderr)
                     su.getErrorStream().close();
                 os = new BufferedOutputStream(su.getOutputStream());
                 writeString(cmd.build(), os);
-                is = new BufferedInputStream(new InputStream() {
-                    InputStream is = su.getInputStream();
-
-                    @Override
-                    public int read() throws IOException {
-                        return is.read();
-                    }
-
-                    @Override
-                    public int read(@NonNull byte[] b, int off, int len) throws IOException {
-                        return is.read(b, off, len);
-                    }
-
-                    @Override
-                    public void close() throws IOException {
-                        super.close();
-                        su.destroy();
-                    }
-                });
+                is = new BufferedInputStream(su.getInputStream());
                 size = Long.valueOf(readLine().trim());
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -579,6 +861,7 @@ public class SuperUser {
         public void close() throws IOException {
             is.close();
             os.close();
+            su.destroy();
         }
     }
 }

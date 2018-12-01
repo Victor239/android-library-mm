@@ -59,8 +59,8 @@ public class DeviceAdmin extends DeviceAdminReceiver {
         }
         SuperUser.Result r = SuperUser.reboot();
         if (!r.ok()) {
-            Log.d(TAG, "Unable reboot: " + r.message(), r.e);
-            Toast.makeText(context, r.message(), Toast.LENGTH_SHORT).show();
+            Log.d(TAG, "Unable reboot: " + r.getMessage(), r.e);
+            Toast.makeText(context, r.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 
