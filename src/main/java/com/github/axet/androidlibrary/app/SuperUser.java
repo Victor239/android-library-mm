@@ -99,7 +99,7 @@ public class SuperUser {
                 e = p;
                 p = p.getCause();
             }
-            msg = p.getMessage();
+            msg = e.getMessage();
             if (msg == null || msg.isEmpty())
                 msg = e.getClass().getCanonicalName();
         }
