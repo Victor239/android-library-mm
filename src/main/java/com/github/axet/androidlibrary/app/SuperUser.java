@@ -632,11 +632,16 @@ public class SuperUser {
         }
     }
 
-    public static class Result extends RuntimeException {
+    public static class Result extends Throwable {
         public int res;
         public String stdout;
         public String stderr;
         public Throwable e;
+
+        public static void must(Process p) throws IOException {
+            if (p.exitValue() != 0)
+                throw new IOException("!0");
+        }
 
         public Result(int res) {
             this.res = res;
@@ -689,7 +694,7 @@ public class SuperUser {
 
         public Result must() {
             if (!ok())
-                throw this;
+                throw new RuntimeException(this);
             return this;
         }
 
