@@ -4,10 +4,8 @@ import android.app.Notification;
 import android.content.Context;
 import android.util.Log;
 
-import com.github.axet.androidlibrary.widgets.NotificationChannelCompat;
-
 public class NotificationManagerCompat {
-    public static final String TAG = NotificationChannelCompat.class.getSimpleName();
+    public static final String TAG = NotificationManagerCompat.class.getSimpleName();
 
     public android.support.v4.app.NotificationManagerCompat nm;
 
@@ -17,6 +15,10 @@ public class NotificationManagerCompat {
 
     public NotificationManagerCompat(Context context) {
         nm = android.support.v4.app.NotificationManagerCompat.from(context);
+    }
+
+    public void cancel(int id) {
+        nm.cancel(id);
     }
 
     public void notify(int id, Notification notification) {
