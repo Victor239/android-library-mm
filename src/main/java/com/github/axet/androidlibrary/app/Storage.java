@@ -430,25 +430,22 @@ public class Storage {
     public static Uri getDocumentParent(Context context, Uri uri) {
         String pid = DocumentsContract.getTreeDocumentId(uri);
         String[] pss = pid.split(COLON, 2);
-        if (!DocumentsContract.isDocumentUri(context, uri)) {
-            File p = new File(pss[1]);
+        if (DocumentsContract.isDocumentUri(context, uri)) {
+            String did = DocumentsContract.getDocumentId(uri);
+            String[] dss = did.split(COLON, 2);
+            File p = new File(dss[1]);
             p = p.getParentFile();
-            if (p == null)
-                return null;
-            return DocumentsContract.buildDocumentUriUsingTree(uri, p.getPath());
-        }
-        String did = DocumentsContract.getDocumentId(uri);
-        String[] dss = did.split(COLON, 2);
-        File p = new File(dss[1]);
-        p = p.getParentFile();
-        if (p == null) {
             if (pid.equals(did))
                 return null;
-            if (pss[0].equals(dss[0]) || dss[1].isEmpty())
-                return DocumentsContract.buildDocumentUriUsingTree(uri, pid);
-            return DocumentsContract.buildDocumentUriUsingTree(uri, dss[0] + COLON);
+            if (p == null) {
+                if (pss[0].equals(dss[0]) || dss[1].isEmpty())
+                    return DocumentsContract.buildDocumentUriUsingTree(uri, pid);
+                return DocumentsContract.buildDocumentUriUsingTree(uri, dss[0] + COLON);
+            }
+            return DocumentsContract.buildDocumentUriUsingTree(uri, dss[0] + COLON + p.getPath());
+        } else {
+            return null;
         }
-        return DocumentsContract.buildDocumentUriUsingTree(uri, dss[0] + COLON + p.getPath());
     }
 
     public static Uri getParent(Context context, Uri uri) {
@@ -478,31 +475,32 @@ public class Storage {
     }
 
     @TargetApi(21)
-    public static String getDocumentChildPath(Uri uri) {
+    public static String getDocumentChildPath(Uri uri) { // tree documents points to id:system/ child points to id:system/bin/
         String id = DocumentsContract.getDocumentId(uri);
         String parent = DocumentsContract.getTreeDocumentId(uri);
-        id = id.substring(parent.length() + 1);
-        return id;
+        String r = relative(parent, id, ':');
+        if (r != null)
+            return r;
+        return relative(parent, id, '/');
     }
 
     @TargetApi(21)
     public static String getDisplayName(Context context, Uri uri) {
         String saf = "sdcard";
-        String unk = "sdcard[x]://";
         if (DocumentsContract.isDocumentUri(context, uri)) {
             String id = DocumentsContract.getTreeDocumentId(uri);
             String[] ss = id.split(COLON, 2); // 1D13-0F08:private
             if (ss.length > 1)
                 return saf + getDocumentStorage(ss[0]) + "://" + getDocumentPath(context, uri);
             else
-                return unk + id; // uknown device path. new saf location?
+                return id + "://"; // uknown device path. new saf location?
         } else {
             String id = DocumentsContract.getTreeDocumentId(uri);
             String[] ss = id.split(COLON, 2); // 1D13-0F08:private
             if (ss.length > 1) // has colon
                 return saf + getDocumentStorage(ss[0]) + "://" + ss[1];
             else
-                return unk + id; // uknown device path. new saf location?
+                return id + "://"; // uknown device path. new saf location?
         }
     }
 
@@ -590,22 +588,17 @@ public class Storage {
     @TargetApi(21)
     public static String getDocumentName(Context context, Uri uri) {
         if (DocumentsContract.isDocumentUri(context, uri)) {
+            String pid = DocumentsContract.getTreeDocumentId(uri);
             String id = DocumentsContract.getDocumentId(uri);
-            String[] ss = id.split(COLON, 2);
-            if (ss[1].isEmpty()) { // unknown id format or root
-                String pid = DocumentsContract.getTreeDocumentId(uri);
-                if (pid.equals(id))
-                    return OpenFileDialog.ROOT;
-                return getQueryName(context, uri); // DocumentFile.getName() return null for non existent files
-            }
-            return new File(ss[1]).getName(); // not using query when it is possible
-        } else {
-            String id = DocumentsContract.getTreeDocumentId(uri);
-            String[] ss = id.split(COLON, 2);
-            if (ss[1].isEmpty()) // always true here
+            if (pid.equals(id))
                 return OpenFileDialog.ROOT;
-            DocumentFile f = DocumentFile.fromTreeUri(context, uri);
-            return f.getName(); // unknown id format
+            String[] ss = id.split(COLON, 2);
+            if (ss[1].isEmpty())  // unknown id format or root
+                return getQueryName(context, uri); // DocumentFile.getName() return null for non existent files
+            else
+                return new File(ss[1]).getName(); // not using query when it is possible
+        } else {
+            return OpenFileDialog.ROOT;
         }
     }
 
@@ -1254,7 +1247,7 @@ public class Storage {
         return list(uri, null);
     }
 
-    public ArrayList<Node> list(Uri uri, NodeFilter filter) { // Node.name = file name _no_ root uris
+    public ArrayList<Node> list(Uri uri, NodeFilter filter) { // Node.name = file name, return _no_ root uris
         ArrayList<Node> files = new ArrayList<>();
         String s = uri.getScheme();
         if (s.equals(ContentResolver.SCHEME_FILE)) {
@@ -1267,6 +1260,7 @@ public class Storage {
                         files.add(n);
                 }
             }
+            return files;
         } else if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
             String id;
             if (DocumentsContract.isDocumentUri(getContext(), uri))
@@ -1283,11 +1277,12 @@ public class Storage {
                         files.add(n);
                 }
                 cursor.close();
+                return files;
             }
+            throw new RuntimeException("unable to read");
         } else {
             throw new Storage.UnknownUri();
         }
-        return files;
     }
 
     @TargetApi(21)
