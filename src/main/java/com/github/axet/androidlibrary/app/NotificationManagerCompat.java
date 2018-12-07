@@ -5,6 +5,7 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.os.Build;
+import android.os.TransactionTooLargeException;
 import android.util.Log;
 
 import com.github.axet.androidlibrary.widgets.NotificationChannelCompat;
@@ -59,12 +60,20 @@ public class NotificationManagerCompat {
         nmc.cancel(id);
     }
 
-    public void notify(int id, Notification notification) {
+    public void notify(int id, Notification n) {
         try {
-            nmc.notify(id, notification);
-        } catch (Exception e) { // catching TransactionTooLargeException and retrying
+            nmc.notify(id, n);
+        } catch (Exception e) {
             Log.e(TAG, "notify", e);
-            nmc.notify(id, notification);
+            if (Build.VERSION.SDK_INT >= 16 && e instanceof TransactionTooLargeException) {
+                if (n.bigContentView != null) {
+                    n.contentView = n.bigContentView;
+                    n.bigContentView = null;
+                }
+                nmc.notify(id, n);
+            } else {
+                throw e;
+            }
         }
     }
 }
