@@ -1,32 +1,79 @@
 package com.github.axet.androidlibrary.app;
 
+import android.annotation.TargetApi;
 import android.app.Notification;
+import android.app.NotificationManager;
 import android.content.Context;
+import android.os.Build;
+import android.os.TransactionTooLargeException;
 import android.util.Log;
+
+import com.github.axet.androidlibrary.widgets.NotificationChannelCompat;
+
+import java.lang.reflect.InvocationTargetException;
 
 public class NotificationManagerCompat {
     public static final String TAG = NotificationManagerCompat.class.getSimpleName();
 
-    public android.support.v4.app.NotificationManagerCompat nm;
+    public static final int IMPORTANCE_NONE = android.support.v4.app.NotificationManagerCompat.IMPORTANCE_NONE;
+    public static final int IMPORTANCE_MIN = android.support.v4.app.NotificationManagerCompat.IMPORTANCE_MIN;
+    public static final int IMPORTANCE_LOW = android.support.v4.app.NotificationManagerCompat.IMPORTANCE_LOW;
+    public static final int IMPORTANCE_DEFAULT = android.support.v4.app.NotificationManagerCompat.IMPORTANCE_DEFAULT;
+    public static final int IMPORTANCE_HIGH = android.support.v4.app.NotificationManagerCompat.IMPORTANCE_HIGH;
+    public static final int IMPORTANCE_MAX = android.support.v4.app.NotificationManagerCompat.IMPORTANCE_MAX;
+    public static final int IMPORTANCE_UNSPECIFIED = android.support.v4.app.NotificationManagerCompat.IMPORTANCE_UNSPECIFIED;
+
+    public NotificationManager nm;
+    public android.support.v4.app.NotificationManagerCompat nmc;
 
     public static NotificationManagerCompat from(Context context) {
         return new NotificationManagerCompat(context);
     }
 
     public NotificationManagerCompat(Context context) {
-        nm = android.support.v4.app.NotificationManagerCompat.from(context);
+        nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        nmc = android.support.v4.app.NotificationManagerCompat.from(context);
+    }
+
+    @TargetApi(26)
+    public void createNotificationChannel(NotificationChannelCompat channel) {
+        try {
+            Class NotificationManager = nm.getClass();
+            NotificationManager.getDeclaredMethod("createNotificationChannel", channel.NotificationChannel).invoke(nm, channel.channel);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        } catch (InvocationTargetException e) {
+            throw new RuntimeException(e);
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public boolean isNotificationPolicyAccessGranted() {
+        if (Build.VERSION.SDK_INT >= 23)
+            return nm.isNotificationPolicyAccessGranted();
+        else
+            return true;
     }
 
     public void cancel(int id) {
-        nm.cancel(id);
+        nmc.cancel(id);
     }
 
-    public void notify(int id, Notification notification) {
+    public void notify(int id, Notification n) {
         try {
-            nm.notify(id, notification);
-        } catch (Exception e) { // catching TransactionTooLargeException and retyring
+            nmc.notify(id, n);
+        } catch (Exception e) {
             Log.e(TAG, "notify", e);
-            nm.notify(id, notification);
+            if (Build.VERSION.SDK_INT >= 16 && e instanceof TransactionTooLargeException) {
+                if (n.bigContentView != null) {
+                    n.contentView = n.bigContentView;
+                    n.bigContentView = null;
+                }
+                nmc.notify(id, n);
+            } else {
+                throw e;
+            }
         }
     }
 }

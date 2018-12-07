@@ -1,25 +1,25 @@
 package com.github.axet.androidlibrary.widgets;
 
 import android.annotation.TargetApi;
-import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.support.v7.preference.SwitchPreferenceCompat;
 import android.util.AttributeSet;
 
-/**
- * Add users permission to app manifest:
- * <p>
- * &lt;uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" /&gt;
- */
+import com.github.axet.androidlibrary.app.NotificationManagerCompat;
+
+// Add users permission to app manifest:
+//
+// <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+//
 public class SilencePreferenceCompat extends SwitchPreferenceCompat {
 
     boolean resume = false;
 
     @TargetApi(23)
     public static boolean isNotificationPolicyAccessGranted(Context context) {
-        NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationManagerCompat nm = NotificationManagerCompat.from(context);
         return nm.isNotificationPolicyAccessGranted();
     }
 

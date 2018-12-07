@@ -27,14 +27,12 @@ public class ZipSAF extends NativeStorage {
     ZipSAF parentFolder;
 
     public static class File extends NativeFile {
-        Uri u;
-        FileChannel c;
         ParcelFileDescriptor fd;
+        FileChannel c;
         FileInputStream fis;
         FileOutputStream fos;
 
         public File(Context context, Uri u, String mode) throws FileNotFoundException {
-            this.u = u;
             ContentResolver resolver = context.getContentResolver();
             fd = resolver.openFileDescriptor(u, "rw");
             if (mode.equals("r")) {
@@ -59,8 +57,12 @@ public class ZipSAF extends NativeStorage {
 
         @Override
         public void readFully(byte[] buf, int off, int len) throws IOException {
-            int r = read(buf, off, len);
-            if (r != len)
+            int r;
+            while (len > 0 && (r = read(buf, off, len)) > 0) {
+                off += r;
+                len -= r;
+            }
+            if (len > 0)
                 throw new IOException("bad read");
         }
 
@@ -72,8 +74,7 @@ public class ZipSAF extends NativeStorage {
         @Override
         public int read(byte[] buf, int off, int len) throws IOException {
             ByteBuffer bb = ByteBuffer.wrap(buf, off, len);
-            int l = c.read(bb);
-            return l;
+            return c.read(bb);
         }
 
         @Override

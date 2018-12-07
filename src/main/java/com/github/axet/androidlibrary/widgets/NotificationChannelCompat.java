@@ -1,7 +1,6 @@
 package com.github.axet.androidlibrary.widgets;
 
 import android.app.Notification;
-import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
@@ -10,14 +9,14 @@ import android.net.Uri;
 import android.os.Build;
 import android.support.annotation.IntDef;
 import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.NotificationManagerCompat;
 import android.util.Log;
+
+import com.github.axet.androidlibrary.app.NotificationManagerCompat;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 
 // https://developer.android.com/training/notify-user/channels
 public class NotificationChannelCompat {
@@ -37,12 +36,12 @@ public class NotificationChannelCompat {
 
     public String channelId;
     public Object channel;
-    public Class NotificationChannelClass;
+    public Class NotificationChannel;
 
     public static void setChannelId(NotificationCompat.Builder builder, String channelId) {
         try {
-            Class klass = NotificationCompat.Builder.class;
-            Field mPublicVersion = klass.getDeclaredField("mPublicVersion");
+            Class NotificationCompat = NotificationCompat.Builder.class;
+            Field mPublicVersion = NotificationCompat.getDeclaredField("mPublicVersion");
             mPublicVersion.setAccessible(true);
             Notification n = (Notification) mPublicVersion.get(builder);
             if (n != null)
@@ -58,8 +57,8 @@ public class NotificationChannelCompat {
     public static void setChannelId(Notification n, String channelId) {
         if (Build.VERSION.SDK_INT >= 26) {
             try {
-                Class klass = n.getClass();
-                Field f = klass.getDeclaredField("mChannelId");
+                Class Notification = n.getClass();
+                Field f = Notification.getDeclaredField("mChannelId");
                 f.setAccessible(true);
                 f.set(n, channelId);
             } catch (NoSuchFieldException e) {
@@ -81,16 +80,12 @@ public class NotificationChannelCompat {
         context.startActivity(intent);
     }
 
-    public NotificationChannelCompat(Context context, String id, String name, @Importance int importance) {
+    public NotificationChannelCompat(String id, String name, @Importance int importance) {
         this.channelId = id;
         if (Build.VERSION.SDK_INT >= 26) {
             try {
-                NotificationChannelClass = Class.forName("android.app.NotificationChannel");
-                channel = NotificationChannelClass.getConstructor(String.class, CharSequence.class, int.class).newInstance(id, name, importance);
-                NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-                Class NotificationManagerClass = nm.getClass();
-                Method CreateNotificationChannel = NotificationManagerClass.getDeclaredMethod("createNotificationChannel", NotificationChannelClass);
-                CreateNotificationChannel.invoke(nm, channel);
+                NotificationChannel = Class.forName("android.app.NotificationChannel");
+                channel = NotificationChannel.getConstructor(String.class, CharSequence.class, int.class).newInstance(id, name, importance);
             } catch (NoSuchMethodException | ClassNotFoundException e) {
                 throw new RuntimeException(e);
             } catch (IllegalAccessException | InvocationTargetException | InstantiationException e) {
@@ -99,11 +94,18 @@ public class NotificationChannelCompat {
         }
     }
 
+    public NotificationChannelCompat(Context context, String id, String name, @Importance int importance) {
+        this(id, name, importance);
+        if (Build.VERSION.SDK_INT >= 26) {
+            NotificationManagerCompat nm = NotificationManagerCompat.from(context);
+            nm.createNotificationChannel(this);
+        }
+    }
+
     public void setDescription(String str) {
         if (Build.VERSION.SDK_INT >= 26) {
             try {
-                Method m = NotificationChannelClass.getDeclaredMethod("setDescription", String.class);
-                m.invoke(channel, str);
+                NotificationChannel.getDeclaredMethod("setDescription", String.class).invoke(channel, str);
             } catch (NoSuchMethodException e) {
                 throw new RuntimeException(e);
             } catch (InvocationTargetException | IllegalAccessException e) {
@@ -115,8 +117,7 @@ public class NotificationChannelCompat {
     public void setSound(Uri sound, AudioAttributes attr) {
         if (Build.VERSION.SDK_INT >= 26) {
             try {
-                Method m = NotificationChannelClass.getDeclaredMethod("setSound", Uri.class, AudioAttributes.class);
-                m.invoke(channel, sound, attr);
+                NotificationChannel.getDeclaredMethod("setSound", Uri.class, AudioAttributes.class).invoke(channel, sound, attr);
             } catch (NoSuchMethodException e) {
                 throw new RuntimeException(e);
             } catch (InvocationTargetException | IllegalAccessException e) {
@@ -128,8 +129,7 @@ public class NotificationChannelCompat {
     public Uri getSound() {
         if (Build.VERSION.SDK_INT >= 26) {
             try {
-                Method m = NotificationChannelClass.getDeclaredMethod("getSound");
-                return (Uri) m.invoke(channel);
+                return (Uri) NotificationChannel.getDeclaredMethod("getSound").invoke(channel);
             } catch (NoSuchMethodException e) {
                 throw new RuntimeException(e);
             } catch (InvocationTargetException | IllegalAccessException e) {
@@ -142,8 +142,7 @@ public class NotificationChannelCompat {
     public AudioAttributes getAudioAttributes() {
         if (Build.VERSION.SDK_INT >= 26) {
             try {
-                Method m = NotificationChannelClass.getDeclaredMethod("getAudioAttributes");
-                return (AudioAttributes) m.invoke(channel);
+                return (AudioAttributes) NotificationChannel.getDeclaredMethod("getAudioAttributes").invoke(channel);
             } catch (NoSuchMethodException e) {
                 throw new RuntimeException(e);
             } catch (InvocationTargetException | IllegalAccessException e) {
@@ -156,8 +155,7 @@ public class NotificationChannelCompat {
     public boolean shouldVibrate() {
         if (Build.VERSION.SDK_INT >= 26) {
             try {
-                Method m = NotificationChannelClass.getDeclaredMethod("shouldVibrate");
-                return (boolean) m.invoke(channel);
+                return (boolean) NotificationChannel.getDeclaredMethod("shouldVibrate").invoke(channel);
             } catch (NoSuchMethodException e) {
                 throw new RuntimeException(e);
             } catch (InvocationTargetException | IllegalAccessException e) {
@@ -170,8 +168,7 @@ public class NotificationChannelCompat {
     public void enableVibration(boolean b) {
         if (Build.VERSION.SDK_INT >= 26) {
             try {
-                Method m = NotificationChannelClass.getDeclaredMethod("enableVibration", boolean.class);
-                m.invoke(channel, b);
+                NotificationChannel.getDeclaredMethod("enableVibration", boolean.class).invoke(channel, b);
             } catch (NoSuchMethodException e) {
                 throw new RuntimeException(e);
             } catch (InvocationTargetException | IllegalAccessException e) {
@@ -183,8 +180,7 @@ public class NotificationChannelCompat {
     public long[] getVibrationPattern() {
         if (Build.VERSION.SDK_INT >= 26) {
             try {
-                Method m = NotificationChannelClass.getDeclaredMethod("getVibrationPattern");
-                return (long[]) m.invoke(channel);
+                return (long[]) NotificationChannel.getDeclaredMethod("getVibrationPattern").invoke(channel);
             } catch (NoSuchMethodException e) {
                 throw new RuntimeException(e);
             } catch (InvocationTargetException | IllegalAccessException e) {
@@ -197,8 +193,7 @@ public class NotificationChannelCompat {
     public boolean shouldShowLights() {
         if (Build.VERSION.SDK_INT >= 26) {
             try {
-                Method m = NotificationChannelClass.getDeclaredMethod("shouldShowLights");
-                return (boolean) m.invoke(channel);
+                return (boolean) NotificationChannel.getDeclaredMethod("shouldShowLights").invoke(channel);
             } catch (NoSuchMethodException e) {
                 throw new RuntimeException(e);
             } catch (InvocationTargetException | IllegalAccessException e) {
@@ -211,8 +206,7 @@ public class NotificationChannelCompat {
     public void enableLights(boolean b) {
         if (Build.VERSION.SDK_INT >= 26) {
             try {
-                Method m = NotificationChannelClass.getDeclaredMethod("enableLights", boolean.class);
-                m.invoke(channel, b);
+                NotificationChannel.getDeclaredMethod("enableLights", boolean.class).invoke(channel, b);
             } catch (NoSuchMethodException e) {
                 throw new RuntimeException(e);
             } catch (InvocationTargetException | IllegalAccessException e) {
@@ -224,8 +218,7 @@ public class NotificationChannelCompat {
     public int getLightColor() {
         if (Build.VERSION.SDK_INT >= 26) {
             try {
-                Method m = NotificationChannelClass.getDeclaredMethod("getLightColor");
-                return (int) m.invoke(channel);
+                return (int) NotificationChannel.getDeclaredMethod("getLightColor").invoke(channel);
             } catch (NoSuchMethodException e) {
                 throw new RuntimeException(e);
             } catch (InvocationTargetException | IllegalAccessException e) {
@@ -238,8 +231,7 @@ public class NotificationChannelCompat {
     public int getImportance() {
         if (Build.VERSION.SDK_INT >= 26) {
             try {
-                Method m = NotificationChannelClass.getDeclaredMethod("getImportance");
-                return (int) m.invoke(channel);
+                return (int) NotificationChannel.getDeclaredMethod("getImportance").invoke(channel);
             } catch (NoSuchMethodException e) {
                 throw new RuntimeException(e);
             } catch (InvocationTargetException | IllegalAccessException e) {
@@ -252,8 +244,7 @@ public class NotificationChannelCompat {
     public String getGroup() {
         if (Build.VERSION.SDK_INT >= 26) {
             try {
-                Method m = NotificationChannelClass.getDeclaredMethod("getGroup");
-                return (String) m.invoke(channel);
+                return (String) NotificationChannel.getDeclaredMethod("getGroup").invoke(channel);
             } catch (NoSuchMethodException e) {
                 throw new RuntimeException(e);
             } catch (InvocationTargetException | IllegalAccessException e) {
@@ -266,8 +257,7 @@ public class NotificationChannelCompat {
     public void setGroup(String groupId) {
         if (Build.VERSION.SDK_INT >= 26) {
             try {
-                Method m = NotificationChannelClass.getDeclaredMethod("setGroup", String.class);
-                m.invoke(channel, groupId);
+                NotificationChannel.getDeclaredMethod("setGroup", String.class).invoke(channel, groupId);
             } catch (NoSuchMethodException e) {
                 throw new RuntimeException(e);
             } catch (InvocationTargetException | IllegalAccessException e) {

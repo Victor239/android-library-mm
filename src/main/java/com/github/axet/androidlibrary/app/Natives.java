@@ -12,7 +12,7 @@ import java.util.List;
 public class Natives {
     public static String TAG = Natives.class.getSimpleName();
 
-    public static String ARCH = Build.CPU_ABI;
+    public static final String ARCH = Build.CPU_ABI;
 
     public static class ArchFirst implements Comparator<File> {
         @Override
@@ -33,13 +33,11 @@ public class Natives {
 
     public static void loadLibraries(Context context, String... libs) {
         try {
-            for (String l : libs) {
+            for (String l : libs)
                 System.loadLibrary(l); // API16 failed to find dependencies
-            }
         } catch (ExceptionInInitializerError | UnsatisfiedLinkError e) { // API15 crash
-            for (String l : libs) {
+            for (String l : libs)
                 Natives.loadLibrary(context, l);
-            }
         }
     }
 

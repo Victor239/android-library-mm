@@ -22,14 +22,12 @@ public class RarSAF extends NativeStorage {
     RarSAF parentFolder;
 
     public static class File extends NativeFile {
-        Uri u;
-        FileChannel c;
+        ParcelFileDescriptor fd;
         FileInputStream fis;
         FileOutputStream fos;
-        ParcelFileDescriptor fd;
+        FileChannel c;
 
         public File(Context context, Uri u, String mode) throws FileNotFoundException {
-            this.u = u;
             ContentResolver resolver = context.getContentResolver();
             fd = resolver.openFileDescriptor(u, "rw");
             if (mode.equals("r")) {
