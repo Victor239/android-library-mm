@@ -68,12 +68,16 @@ public class Storage {
     protected Context context;
     protected ContentResolver resolver;
 
+    // byte functions
+
     public static String toHex(byte[] in) {
         final StringBuilder builder = new StringBuilder();
         for (byte b : in)
             builder.append(String.format("%02x", b));
         return builder.toString();
     }
+
+    // string functions
 
     public static String md5(String str) {
         try {
@@ -84,16 +88,6 @@ public class Storage {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public static File relative(File base, File file) { // system/test64/123 - system/test64 == 123, but not 'system/test'
-        String f = file.getPath();
-        String r = relative(base.getPath(), f);
-        if (r == null)
-            return null;
-        if (f == r)
-            return file;
-        return new File(r);
     }
 
     public static String relative(String base, String file) {
@@ -133,8 +127,7 @@ public class Storage {
         }
     }
 
-    // https://stackoverflow.com/questions/28734455/java-converting-file-pattern-to-regular-expression-pattern
-    public static String wildcard(String wildcard) {
+    public static String wildcard(String wildcard) { // https://stackoverflow.com/questions/28734455/java-converting-file-pattern-to-regular-expression-pattern
         StringBuilder s = new StringBuilder(wildcard.length());
         s.append('^');
         for (int i = 0, is = wildcard.length(); i < is; i++) {
@@ -173,23 +166,6 @@ public class Storage {
         return (s.toString());
     }
 
-    public static long getFree(File f) {
-        while (!f.exists()) {
-            f = f.getParentFile();
-            if (f == null)
-                return 0;
-        }
-        StatFs fsi = new StatFs(f.getPath());
-        if (Build.VERSION.SDK_INT >= 18)
-            return fsi.getBlockSizeLong() * fsi.getAvailableBlocksLong();
-        else
-            return fsi.getBlockSize() * (long) fsi.getAvailableBlocks();
-    }
-
-    public static String getNameNoExt(File f) {
-        return getNameNoExt(f.getName());
-    }
-
     public static String getNameNoExt(String fileName) {
         int i = fileName.lastIndexOf('.');
         if (i > 0)
@@ -204,13 +180,7 @@ public class Storage {
         return "";
     }
 
-    public static String getExt(File f) {
-        String fileName = f.getName();
-        return getExt(fileName);
-    }
-
-    // "test (1)" --> "test"
-    public static String filterDups(String fileName) {
+    public static String filterDups(String fileName) { // "test (1)" --> "test"
         Pattern p = Pattern.compile("(.*)\\s\\(\\d+\\)");
         Matcher m = p.matcher(fileName);
         if (m.matches()) {
@@ -218,6 +188,82 @@ public class Storage {
             return filterDups(fileName);
         }
         return fileName;
+    }
+
+    public static String getTypeByName(String fileName) {
+        String ext = Storage.getExt(fileName);
+        return getTypeByExt(ext);
+    }
+
+    public static String getTypeByExt(String ext) {
+        if (ext == null || ext.isEmpty())
+            return CONTENTTYPE_OCTETSTREAM; // replace 'null'
+        ext = ext.toLowerCase();
+        switch (ext) {
+            case "opus":
+                return CONTENTTYPE_OPUS; // android missing
+            case "ogg":
+                return CONTENTTYPE_OGG; // replace 'application/ogg'
+            case "fb2":
+                return CONTENTTYPE_FB2;
+            case "rar":
+                return CONTENTTYPE_RAR;
+        }
+        String type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext);
+        if (type == null)
+            return CONTENTTYPE_OCTETSTREAM;
+        return type;
+    }
+
+    // file functions
+
+    public static File getFile(Uri u) {
+        return new File(u.getPath());
+    }
+
+    public static File relative(File base, File file) { // system/test64/123 - system/test64 == 123, but not 'system/test'
+        String f = file.getPath();
+        String r = relative(base.getPath(), f);
+        if (r == null)
+            return null;
+        if (f == r)
+            return file;
+        return new File(r);
+    }
+
+    public static long getFree(File f) {
+        while (!f.exists()) {
+            f = f.getParentFile();
+            if (f == null)
+                return 0;
+        }
+        StatFs fsi = new StatFs(f.getPath());
+        if (Build.VERSION.SDK_INT >= 18)
+            return fsi.getBlockSizeLong() * fsi.getAvailableBlocksLong();
+        else
+            return fsi.getBlockSize() * (long) fsi.getAvailableBlocks();
+    }
+
+    public static boolean canWrite(File f) {
+        if (!f.canWrite())
+            return false;
+        if (f.exists() && f.getFreeSpace() > 0)
+            return true;
+        File p = f.getParentFile();
+        if (!f.exists() && !p.canWrite())
+            return false;
+        if (!f.exists() && p.exists() && p.getFreeSpace() > 0)
+            return true;
+        return false;
+    }
+
+    public static String getNameNoExt(File f) {
+        return getNameNoExt(f.getName());
+    }
+
+    public static String getExt(File f) {
+        String fileName = f.getName();
+        return getExt(fileName);
     }
 
     public static File getNextFile(File f) {
@@ -297,6 +343,285 @@ public class Storage {
         }
     }
 
+    public static boolean ejected(File p) { // check target 'parent RW' access if child does not exist, and 'child R' if exists
+        if (!p.exists()) {
+            while (!p.exists())
+                p = p.getParentFile();
+            if (p.canWrite())
+                return false; // torrent parent folder not exist, but we have write access and can create subdirs
+            else
+                return true; // no write access - ejected
+        }
+        return !p.canRead(); // readonly check
+    }
+
+    // document methods
+
+    public static String getDocumentStorage(String s) {
+        if (s.equals(STORAGE_PRIMARY))
+            return "[i]";
+        else if (s.equals(STORAGE_HOME))
+            return "[h]";
+        else
+            return "[e]"; // 12f1-2211
+    }
+
+    @TargetApi(21)
+    public static String getDocumentStorage(Context context, Uri uri) { // tree uri can points to 'home:'
+        String id;
+        if (DocumentsContract.isDocumentUri(context, uri))
+            id = DocumentsContract.getDocumentId(uri);
+        else
+            id = DocumentsContract.getTreeDocumentId(uri);
+        String[] ss = id.split(COLON, 2);
+        return getDocumentStorage(ss[0]);
+    }
+
+    @TargetApi(21)
+    public static DocumentFile getDocumentFile(Context context, Uri uri) {
+        if (DocumentsContract.isDocumentUri(context, uri))
+            return DocumentFile.fromSingleUri(context, uri);
+        else
+            return DocumentFile.fromTreeUri(context, uri);
+    }
+
+    @TargetApi(21)
+    public static String getDocumentPath(Context context, Uri uri) { // for display purpose only
+        String pid = DocumentsContract.getTreeDocumentId(uri);
+        String[] pss = pid.split(COLON, 2);
+        if (!DocumentsContract.isDocumentUri(context, uri))
+            return pss[1];
+        String did = DocumentsContract.getDocumentId(uri);
+        if (pid.equals(did))
+            return pss[1];
+        String[] dss = did.split(COLON, 2);
+        if (!pss[0].equals(dss[0])) {
+            Uri doc = DocumentsContract.buildDocumentUriUsingTree(uri, dss[0] + COLON);
+            String n = DocumentFile.fromSingleUri(context, doc).getName();
+            if (pss[1].isEmpty())
+                pss[1] = n;
+            else
+                pss[1] = new File(pss[1], n).getPath();
+        }
+        if (dss[1].isEmpty())
+            return pss[1];
+        else if (pss[1].isEmpty())
+            return dss[1];
+        return new File(pss[1], dss[1]).getPath();
+    }
+
+    @TargetApi(21)
+    public static Uri getDocumentParent(Context context, Uri uri) { // either we have to store all parents for current uri, or have getDocument* methods
+        String pid = DocumentsContract.getTreeDocumentId(uri);
+        String[] pss = pid.split(COLON, 2);
+        if (DocumentsContract.isDocumentUri(context, uri)) {
+            String did = DocumentsContract.getDocumentId(uri);
+            String[] dss = did.split(COLON, 2);
+            File p = new File(dss[1]);
+            p = p.getParentFile();
+            if (pid.equals(did))
+                return null;
+            if (p == null) {
+                if (pss[0].equals(dss[0]) || dss[1].isEmpty())
+                    return DocumentsContract.buildDocumentUriUsingTree(uri, pid);
+                return DocumentsContract.buildDocumentUriUsingTree(uri, dss[0] + COLON);
+            }
+            return DocumentsContract.buildDocumentUriUsingTree(uri, dss[0] + COLON + p.getPath());
+        } else {
+            return null;
+        }
+    }
+
+    @TargetApi(21)
+    public static Uri getDocumentChild(Context context, Uri uri, String name) {
+        String id;
+        if (DocumentsContract.isDocumentUri(context, uri))
+            id = DocumentsContract.getDocumentId(uri);
+        else
+            id = DocumentsContract.getTreeDocumentId(uri);
+        String[] ss = id.split(COLON, 2);
+        File f = new File(ss[1], name);
+        return DocumentsContract.buildDocumentUriUsingTree(uri, ss[0] + COLON + f.getPath());
+    }
+
+    @TargetApi(21)
+    public static String getDocumentChildPath(Uri uri) { // tree documents points to id:system/f1/ child points to id:system/f1/bin/ == 'bin/'
+        String id = DocumentsContract.getDocumentId(uri);
+        String parent = DocumentsContract.getTreeDocumentId(uri);
+        String r = relative(parent, id, '/'); // folder can ends with ':' so, we try '/' first
+        if (r != null)
+            return r;
+        return relative(parent, id, ':'); // id never ends with '/'
+    }
+
+    @TargetApi(21)
+    public static String getDisplayName(Context context, Uri uri) {
+        String saf = "sdcard";
+        if (DocumentsContract.isDocumentUri(context, uri)) {
+            String id = DocumentsContract.getTreeDocumentId(uri);
+            String[] ss = id.split(COLON, 2); // 1D13-0F08:private
+            if (ss.length > 1)
+                return saf + getDocumentStorage(ss[0]) + CSS + getDocumentPath(context, uri);
+            else
+                return id + CSS; // uknown device path. new saf location?
+        } else {
+            String id = DocumentsContract.getTreeDocumentId(uri);
+            String[] ss = id.split(COLON, 2); // 1D13-0F08:private
+            if (ss.length > 1) // has colon
+                return saf + getDocumentStorage(ss[0]) + CSS + ss[1];
+            else
+                return id + CSS; // uknown device path. new saf location?
+        }
+    }
+
+    @TargetApi(19)
+    public static boolean isDocumentExists(Context context, Uri uri) {
+        return getDocumentFile(context, uri).exists();
+    }
+
+    @TargetApi(21)
+    public static long getDocumentFree(Context context, Uri uri) {
+        ContentResolver resolver = context.getContentResolver();
+        Uri docTreeUri = DocumentsContract.buildDocumentUriUsingTree(uri, DocumentsContract.getTreeDocumentId(uri));
+        try {
+            ParcelFileDescriptor pfd = resolver.openFileDescriptor(docTreeUri, "r");
+            StructStatVfs stats = Os.fstatvfs(pfd.getFileDescriptor());
+            return stats.f_bavail * stats.f_bsize;
+        } catch (Exception e) { // IllegalArgumentException | FileNotFoundException | ErrnoException | NullPointerException (readExceptionWithFileNotFoundExceptionFromParcel)
+            return 0;
+        }
+    }
+
+    @TargetApi(21)
+    public static String buildDocumentPath(Context context, Uri start, Uri end) {
+        if (!DocumentsContract.isDocumentUri(context, end))
+            return OpenFileDialog.ROOT;
+        String eid = DocumentsContract.getDocumentId(end);
+        String path = "";
+        ContentResolver resolver = context.getContentResolver();
+        if (!DocumentsContract.isDocumentUri(context, start))
+            start = DocumentsContract.buildDocumentUriUsingTree(start, DocumentsContract.getTreeDocumentId(start));
+        Cursor cursor = resolver.query(start, null, null, null, null);
+        if (cursor != null) {
+            try {
+                while (cursor.moveToNext()) {
+                    String id = cursor.getString(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_DOCUMENT_ID));
+                    String name = cursor.getString(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_DISPLAY_NAME));
+                    String type = cursor.getString(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_MIME_TYPE));
+                    boolean d = type.equals(DocumentsContract.Document.MIME_TYPE_DIR);
+                    if (d) {
+                        Uri doc = DocumentsContract.buildChildDocumentsUriUsingTree(start, id);
+                        Cursor cursor2 = resolver.query(doc, null, null, null, null);
+                        if (cursor2 != null) {
+                            try {
+                                while (cursor2.moveToNext()) {
+                                    id = cursor2.getString(cursor2.getColumnIndex(DocumentsContract.Document.COLUMN_DOCUMENT_ID));
+                                    name = cursor2.getString(cursor2.getColumnIndex(DocumentsContract.Document.COLUMN_DISPLAY_NAME));
+                                    type = cursor2.getString(cursor2.getColumnIndex(DocumentsContract.Document.COLUMN_MIME_TYPE));
+                                    d = type.equals(DocumentsContract.Document.MIME_TYPE_DIR);
+                                    if (relative(id, eid) != null) {
+                                        path = new File(path, name).getPath();
+                                        if (d) {
+                                            Uri uri = DocumentsContract.buildDocumentUriUsingTree(doc, id);
+                                            return new File(path, buildDocumentPath(context, uri, end)).getPath();
+                                        }
+                                    }
+                                }
+                            } finally {
+                                cursor2.close();
+                            }
+                        }
+                    } else {
+                        return new File(name).getPath();
+                    }
+                }
+            } finally {
+                cursor.close();
+            }
+        }
+        return path;
+    }
+
+    @TargetApi(21)
+    public static Uri getDocumentTreeUri(Uri uri) { // build document tree uri (root saf folder) from document uri
+        return new Uri.Builder().scheme(ContentResolver.SCHEME_CONTENT)
+                .authority(uri.getAuthority()).appendPath(PATH_TREE)
+                .appendPath(DocumentsContract.getTreeDocumentId(uri))
+                .build();
+    }
+
+    public static String getQueryName(Context context, Uri uri) {
+        ContentResolver resolver = context.getContentResolver();
+        Cursor cursor = resolver.query(uri, null, null, null, null);
+        if (cursor != null) {
+            try {
+                if (cursor.moveToNext())
+                    return cursor.getString(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_DISPLAY_NAME));
+            } finally {
+                cursor.close();
+            }
+        }
+        return uri.getLastPathSegment();
+    }
+
+    @TargetApi(21)
+    public static String getDocumentName(Context context, Uri uri) {
+        if (DocumentsContract.isDocumentUri(context, uri)) {
+            String pid = DocumentsContract.getTreeDocumentId(uri);
+            String id = DocumentsContract.getDocumentId(uri);
+            if (pid.equals(id))
+                return OpenFileDialog.ROOT;
+            String[] ss = id.split(COLON, 2);
+            if (ss[1].isEmpty())  // unknown id format or root
+                return getQueryName(context, uri); // DocumentFile.getName() return null for non existent files
+            else
+                return new File(ss[1]).getName(); // not using query when it is possible
+        } else {
+            return OpenFileDialog.ROOT;
+        }
+    }
+
+
+    @TargetApi(19)
+    public static String getContentName(Context context, Uri uri) {
+        if (uri.getAuthority().startsWith(SAF)) // query crashed for DocumentsContract.isTreeUri() uris
+            return getDocumentName(context, uri);
+        else
+            return getQueryName(context, uri);
+    }
+
+    @TargetApi(21)
+    public static boolean isEjected(Context context, Uri uri, int takeFlags) { // check folder existes and childs can be read
+        ContentResolver resolver = context.getContentResolver();
+        try {
+            resolver.takePersistableUriPermission(uri, takeFlags);
+            Cursor childCursor = null;
+            Cursor childCursor2 = null;
+            try {
+                Uri doc = DocumentsContract.buildDocumentUriUsingTree(uri, DocumentsContract.getTreeDocumentId(uri));
+                childCursor = resolver.query(doc, null, null, null, null); // check target folder
+                if (childCursor != null && childCursor.moveToNext()) {
+                    Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(uri, DocumentsContract.getTreeDocumentId(uri));
+                    childCursor2 = resolver.query(childrenUri, null, null, null, null); // check read directory content
+                    if (childCursor2 != null) {
+                        return false;
+                    }
+                }
+            } finally {
+                if (childCursor != null)
+                    childCursor.close();
+                if (childCursor2 != null)
+                    childCursor2.close();
+            }
+            return true;
+        } catch (RuntimeException e) {
+            Log.d(TAG, "open SAF failed", e);
+        }
+        return true;
+    }
+
+    // context methods
+
     public static boolean permitted(Context context, String[] ss) {
         if (permittedForce)
             return true;
@@ -356,94 +681,16 @@ public class Storage {
         context.startActivity(intent);
     }
 
-    public static File getFile(Uri u) {
-        return new File(u.getPath());
-    }
+    // file and content
 
-    public static boolean ejected(File p) { // check target 'parent RW' access if child does not exist, and 'child R' if exists
-        if (!p.exists()) {
-            while (!p.exists())
-                p = p.getParentFile();
-            if (p.canWrite())
-                return false; // torrent parent folder not exist, but we have write access and can create subdirs
-            else
-                return true; // no write access - ejected
-        }
-        return !p.canRead(); // readonly check
-    }
-
-    @TargetApi(21)
-    public static String getDocumentStorage(Context context, Uri uri) { // tree uri can points to 'home:'
-        String id;
-        if (DocumentsContract.isDocumentUri(context, uri))
-            id = DocumentsContract.getDocumentId(uri);
-        else
-            id = DocumentsContract.getTreeDocumentId(uri);
-        String[] ss = id.split(COLON, 2);
-        return getDocumentStorage(ss[0]);
-    }
-
-    public static String getDocumentStorage(String s) {
-        if (s.equals(STORAGE_PRIMARY))
-            return "[i]";
-        else if (s.equals(STORAGE_HOME))
-            return "[h]";
-        else
-            return "[e]"; // 12f1-2211
-    }
-
-    @TargetApi(21)
-    public static DocumentFile getDocumentFile(Context context, Uri uri) {
-        if (DocumentsContract.isDocumentUri(context, uri))
-            return DocumentFile.fromSingleUri(context, uri);
-        else
-            return DocumentFile.fromTreeUri(context, uri);
-    }
-
-    @TargetApi(21)
-    public static String getDocumentPath(Context context, Uri uri) { // for display purpose
-        String pid = DocumentsContract.getTreeDocumentId(uri);
-        String[] pss = pid.split(COLON, 2);
-        if (!DocumentsContract.isDocumentUri(context, uri))
-            return pss[1];
-        String did = DocumentsContract.getDocumentId(uri);
-        if (pid.equals(did))
-            return pss[1];
-        String[] dss = did.split(COLON, 2);
-        if (!pss[0].equals(dss[0])) {
-            Uri doc = DocumentsContract.buildDocumentUriUsingTree(uri, dss[0] + COLON);
-            String n = DocumentFile.fromSingleUri(context, doc).getName();
-            if (pss[1].isEmpty())
-                pss[1] = n;
-            else
-                pss[1] = new File(pss[1], n).getPath();
-        }
-        if (dss[1].isEmpty())
-            return pss[1];
-        else if (pss[1].isEmpty())
-            return dss[1];
-        return new File(pss[1], dss[1]).getPath();
-    }
-
-    @TargetApi(21)
-    public static Uri getDocumentParent(Context context, Uri uri) {
-        String pid = DocumentsContract.getTreeDocumentId(uri);
-        String[] pss = pid.split(COLON, 2);
-        if (DocumentsContract.isDocumentUri(context, uri)) {
-            String did = DocumentsContract.getDocumentId(uri);
-            String[] dss = did.split(COLON, 2);
-            File p = new File(dss[1]);
-            p = p.getParentFile();
-            if (pid.equals(did))
-                return null;
-            if (p == null) {
-                if (pss[0].equals(dss[0]) || dss[1].isEmpty())
-                    return DocumentsContract.buildDocumentUriUsingTree(uri, pid);
-                return DocumentsContract.buildDocumentUriUsingTree(uri, dss[0] + COLON);
-            }
-            return DocumentsContract.buildDocumentUriUsingTree(uri, dss[0] + COLON + p.getPath());
+    public static String getName(Context context, Uri uri) {
+        String s = uri.getScheme();
+        if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
+            return getContentName(context, uri);
+        } else if (s.equals(ContentResolver.SCHEME_FILE)) {
+            return getFile(uri).getName();
         } else {
-            return null;
+            throw new UnknownUri();
         }
     }
 
@@ -459,242 +706,6 @@ public class Storage {
         } else {
             throw new UnknownUri();
         }
-    }
-
-    @TargetApi(21)
-    public static Uri getDocumentChild(Context context, Uri uri, String name) {
-        String id;
-        if (DocumentsContract.isDocumentUri(context, uri))
-            id = DocumentsContract.getDocumentId(uri);
-        else
-            id = DocumentsContract.getTreeDocumentId(uri);
-        String[] ss = id.split(COLON, 2);
-        File f = new File(ss[1], name);
-        return DocumentsContract.buildDocumentUriUsingTree(uri, ss[0] + COLON + f.getPath());
-    }
-
-    @TargetApi(21)
-    public static String getDocumentChildPath(Uri uri) { // tree documents points to id:system/ child points to id:system/bin/
-        String id = DocumentsContract.getDocumentId(uri);
-        String parent = DocumentsContract.getTreeDocumentId(uri);
-        String r = relative(parent, id, ':');
-        if (r != null)
-            return r;
-        return relative(parent, id, '/');
-    }
-
-    @TargetApi(21)
-    public static String getDisplayName(Context context, Uri uri) {
-        String saf = "sdcard";
-        if (DocumentsContract.isDocumentUri(context, uri)) {
-            String id = DocumentsContract.getTreeDocumentId(uri);
-            String[] ss = id.split(COLON, 2); // 1D13-0F08:private
-            if (ss.length > 1)
-                return saf + getDocumentStorage(ss[0]) + CSS + getDocumentPath(context, uri);
-            else
-                return id + CSS; // uknown device path. new saf location?
-        } else {
-            String id = DocumentsContract.getTreeDocumentId(uri);
-            String[] ss = id.split(COLON, 2); // 1D13-0F08:private
-            if (ss.length > 1) // has colon
-                return saf + getDocumentStorage(ss[0]) + CSS + ss[1];
-            else
-                return id + CSS; // uknown device path. new saf location?
-        }
-    }
-
-    @TargetApi(19)
-    public static boolean isDocumentExists(Context context, Uri uri) {
-        return getDocumentFile(context, uri).exists();
-    }
-
-    @TargetApi(21)
-    public static long getDocumentFree(Context context, Uri uri) {
-        ContentResolver resolver = context.getContentResolver();
-        Uri docTreeUri = DocumentsContract.buildDocumentUriUsingTree(uri, DocumentsContract.getTreeDocumentId(uri));
-        try {
-            ParcelFileDescriptor pfd = resolver.openFileDescriptor(docTreeUri, "r");
-            StructStatVfs stats = Os.fstatvfs(pfd.getFileDescriptor());
-            return stats.f_bavail * stats.f_bsize;
-        } catch (Exception e) { // IllegalArgumentException | FileNotFoundException | ErrnoException | NullPointerException (readExceptionWithFileNotFoundExceptionFromParcel)
-            return 0;
-        }
-    }
-
-    @TargetApi(21)
-    public static boolean isEjected(Context context, Uri uri, int takeFlags) { // check folder existes and childs can be read
-        ContentResolver resolver = context.getContentResolver();
-        try {
-            resolver.takePersistableUriPermission(uri, takeFlags);
-            Cursor childCursor = null;
-            Cursor childCursor2 = null;
-            try {
-                Uri doc = DocumentsContract.buildDocumentUriUsingTree(uri, DocumentsContract.getTreeDocumentId(uri));
-                childCursor = resolver.query(doc, null, null, null, null); // check target folder
-                if (childCursor != null && childCursor.moveToNext()) {
-                    Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(uri, DocumentsContract.getTreeDocumentId(uri));
-                    childCursor2 = resolver.query(childrenUri, null, null, null, null); // check read directory content
-                    if (childCursor2 != null) {
-                        return false;
-                    }
-                }
-            } finally {
-                if (childCursor != null)
-                    childCursor.close();
-                if (childCursor2 != null)
-                    childCursor2.close();
-            }
-            return true;
-        } catch (RuntimeException e) {
-            Log.d(TAG, "open SAF failed", e);
-        }
-        return true;
-    }
-
-    public static String getName(Context context, Uri uri) {
-        String s = uri.getScheme();
-        if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
-            return getContentName(context, uri);
-        } else if (s.equals(ContentResolver.SCHEME_FILE)) {
-            return getFile(uri).getName();
-        } else {
-            throw new UnknownUri();
-        }
-    }
-
-    @TargetApi(19)
-    public static String getContentName(Context context, Uri uri) {
-        if (uri.getAuthority().startsWith(SAF)) // query crashed for DocumentsContract.isTreeUri() uris
-            return getDocumentName(context, uri);
-        else
-            return getQueryName(context, uri);
-    }
-
-    public static String getQueryName(Context context, Uri uri) {
-        ContentResolver resolver = context.getContentResolver();
-        Cursor cursor = resolver.query(uri, null, null, null, null);
-        if (cursor != null) {
-            try {
-                if (cursor.moveToNext())
-                    return cursor.getString(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_DISPLAY_NAME));
-            } finally {
-                cursor.close();
-            }
-        }
-        return uri.getLastPathSegment();
-    }
-
-    @TargetApi(21)
-    public static String getDocumentName(Context context, Uri uri) {
-        if (DocumentsContract.isDocumentUri(context, uri)) {
-            String pid = DocumentsContract.getTreeDocumentId(uri);
-            String id = DocumentsContract.getDocumentId(uri);
-            if (pid.equals(id))
-                return OpenFileDialog.ROOT;
-            String[] ss = id.split(COLON, 2);
-            if (ss[1].isEmpty())  // unknown id format or root
-                return getQueryName(context, uri); // DocumentFile.getName() return null for non existent files
-            else
-                return new File(ss[1]).getName(); // not using query when it is possible
-        } else {
-            return OpenFileDialog.ROOT;
-        }
-    }
-
-    @TargetApi(21)
-    public static String buildDocumentPath(Context context, Uri start, Uri end) {
-        if (!DocumentsContract.isDocumentUri(context, end))
-            return OpenFileDialog.ROOT;
-        String eid = DocumentsContract.getDocumentId(end);
-        String path = "";
-        ContentResolver resolver = context.getContentResolver();
-        if (!DocumentsContract.isDocumentUri(context, start))
-            start = DocumentsContract.buildDocumentUriUsingTree(start, DocumentsContract.getTreeDocumentId(start));
-        Cursor cursor = resolver.query(start, null, null, null, null);
-        if (cursor != null) {
-            try {
-                while (cursor.moveToNext()) {
-                    String id = cursor.getString(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_DOCUMENT_ID));
-                    String name = cursor.getString(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_DISPLAY_NAME));
-                    String type = cursor.getString(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_MIME_TYPE));
-                    boolean d = type.equals(DocumentsContract.Document.MIME_TYPE_DIR);
-                    if (d) {
-                        Uri doc = DocumentsContract.buildChildDocumentsUriUsingTree(start, id);
-                        Cursor cursor2 = resolver.query(doc, null, null, null, null);
-                        if (cursor2 != null) {
-                            try {
-                                while (cursor2.moveToNext()) {
-                                    id = cursor2.getString(cursor2.getColumnIndex(DocumentsContract.Document.COLUMN_DOCUMENT_ID));
-                                    name = cursor2.getString(cursor2.getColumnIndex(DocumentsContract.Document.COLUMN_DISPLAY_NAME));
-                                    type = cursor2.getString(cursor2.getColumnIndex(DocumentsContract.Document.COLUMN_MIME_TYPE));
-                                    d = type.equals(DocumentsContract.Document.MIME_TYPE_DIR);
-                                    if (relative(id, eid) != null) {
-                                        path = new File(path, name).getPath();
-                                        if (d) {
-                                            Uri uri = DocumentsContract.buildDocumentUriUsingTree(doc, id);
-                                            return new File(path, buildDocumentPath(context, uri, end)).getPath();
-                                        }
-                                    }
-                                }
-                            } finally {
-                                cursor2.close();
-                            }
-                        }
-                    } else {
-                        return new File(name).getPath();
-                    }
-                }
-            } finally {
-                cursor.close();
-            }
-        }
-        return path;
-    }
-
-    @TargetApi(21)
-    public static Uri getDocumentTreeUri(Uri treeUri) { // get document folder from document uri
-        return new Uri.Builder().scheme(ContentResolver.SCHEME_CONTENT)
-                .authority(treeUri.getAuthority()).appendPath(PATH_TREE)
-                .appendPath(DocumentsContract.getTreeDocumentId(treeUri))
-                .build();
-    }
-
-    public static boolean canWrite(File f) {
-        if (!f.canWrite())
-            return false;
-        if (f.exists() && f.getFreeSpace() > 0)
-            return true;
-        File p = f.getParentFile();
-        if (!f.exists() && !p.canWrite())
-            return false;
-        if (!f.exists() && p.exists() && p.getFreeSpace() > 0)
-            return true;
-        return false;
-    }
-
-    public static String getTypeByName(String fileName) {
-        String ext = Storage.getExt(fileName);
-        return getTypeByExt(ext);
-    }
-
-    public static String getTypeByExt(String ext) {
-        if (ext == null || ext.isEmpty())
-            return CONTENTTYPE_OCTETSTREAM; // replace 'null'
-        ext = ext.toLowerCase();
-        switch (ext) {
-            case "opus":
-                return CONTENTTYPE_OPUS; // android missing
-            case "ogg":
-                return CONTENTTYPE_OGG; // replace 'application/ogg'
-            case "fb2":
-                return CONTENTTYPE_FB2;
-            case "rar":
-                return CONTENTTYPE_RAR;
-        }
-        String type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext);
-        if (type == null)
-            return CONTENTTYPE_OCTETSTREAM;
-        return type;
     }
 
     public static class UnknownUri extends RuntimeException {
@@ -750,6 +761,10 @@ public class Storage {
                 return name.endsWith(OpenFileDialog.ROOT) ? name : name + OpenFileDialog.ROOT;
             return name;
         }
+    }
+
+    public interface NodeFilter {
+        boolean accept(Node n);
     }
 
     public Storage(Context context) {
@@ -1093,9 +1108,8 @@ public class Storage {
                 Uri tt = createFolder(dir, getContentName(context, t));
                 File[] files = f.listFiles();
                 if (files != null) {
-                    for (File m : files) {
+                    for (File m : files)
                         migrate(m, tt);
-                    }
                 }
                 delete(f);
                 return tt;
@@ -1117,9 +1131,8 @@ public class Storage {
                 return dir;
             } else {
                 File to = Storage.getFile(dir);
-                if (!to.exists() && !to.mkdirs()) {
+                if (!to.exists() && !to.mkdirs())
                     throw new RuntimeException("No permissions: " + to);
-                }
                 File tofile = new File(to, f.getName());
                 return Uri.fromFile(move(f, tofile));
             }
@@ -1174,16 +1187,17 @@ public class Storage {
         return DocumentsContract.createDocument(resolver, docUri, DocumentsContract.Document.MIME_TYPE_DIR, p.getName());
     }
 
-    public boolean touch(Uri uri, String name) {
+    public Uri touch(Uri uri, String name) {
         String s = uri.getScheme();
         if (s.equals(ContentResolver.SCHEME_FILE)) {
             File k = Storage.getFile(uri);
             File m = new File(k, name);
             try {
                 new FileOutputStream(m, true).close();
-                return true;
+                return Uri.fromFile(m);
             } catch (IOException e) {
-                return false;
+                Log.d(TAG, "touch", e);
+                return null;
             }
         } else if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
             Uri doc = child(uri, name);
@@ -1193,13 +1207,14 @@ public class Storage {
                     ContentResolver resolver = context.getContentResolver();
                     OutputStream os = resolver.openOutputStream(doc, "wa");
                     os.close();
-                    return true;
+                    return doc;
                 } catch (IOException e) {
-                    return false;
+                    Log.d(TAG, "touch", e);
+                    return null;
                 }
             } else {
                 doc = createFile(uri, name);
-                return doc != null;
+                return doc;
             }
         } else {
             throw new Storage.UnknownUri();
@@ -1214,7 +1229,7 @@ public class Storage {
             if (m.mkdir())
                 return Uri.fromFile(m);
         } else if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
-            Uri e = child(to, name);
+            Uri e = getDocumentChild(context, to, name);
             DocumentFile m = DocumentFile.fromSingleUri(context, e);
             if (m.exists()) // directory or file == failed
                 return null;
@@ -1223,7 +1238,7 @@ public class Storage {
             File f = new File(name);
             File p = f.getParentFile();
             if (p != null) {
-                to = child(to, p.getPath());
+                to = getDocumentChild(context, to, p.getPath());
                 name = f.getName();
             }
             return DocumentsContract.createDocument(resolver, to, DocumentsContract.Document.MIME_TYPE_DIR, name); // createFolder() 'mkdirs' mode
@@ -1231,10 +1246,6 @@ public class Storage {
             throw new Storage.UnknownUri();
         }
         return null;
-    }
-
-    public interface NodeFilter {
-        boolean accept(Node n);
     }
 
     public ArrayList<Node> list(Uri uri) {

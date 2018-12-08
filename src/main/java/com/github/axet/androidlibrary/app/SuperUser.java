@@ -97,7 +97,16 @@ public class SuperUser {
 
     public static boolean EXITCODE = false; // does su support for exit code for pipe scripts? run exitTest()
 
-    public static String toMessage(Throwable e) {
+    public static Throwable getCause(Throwable e) { // get to the bottom
+        Throwable c = null;
+        while (e != null) {
+            c = e;
+            e = e.getCause();
+        }
+        return c;
+    }
+
+    public static String toMessage(Throwable e) { // eat RuntimeException's
         Throwable p = e;
         while (e instanceof RuntimeException) {
             e = e.getCause();

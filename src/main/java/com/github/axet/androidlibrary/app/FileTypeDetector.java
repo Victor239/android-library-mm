@@ -32,6 +32,8 @@ import javax.xml.parsers.SAXParserFactory;
 public class FileTypeDetector { // take a look at tika from 'apache commons'
     public static final String TAG = FileTypeDetector.class.getSimpleName();
 
+    public static int BUF_SIZE = 1024; // optimal buffer size / minimum detection range bytes
+
     ArrayList<Handler> list = new ArrayList<>();
 
     public static String detecting(Context context, FileTypeDetector.Detector[] dd, InputStream is, OutputStream os, Uri u) throws IOException, NoSuchAlgorithmException {

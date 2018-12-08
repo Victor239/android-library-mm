@@ -9,7 +9,6 @@ import android.support.v7.preference.PreferenceManager;
 
 import com.github.axet.androidlibrary.R;
 
-import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 
 public class MainApplication extends Application {
@@ -120,9 +119,7 @@ public class MainApplication extends Application {
     protected void attachBaseContext(Context base) {
         super.attachBaseContext(base);
         try { // MultiDex.install(this);
-            Class<?> klass = Class.forName("android.support.multidex.MultiDex");
-            Method m = klass.getMethod("install", Context.class);
-            m.invoke(null, this);
+            Class.forName("android.support.multidex.MultiDex").getMethod("install", Context.class).invoke(null, this);
         } catch (Exception ignore) {
         }
     }
