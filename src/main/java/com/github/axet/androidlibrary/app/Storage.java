@@ -1108,9 +1108,8 @@ public class Storage {
                 Uri tt = createFolder(dir, getContentName(context, t));
                 File[] files = f.listFiles();
                 if (files != null) {
-                    for (File m : files) {
+                    for (File m : files)
                         migrate(m, tt);
-                    }
                 }
                 delete(f);
                 return tt;
@@ -1132,9 +1131,8 @@ public class Storage {
                 return dir;
             } else {
                 File to = Storage.getFile(dir);
-                if (!to.exists() && !to.mkdirs()) {
+                if (!to.exists() && !to.mkdirs())
                     throw new RuntimeException("No permissions: " + to);
-                }
                 File tofile = new File(to, f.getName());
                 return Uri.fromFile(move(f, tofile));
             }
@@ -1189,16 +1187,17 @@ public class Storage {
         return DocumentsContract.createDocument(resolver, docUri, DocumentsContract.Document.MIME_TYPE_DIR, p.getName());
     }
 
-    public boolean touch(Uri uri, String name) {
+    public Uri touch(Uri uri, String name) {
         String s = uri.getScheme();
         if (s.equals(ContentResolver.SCHEME_FILE)) {
             File k = Storage.getFile(uri);
             File m = new File(k, name);
             try {
                 new FileOutputStream(m, true).close();
-                return true;
+                return Uri.fromFile(m);
             } catch (IOException e) {
-                return false;
+                Log.d(TAG, "touch", e);
+                return null;
             }
         } else if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
             Uri doc = child(uri, name);
@@ -1208,13 +1207,14 @@ public class Storage {
                     ContentResolver resolver = context.getContentResolver();
                     OutputStream os = resolver.openOutputStream(doc, "wa");
                     os.close();
-                    return true;
+                    return doc;
                 } catch (IOException e) {
-                    return false;
+                    Log.d(TAG, "touch", e);
+                    return null;
                 }
             } else {
                 doc = createFile(uri, name);
-                return doc != null;
+                return doc;
             }
         } else {
             throw new Storage.UnknownUri();
@@ -1229,7 +1229,7 @@ public class Storage {
             if (m.mkdir())
                 return Uri.fromFile(m);
         } else if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
-            Uri e = child(to, name);
+            Uri e = getDocumentChild(context, to, name);
             DocumentFile m = DocumentFile.fromSingleUri(context, e);
             if (m.exists()) // directory or file == failed
                 return null;
@@ -1238,7 +1238,7 @@ public class Storage {
             File f = new File(name);
             File p = f.getParentFile();
             if (p != null) {
-                to = child(to, p.getPath());
+                to = getDocumentChild(context, to, p.getPath());
                 name = f.getName();
             }
             return DocumentsContract.createDocument(resolver, to, DocumentsContract.Document.MIME_TYPE_DIR, name); // createFolder() 'mkdirs' mode
