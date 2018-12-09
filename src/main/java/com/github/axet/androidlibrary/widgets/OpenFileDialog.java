@@ -567,7 +567,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
                 Log.e(TAG, "listFiles", e);
                 if (emptyView != null) {
                     emptyView.setVisibility(View.VISIBLE);
-                    emptyView.setText(SuperUser.toMessage(e));
+                    emptyView.setText(ErrorDialog.toMessage(e));
                 }
             }
 

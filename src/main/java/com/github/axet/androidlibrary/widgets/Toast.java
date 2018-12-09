@@ -53,20 +53,38 @@ public class Toast {
         void onDismiss(Toast t);
     }
 
-    public static String toString(Throwable e) {
-        Throwable p;
-        while ((p = e.getCause()) != null) {
-            e = p;
-        }
-        String msg = e.getClass().getSimpleName();
-        String m = e.getMessage();
-        if (m != null && !m.isEmpty())
-            msg += ": " + m;
-        return msg;
+    public static void Post(final Activity a, final Throwable e) {
+        Log.d(TAG, "post", e);
+        a.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Error(a, ErrorDialog.toMessage(e));
+            }
+        });
+    }
+
+    public static void Post(final Activity a, final String msg) {
+        a.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Error(a, msg);
+            }
+        });
+    }
+
+    public static Toast Error(Context context, Throwable e) {
+        Log.d(TAG, "Error", e);
+        return Error(context, ErrorDialog.toMessage(e));
+    }
+
+    public static Toast Error(Context context, String msg) {
+        Toast t = Toast.makeText(context, msg, LENGTH_SHORT);
+        t.show();
+        return t;
     }
 
     public static Toast Error(Context context, String msg, Throwable e) {
-        Toast t = Toast.makeText(context, msg + "\n" + toString(e), LENGTH_SHORT);
+        Toast t = Toast.makeText(context, msg + "\n" + ErrorDialog.toMessage(e), LENGTH_SHORT);
         t.show();
         return t;
     }

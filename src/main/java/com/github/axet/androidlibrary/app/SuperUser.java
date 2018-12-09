@@ -9,6 +9,8 @@ import android.system.Os;
 import android.system.OsConstants;
 import android.util.Log;
 
+import com.github.axet.androidlibrary.widgets.ErrorDialog;
+
 import org.apache.commons.io.IOUtils;
 
 import java.io.BufferedInputStream;
@@ -96,28 +98,6 @@ public class SuperUser {
     public static final File DOTDOT = new File("..");
 
     public static boolean EXITCODE = false; // does su support for exit code for pipe scripts? run exitTest()
-
-    public static Throwable getCause(Throwable e) { // get to the bottom
-        Throwable c = null;
-        while (e != null) {
-            c = e;
-            e = e.getCause();
-        }
-        return c;
-    }
-
-    public static String toMessage(Throwable e) { // eat RuntimeException's
-        Throwable p = e;
-        while (e instanceof RuntimeException) {
-            e = e.getCause();
-            if (e != null)
-                p = e;
-        }
-        String msg = p.getMessage();
-        if (msg == null || msg.isEmpty())
-            msg = p.getClass().getCanonicalName();
-        return msg;
-    }
 
     public FileDescriptor dup(FileDescriptor fd) {
         try {
@@ -780,7 +760,7 @@ public class SuperUser {
             if (stderr != null && !stderr.isEmpty())
                 return SuperUser.errno(stderr, errno);
             if (e != null)
-                return SuperUser.errno(toMessage(e), errno);
+                return SuperUser.errno(ErrorDialog.toMessage(e), errno);
             return SuperUser.errno("", errno);
         }
     }
