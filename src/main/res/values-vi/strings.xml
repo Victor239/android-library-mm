@@ -71,4 +71,5 @@
     </string-array>
 
     <string name="pref_screenlock_title">Giữ sáng màn hình</string>
+    <string name="migrating_data">Di chuyển dữ liệu</string>
 </resources>
