@@ -1050,39 +1050,6 @@ public class Storage {
         }
     }
 
-    public void migrateLocalStorageDialog(final Activity a) {
-        int dp10 = ThemeUtils.dp2px(context, 10);
-        ProgressBar progress = new ProgressBar(context);
-        progress.setIndeterminate(true);
-        progress.setPadding(dp10, dp10, dp10, dp10);
-        AlertDialog.Builder b = new AlertDialog.Builder(a);
-        b.setTitle(R.string.migrating_data);
-        b.setView(progress);
-        b.setCancelable(false);
-        final AlertDialog dialog = b.create();
-        final Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    migrateLocalStorage();
-                } catch (final RuntimeException e) {
-                    Toast.Post(a, e);
-                }
-                a.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        dialog.cancel();
-                    }
-                });
-            }
-        });
-        dialog.show();
-        thread.start();
-    }
-
-    public void migrateLocalStorage() {
-    }
-
     public static Uri migrate(Context context, File f, Uri dir) {
         String s = dir.getScheme();
         if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
@@ -1401,5 +1368,38 @@ public class Storage {
             return Uri.fromFile(getLocalStorage());
         else
             return Uri.fromFile(getStoragePath(f));
+    }
+
+    public void migrateLocalStorageDialog(final Activity a) {
+        int dp10 = ThemeUtils.dp2px(context, 10);
+        ProgressBar progress = new ProgressBar(context);
+        progress.setIndeterminate(true);
+        progress.setPadding(dp10, dp10, dp10, dp10);
+        AlertDialog.Builder b = new AlertDialog.Builder(a);
+        b.setTitle(R.string.migrating_data);
+        b.setView(progress);
+        b.setCancelable(false);
+        final AlertDialog dialog = b.create();
+        final Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    migrateLocalStorage();
+                } catch (final RuntimeException e) {
+                    Toast.Post(a, e);
+                }
+                a.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        dialog.cancel();
+                    }
+                });
+            }
+        });
+        dialog.show();
+        thread.start();
+    }
+
+    public void migrateLocalStorage() {
     }
 }
