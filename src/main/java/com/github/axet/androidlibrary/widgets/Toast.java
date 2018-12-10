@@ -6,6 +6,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Handler;
+import android.os.Looper;
 import android.support.annotation.IntDef;
 import android.util.Log;
 import android.view.Gravity;
@@ -54,7 +55,7 @@ public class Toast {
     }
 
     public static void Post(final Activity a, final Throwable e) {
-        Log.d(TAG, "post", e);
+        Log.e(TAG, "Post", e);
         a.runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -72,19 +73,41 @@ public class Toast {
         });
     }
 
+    public static void Post(final Context context, final String msg) {
+        Handler handler = new Handler(Looper.getMainLooper());
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                Error(context, msg);
+            }
+        });
+    }
+
+    public static void Post(final Context context, final Throwable e) {
+        Log.e(TAG, "Post", e);
+        Handler handler = new Handler(Looper.getMainLooper());
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                Error(context, e);
+            }
+        });
+    }
+
     public static Toast Error(Context context, Throwable e) {
-        Log.d(TAG, "Error", e);
+        Log.e(TAG, "Error", e);
         return Error(context, ErrorDialog.toMessage(e));
     }
 
     public static Toast Error(Context context, String msg) {
-        Toast t = Toast.makeText(context, msg, LENGTH_SHORT);
+        Toast t = makeText(context, msg, LENGTH_SHORT);
         t.show();
         return t;
     }
 
     public static Toast Error(Context context, String msg, Throwable e) {
-        Toast t = Toast.makeText(context, msg + "\n" + ErrorDialog.toMessage(e), LENGTH_SHORT);
+        Log.e(TAG, "Error", e);
+        Toast t = makeText(context, msg + "\n" + ErrorDialog.toMessage(e), LENGTH_SHORT);
         t.show();
         return t;
     }

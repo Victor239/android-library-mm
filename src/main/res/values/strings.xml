@@ -71,4 +71,6 @@
     </string-array>
 
     <string name="pref_screenlock_title">Keep Screen On</string>
+
+    <string name="migrating_data">Migrating data</string>
 </resources>

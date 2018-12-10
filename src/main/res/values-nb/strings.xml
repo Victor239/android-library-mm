@@ -71,4 +71,6 @@
     </string-array>
 
     <string name="pref_screenlock_title">Hold skjermen påskrudd</string>
+
+    <string name="migrating_data">Migrerer dataene</string>
 </resources>

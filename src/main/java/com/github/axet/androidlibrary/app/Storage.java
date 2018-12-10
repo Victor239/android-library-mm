@@ -19,12 +19,17 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.provider.DocumentFile;
+import android.support.v7.app.AlertDialog;
 import android.system.Os;
 import android.system.StructStatVfs;
 import android.util.Log;
 import android.webkit.MimeTypeMap;
+import android.widget.ProgressBar;
 
+import com.github.axet.androidlibrary.R;
 import com.github.axet.androidlibrary.widgets.OpenFileDialog;
+import com.github.axet.androidlibrary.widgets.ThemeUtils;
+import com.github.axet.androidlibrary.widgets.Toast;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -191,7 +196,7 @@ public class Storage {
     }
 
     public static String getTypeByName(String fileName) {
-        String ext = Storage.getExt(fileName);
+        String ext = getExt(fileName);
         return getTypeByExt(ext);
     }
 
@@ -832,7 +837,7 @@ public class Storage {
             File f1 = getFile(f);
             File ff = new File(f1.getParent(), t);
             if (ff.exists())
-                ff = Storage.getNextFile(ff);
+                ff = getNextFile(ff);
             f1.renameTo(ff);
             return Uri.fromFile(ff);
         } else {
@@ -899,7 +904,7 @@ public class Storage {
     public static Uri touch(Context context, Uri uri, String name) {
         String s = uri.getScheme();
         if (s.equals(ContentResolver.SCHEME_FILE)) {
-            File k = Storage.getFile(uri);
+            File k = getFile(uri);
             File m = new File(k, name);
             try {
                 new FileOutputStream(m, true).close();
@@ -926,7 +931,7 @@ public class Storage {
                 return doc;
             }
         } else {
-            throw new Storage.UnknownUri();
+            throw new UnknownUri();
         }
     }
 
@@ -934,7 +939,7 @@ public class Storage {
         ContentResolver resolver = context.getContentResolver();
         String s = to.getScheme();
         if (s.equals(ContentResolver.SCHEME_FILE)) {
-            File k = Storage.getFile(to);
+            File k = getFile(to);
             File m = new File(k, name);
             if (m.mkdir())
                 return Uri.fromFile(m);
@@ -953,7 +958,7 @@ public class Storage {
             }
             return DocumentsContract.createDocument(resolver, to, DocumentsContract.Document.MIME_TYPE_DIR, name); // createFolder() 'mkdirs' mode
         } else {
-            throw new Storage.UnknownUri();
+            throw new UnknownUri();
         }
         return null;
     }
@@ -1028,18 +1033,18 @@ public class Storage {
             File tf = getFile(t);
             File td = tf.getParentFile();
 
-            if (Storage.isSame(parent, td))
+            if (isSame(parent, td))
                 return null;
 
             if (!td.exists() && !td.mkdirs())
                 throw new RuntimeException("unable to create: " + td);
 
-            File to = Storage.getNextFile(td, n, ext);
+            File to = getNextFile(td, n, ext);
 
-            if (Storage.isSame(f, to))
+            if (isSame(f, to))
                 return null;
 
-            return Uri.fromFile(Storage.move(f, to));
+            return Uri.fromFile(move(f, to));
         } else {
             throw new UnknownUri();
         }
@@ -1078,7 +1083,7 @@ public class Storage {
                 delete(f);
                 return dir;
             } else {
-                File to = Storage.getFile(dir);
+                File to = getFile(dir);
                 if (!to.exists() && !to.mkdirs())
                     throw new RuntimeException("No permissions: " + to);
                 File tofile = new File(to, f.getName());
@@ -1097,7 +1102,7 @@ public class Storage {
         ArrayList<Node> files = new ArrayList<>();
         String s = uri.getScheme();
         if (s.equals(ContentResolver.SCHEME_FILE)) {
-            File file = Storage.getFile(uri);
+            File file = getFile(uri);
             File[] ff = file.listFiles();
             if (ff != null) {
                 for (File f : ff) {
@@ -1105,8 +1110,9 @@ public class Storage {
                     if (filter == null || filter.accept(n))
                         files.add(n);
                 }
+                return files;
             }
-            return files;
+            throw new RuntimeException("unable to read");
         } else if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
             String id;
             if (DocumentsContract.isDocumentUri(context, uri))
@@ -1127,7 +1133,7 @@ public class Storage {
             }
             throw new RuntimeException("unable to read");
         } else {
-            throw new Storage.UnknownUri();
+            throw new UnknownUri();
         }
     }
 
@@ -1139,9 +1145,9 @@ public class Storage {
         ArrayList<Node> files = new ArrayList<>();
         String s = uri.getScheme();
         if (s.equals(ContentResolver.SCHEME_FILE)) {
-            File r = Storage.getFile(root);
-            File f = Storage.getFile(uri);
-            files.add(new Storage.Node(uri, relative(r, f).getPath(), f.isDirectory(), f.length(), f.lastModified()));
+            File r = getFile(root);
+            File f = getFile(uri);
+            files.add(new Node(uri, relative(r, f).getPath(), f.isDirectory(), f.length(), f.lastModified()));
             File[] kk = f.listFiles();
             if (kk != null) {
                 for (File k : kk) {
@@ -1166,7 +1172,7 @@ public class Storage {
                     long size = cursor.getLong(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_SIZE));
                     long last = cursor.getLong(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_LAST_MODIFIED));
                     boolean d = type.equals(DocumentsContract.Document.MIME_TYPE_DIR);
-                    files.add(new Storage.Node(uri, p, d, size, last)); // root uri (unchanged)
+                    files.add(new Node(uri, p, d, size, last)); // root uri (unchanged)
                     if (d) {
                         doc = DocumentsContract.buildChildDocumentsUriUsingTree(uri, id);
                         Cursor cursor2 = resolver.query(doc, null, null, null, null);
@@ -1189,7 +1195,7 @@ public class Storage {
                 cursor.close();
             }
         } else {
-            throw new Storage.UnknownUri();
+            throw new UnknownUri();
         }
         return files;
     }
@@ -1362,5 +1368,38 @@ public class Storage {
             return Uri.fromFile(getLocalStorage());
         else
             return Uri.fromFile(getStoragePath(f));
+    }
+
+    public void migrateLocalStorageDialog(final Activity a) {
+        int dp10 = ThemeUtils.dp2px(context, 10);
+        ProgressBar progress = new ProgressBar(context);
+        progress.setIndeterminate(true);
+        progress.setPadding(dp10, dp10, dp10, dp10);
+        AlertDialog.Builder b = new AlertDialog.Builder(a);
+        b.setTitle(R.string.migrating_data);
+        b.setView(progress);
+        b.setCancelable(false);
+        final AlertDialog dialog = b.create();
+        final Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    migrateLocalStorage();
+                } catch (final RuntimeException e) {
+                    Toast.Post(a, e);
+                }
+                a.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        dialog.cancel();
+                    }
+                });
+            }
+        });
+        dialog.show();
+        thread.start();
+    }
+
+    public void migrateLocalStorage() {
     }
 }

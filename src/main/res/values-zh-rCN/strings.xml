@@ -71,4 +71,6 @@
     </string-array>
 
     <string name="pref_screenlock_title">保持屏幕开启</string>
+
+    <string name="migrating_data">迁移数据</string>
 </resources>

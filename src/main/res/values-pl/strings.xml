@@ -71,4 +71,6 @@
     </string-array>
 
     <string name="pref_screenlock_title">Wygaszenie ekranu</string>
+
+    <string name="migrating_data">Migracja danych</string>
 </resources>

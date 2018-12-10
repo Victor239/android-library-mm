@@ -883,7 +883,7 @@ public class WebViewCustom extends WebView {
             }
             String[] cc = cookies.split(";");
             for (String c : cc) {
-                String[] vv = c.split("=");
+                String[] vv = c.split("=", 2);
                 for (File f = Storage.getFile(uri); f != null; f = f.getParentFile()) {
                     String p;
                     String path;
@@ -928,7 +928,7 @@ public class WebViewCustom extends WebView {
         Uri uri = Uri.parse(url);
 
         for (String c : cc) {
-            String[] vv = c.split("=");
+            String[] vv = c.split("=", 2);
             String n = null;
             if (vv.length > 0)
                 n = vv[0].trim();

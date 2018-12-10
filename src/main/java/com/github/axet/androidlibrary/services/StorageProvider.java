@@ -101,10 +101,9 @@ public class StorageProvider extends ContentProvider {
         String s = p.getScheme();
         if (s.equals(ContentResolver.SCHEME_CONTENT) && Build.VERSION.SDK_INT >= 21 && !p.getAuthority().equals(authory)) {
             String tree = DocumentsContract.getTreeDocumentId(p);
-            String[] ss = tree.split(Storage.COLON); // 1D13-0F08:private
-            if (!ss[0].equals(Storage.STORAGE_PRIMARY)) {
+            String[] ss = tree.split(Storage.COLON, 2); // 1D13-0F08:private
+            if (!ss[0].equals(Storage.STORAGE_PRIMARY))
                 return false;
-            }
         }
         if (s.equals(ContentResolver.SCHEME_FILE)) {
             if (Build.VERSION.SDK_INT >= 24 && context.getApplicationInfo().targetSdkVersion >= 24)
@@ -140,7 +139,6 @@ public class StorageProvider extends ContentProvider {
                     uri = Uri.fromFile(r);
                 }
             }
-
         }
         return uri;
     }
@@ -183,16 +181,10 @@ public class StorageProvider extends ContentProvider {
         boolean perms = false;
         String s = uri.getScheme();
         if (s.equals(ContentResolver.SCHEME_CONTENT) && Build.VERSION.SDK_INT >= 21 && uri.getAuthority().startsWith(Storage.SAF)) { // convert content://.../primary to file://
-            String tree = DocumentsContract.getTreeDocumentId(uri);
-            String[] ss = tree.split(Storage.COLON); // 'primary:Documents' or '1D13-0F08:Documents'
-            if (ss[0].equals(Storage.STORAGE_PRIMARY)) {
-                File f = Environment.getExternalStorageDirectory();
-                if (ss.length > 1)
-                    f = new File(f, ss[1]);
-                uri = Uri.fromFile(f);
-            } else {
+            Uri old = uri;
+            uri = filterFolderIntent(context, uri);
+            if (old == uri)
                 perms = true;
-            }
         } else {
             perms = true;
         }

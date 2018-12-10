@@ -42,7 +42,6 @@ import android.widget.TextView;
 import com.github.axet.androidlibrary.R;
 import com.github.axet.androidlibrary.app.MainApplication;
 import com.github.axet.androidlibrary.app.Storage;
-import com.github.axet.androidlibrary.app.SuperUser;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -117,12 +116,16 @@ public class OpenFileDialog extends AlertDialog.Builder {
 
     protected Button positive; // enable / disable OK
 
-    public static File[] getPortableList() {
+    public static File getPortable() {
         String path = System.getenv(OpenFileDialog.ANDROID_STORAGE);
         if (path == null || path.isEmpty())
             path = OpenFileDialog.DEFAULT_STORAGE_PATH;
-        File storage = new File(path);
-        return storage.listFiles(new FileFilter() {
+        return new File(path);
+    }
+
+    public static File[] getPortableList() {
+        File portable = getPortable();
+        return portable.listFiles(new FileFilter() {
             @Override
             public boolean accept(File file) {
                 String name = file.getName();
