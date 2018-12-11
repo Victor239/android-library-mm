@@ -171,6 +171,10 @@ public class FileTypeDetector { // take a look at tika from 'apache commons'
             public Handler(String ext, int[] b) {
                 super(ext, b);
             }
+
+            public boolean detect(String e) {
+                return done && detected && ext.equals(e);
+            }
         }
 
         public ExtDetector(Detector[] dd) {
@@ -188,7 +192,7 @@ public class FileTypeDetector { // take a look at tika from 'apache commons'
             String name = Storage.getName(context, u);
             String e = Storage.getExt(name).toLowerCase();
             for (Handler h : list) {
-                if (h.done && h.detected && e.equals(h.ext)) {
+                if (h.detect(e)) {
                     h.detected = true;
                     h.done = true;
                 } else {
@@ -298,8 +302,8 @@ public class FileTypeDetector { // take a look at tika from 'apache commons'
     }
 
     public static class FileTypeDetectorZip extends FileTypeDetectorIO {
-        ArrayList<Handler> list = new ArrayList<>();
         Thread thread;
+        ArrayList<Handler> list = new ArrayList<>();
 
         public static class Handler extends FileTypeDetectorIO.Handler {
             public Handler(String ext) {
@@ -340,7 +344,7 @@ public class FileTypeDetector { // take a look at tika from 'apache commons'
                     } finally {
                         try {
                             is.close();
-                        } catch (IOException e1) {
+                        } catch (IOException e) {
                         }
                         try {
                             zip.close();

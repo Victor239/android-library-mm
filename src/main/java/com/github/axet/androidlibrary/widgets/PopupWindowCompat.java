@@ -101,7 +101,11 @@ public class PopupWindowCompat {
     }
 
     public static void showAsTooltip(PopupWindow p, View anchor, int gravity) {
-        showAsTooltip(p, anchor, gravity, ThemeUtils.getColor(anchor.getContext(), R.color.button_material_light), -1);
+        showAsTooltip(p, anchor, gravity, -1);
+    }
+
+    public static void showAsTooltip(PopupWindow p, View anchor, int gravity, int maxwidth) {
+        showAsTooltip(p, anchor, gravity, ThemeUtils.getThemeColor(anchor.getContext(), R.attr.colorButtonNormal), maxwidth);
     }
 
     public static void showAsTooltip(final PopupWindow p, View anchor, int gravity, int background, int maxwidth) {
@@ -216,7 +220,6 @@ public class PopupWindowCompat {
         setTintCompat(triangle, background);
         Drawable round = content.getBackground();
         setTintCompat(round, background);
-
 
         int l = rect.centerX() - x - arrow.getMeasuredWidth() / 2;
         int ll = ThemeUtils.dp2px(context, 10); // round background range left
