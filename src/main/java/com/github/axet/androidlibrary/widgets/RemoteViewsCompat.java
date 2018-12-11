@@ -8,6 +8,7 @@ import android.os.Build;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.view.ContextThemeWrapper;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -279,4 +280,11 @@ public class RemoteViewsCompat {
         inflater.inflate(view.getLayoutId(), null);
     }
 
+    public static void mergeRemoteViews(RemoteViews view, RemoteViews a) {
+        try {
+            view.getClass().getDeclaredMethod("mergeRemoteViews", RemoteViews.class).invoke(view, a);
+        } catch (Exception e) {
+            Log.e(TAG, "merge", e);
+        }
+    }
 }
