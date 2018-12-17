@@ -5,7 +5,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.text.TextUtils;
 import android.util.Log;
-import android.webkit.WebResourceResponse;
 
 import com.github.axet.androidlibrary.app.AlarmManager;
 
@@ -15,10 +14,12 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.io.StringBufferInputStream;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpCookie;
@@ -278,7 +279,7 @@ public class HttpClient {
                 html += str;
                 html += "</body></html>";
                 buf = html.getBytes(Charset.defaultCharset().name());
-                setData(new ByteArrayInputStream(buf));
+                is = new ByteArrayInputStream(buf);
             } catch (IOException ee) {
                 Log.e(TAG, "HttpError", ee);
             }
@@ -310,24 +311,25 @@ public class HttpClient {
         }
     }
 
-    @TargetApi(11) // WebResourceResponse API11+
-    public static class DownloadResponse extends WebResourceResponse {
+    public static class DownloadResponse {
         public boolean downloaded; // or isAttachment
 
         public String userAgent;
         public String contentDisposition;
         public long contentLength;
         public String url;
-        byte[] buf;
+        public byte[] buf;
+        public String mimetype;
+        public String encoding;
+        public InputStream is;
 
-        HttpUriRequest request;
-        CloseableHttpResponse response;
-        HttpEntity entity;
-        StatusLine status;
-        ContentType contentType;
+        public HttpUriRequest request;
+        public CloseableHttpResponse response;
+        public HttpEntity entity;
+        public StatusLine status;
+        public ContentType contentType;
 
         public DownloadResponse(HttpClientContext context, HttpUriRequest request, CloseableHttpResponse response) {
-            super(null, null, null);
             this.request = request;
             this.response = response;
             entity = response.getEntity();
@@ -338,7 +340,7 @@ public class HttpClient {
             if (url == null)
                 url = request.getURI().toString();
             status = response.getStatusLine();
-            setMimeType(contentType.getMimeType());
+            mimetype = contentType.getMimeType();
             Header ct = response.getFirstHeader("Content-Disposition");
             if (ct != null)
                 contentDisposition = ct.getValue();
@@ -346,14 +348,22 @@ public class HttpClient {
         }
 
         public DownloadResponse(String mimeType, String encoding, InputStream data) {
-            super(mimeType, encoding, data);
-            downloaded = true;
+            this.mimetype = mimeType;
+            this.encoding = encoding;
+            this.is = data;
+            this.downloaded = true;
         }
 
         public DownloadResponse(String mimeType, String encoding, String data) {
-            super(mimeType, encoding, null);
+            this(mimeType, encoding, (InputStream) null);
             setHtml(data);
-            downloaded = true;
+        }
+
+        public DownloadResponse(HttpURLConnection conn) throws IOException {
+            this.is = new BufferedInputStream(conn.getInputStream());
+            this.contentType = ContentType.create(conn.getContentType());
+            this.contentLength = conn.getContentLength();
+            this.downloaded = true;
         }
 
         public String getUrl() {
@@ -366,7 +376,7 @@ public class HttpClient {
 
         public String getHtml() {
             try {
-                return new String(buf, getEncoding());
+                return new String(buf, encoding);
             } catch (UnsupportedEncodingException e) {
                 throw new RuntimeException(e);
             }
@@ -374,8 +384,8 @@ public class HttpClient {
 
         public void setHtml(String html) {
             try {
-                buf = html.getBytes(getEncoding());
-                setData(new ByteArrayInputStream(buf));
+                buf = html.getBytes(encoding);
+                is = new ByteArrayInputStream(buf);
             } catch (UnsupportedEncodingException e) {
                 throw new RuntimeException(e);
             }
@@ -412,8 +422,8 @@ public class HttpClient {
                             enc = Charset.defaultCharset();
                     }
                     if (enc != null)
-                        setEncoding(Charsets.toCharset(enc).name());
-                    setData(new ByteArrayInputStream(buf));
+                        encoding = (Charsets.toCharset(enc).name());
+                    is = new ByteArrayInputStream(buf);
                     downloaded = true;
                 }
                 consume();
@@ -466,7 +476,7 @@ public class HttpClient {
         }
 
         public boolean isHtml() {
-            return getMimeType().equals(CONTENTTYPE_HTML);
+            return mimetype.equals(CONTENTTYPE_HTML);
         }
 
         public String getContentType() {
@@ -477,7 +487,7 @@ public class HttpClient {
             if (entity != null)
                 return entity.getContent();
             else
-                return super.getData();
+                return is;
         }
 
         public HttpUriRequest getRequest() {

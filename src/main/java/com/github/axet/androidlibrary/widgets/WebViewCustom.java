@@ -8,6 +8,7 @@ import android.net.UrlQuerySanitizer;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
+import android.support.annotation.NonNull;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.webkit.ConsoleMessage;
@@ -38,6 +39,7 @@ import org.jsoup.nodes.Element;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpCookie;
 import java.net.SocketTimeoutException;
 import java.net.URL;
@@ -155,6 +157,22 @@ public class WebViewCustom extends WebView {
             Log.e(TAG, "load timeout " + url);
         else
             Log.e(TAG, url, e);
+    }
+
+    @TargetApi(11)
+    public static class WebResponse extends android.webkit.WebResourceResponse {
+        public WebResponse(String mimeType, String encoding, InputStream data) {
+            super(mimeType, encoding, data);
+        }
+
+        @TargetApi(21)
+        public WebResponse(String mimeType, String encoding, int statusCode, @NonNull String reasonPhrase, Map<String, String> responseHeaders, InputStream data) {
+            super(mimeType, encoding, statusCode, reasonPhrase, responseHeaders, data);
+        }
+
+        public WebResponse(HttpClient.DownloadResponse w) {
+            super(w.mimetype, w.encoding, w.is);
+        }
     }
 
     public class Interceptor {
@@ -345,12 +363,12 @@ public class WebViewCustom extends WebView {
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 if (request.getMethod().equals(METHOD_POST)) // post requets come with not data in 'request', ignore at all.
                     return null;
-                return WebViewCustom.this.shouldInterceptRequest(view, request.getUrl().toString());
+                return new WebResponse(WebViewCustom.this.shouldInterceptRequest(view, request.getUrl().toString()));
             }
 
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
-                return WebViewCustom.this.shouldInterceptRequest(view, url);
+                return new WebResponse(WebViewCustom.this.shouldInterceptRequest(view, url));
             }
         });
     }
@@ -557,13 +575,13 @@ public class WebViewCustom extends WebView {
 
     public void load(String url, String hist, final HttpClient.DownloadResponse r) {
         if (!r.downloaded) {
-            listener.onDownloadStart(url, r.userAgent, r.contentDisposition, r.getMimeType(), r.contentLength);
+            listener.onDownloadStart(url, r.userAgent, r.contentDisposition, r.mimetype, r.contentLength);
             return;
         }
         try {
             url = r.getUrl(); // error or not, we need to keep javascript working
 
-            String html = IOUtils.toString(r.getData(), r.getEncoding());
+            String html = IOUtils.toString(r.is, r.encoding);
             if (r.getError() == null) {
                 hist = url; // no error, we have to get last redirected url
                 if (r.isHtml())
