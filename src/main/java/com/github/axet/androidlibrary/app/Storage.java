@@ -743,7 +743,7 @@ public class Storage {
 
     public static String getName(Context context, Uri uri) {
         String s = uri.getScheme();
-        if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
+        if (s.equals(ContentResolver.SCHEME_CONTENT)) { // all SDK_INT
             return getContentName(context, uri);
         } else if (s.equals(ContentResolver.SCHEME_FILE)) {
             return getFile(uri).getName();
