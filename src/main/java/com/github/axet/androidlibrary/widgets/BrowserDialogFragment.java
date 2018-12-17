@@ -8,8 +8,6 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
-import android.support.v4.app.DialogFragment;
-import android.support.v4.view.ViewPager;
 import android.support.v7.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -31,12 +29,11 @@ import com.github.axet.androidlibrary.net.HttpClient;
 
 import org.jsoup.nodes.Document;
 
-public class BrowserDialogFragment extends DialogFragment {
+public class BrowserDialogFragment extends DialogFragmentCompat {
     public static String TAG = BrowserDialogFragment.class.getSimpleName();
 
     public static final String ABOUT_HTML = "about:html";
 
-    public View v;
     public Handler handler = new Handler();
     public ImageButton back;
     public ImageButton forward;
@@ -134,30 +131,15 @@ public class BrowserDialogFragment extends DialogFragment {
     }
 
     @Override
-    public Dialog onCreateDialog(Bundle savedInstanceState) {
-        AlertDialog d = new AlertDialog.Builder(getActivity())
-                .setNeutralButton(getContext().getString(R.string.close),
-                        new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int whichButton) {
-                                dialog.dismiss();
-                            }
-                        }
-                )
-                .setView(createView(LayoutInflater.from(getContext()), null, savedInstanceState))
-                .create();
-        return d;
-    }
-
-    @Nullable
-    @Override
-    public View getView() {
-        return null;
-    }
-
-    @Nullable
-    @Override
-    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return v;
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        builder.setNeutralButton(getContext().getString(R.string.close),
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+                        dialog.dismiss();
+                    }
+                }
+        );
     }
 
     public String getString(String k, String d) {
