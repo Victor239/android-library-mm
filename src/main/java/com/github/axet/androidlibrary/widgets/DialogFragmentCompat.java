@@ -1,6 +1,5 @@
 package com.github.axet.androidlibrary.widgets;
 
-import android.app.Dialog;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
@@ -16,7 +15,7 @@ public class DialogFragmentCompat extends DialogFragment {
     public View v;
 
     @Override
-    public Dialog onCreateDialog(Bundle savedInstanceState) {
+    public AlertDialog onCreateDialog(Bundle savedInstanceState) {
         builder = new AlertDialog.Builder(getActivity());
         onCreateDialog(builder, savedInstanceState);
         d = builder.create();
