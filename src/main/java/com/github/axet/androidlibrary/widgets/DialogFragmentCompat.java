@@ -24,13 +24,14 @@ public class DialogFragmentCompat extends DialogFragment {
     }
 
     public void onCreateDialog(AlertDialog.Builder builder, Bundle savedInstanceState) {
-        builder.setView(createView(LayoutInflater.from(getContext()), null, savedInstanceState));
+        v = createView(LayoutInflater.from(getContext()), null, savedInstanceState);
+        builder.setView(v);
     }
 
     @Nullable
     @Override
     public View getView() {
-        return null;
+        return null; // return null, or 'IllegalStateException DialogFragment can not be attached to a container view'
     }
 
     @Nullable
@@ -40,13 +41,13 @@ public class DialogFragmentCompat extends DialogFragment {
     }
 
     public View createView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) { // override
-        return v;
+        return null;
     }
 
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        d.setView(view); // with out setView api10 crash due to wrapping of child view
+        d.setView(view); // with out setView api10 crash due to wrapping of child view 'IllegalStateException: The specified child already has a parent'
     }
 
 }
