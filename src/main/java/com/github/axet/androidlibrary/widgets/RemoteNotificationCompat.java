@@ -5,6 +5,7 @@ import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
+import android.graphics.Bitmap;
 import android.os.Build;
 import android.support.v4.app.NotificationCompat;
 import android.support.v7.view.ContextThemeWrapper;
@@ -154,6 +155,13 @@ public class RemoteNotificationCompat extends NotificationCompat {
             RemoteViewsCompat.setContentDescription(compact, id, text);
             if (big != null)
                 RemoteViewsCompat.setContentDescription(big, id, text);
+            return this;
+        }
+
+        public Builder setImageViewBitmap(int id, Bitmap bm) {
+            compact.setImageViewBitmap(id, bm);
+            if (big != null)
+                big.setImageViewBitmap(id, bm);
             return this;
         }
 
