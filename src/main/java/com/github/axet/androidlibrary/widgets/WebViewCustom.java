@@ -363,12 +363,18 @@ public class WebViewCustom extends WebView {
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 if (request.getMethod().equals(METHOD_POST)) // post requets come with not data in 'request', ignore at all.
                     return null;
-                return new WebResponse(WebViewCustom.this.shouldInterceptRequest(view, request.getUrl().toString()));
+                HttpClient.DownloadResponse w = WebViewCustom.this.shouldInterceptRequest(view, request.getUrl().toString());
+                if (w == null)
+                    return null;
+                return new WebResponse(w);
             }
 
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
-                return new WebResponse(WebViewCustom.this.shouldInterceptRequest(view, url));
+                HttpClient.DownloadResponse w = WebViewCustom.this.shouldInterceptRequest(view, url);
+                if (w == null)
+                    return null;
+                return new WebResponse(w);
             }
         });
     }

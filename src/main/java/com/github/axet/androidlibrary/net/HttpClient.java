@@ -96,7 +96,7 @@ import cz.msebera.android.httpclient.util.EntityUtils;
 // cz.msebera.android.httpclient recommended by apache
 //
 // https://hc.apache.org/httpcomponents-client-4.5.x/android-port.html
-
+//
 public class HttpClient {
     public static final String TAG = HttpClient.class.getSimpleName();
 
