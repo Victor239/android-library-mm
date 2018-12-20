@@ -18,12 +18,11 @@ import com.github.axet.androidlibrary.crypto.MD5;
 import org.apache.commons.io.IOUtils;
 
 import java.io.File;
-import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -292,6 +291,15 @@ public class CacheImagesAdapter {
         runs.clear();
     }
 
+    public Bitmap downloadImage(Uri cover, File f) throws IOException {
+        InputStream in = new URL(cover.toString()).openStream();
+        FileOutputStream out = new FileOutputStream(f);
+        IOUtils.copy(in, out);
+        in.close();
+        out.close();
+        return BitmapFactory.decodeStream(new FileInputStream(f));
+    }
+
     public Bitmap downloadImage(Uri cover) {
         try {
             cacheClear(context);
@@ -306,12 +314,7 @@ public class CacheImagesAdapter {
                         f.delete();
                     }
                 }
-                InputStream in = new URL(cover.toString()).openStream();
-                FileOutputStream out = new FileOutputStream(f);
-                IOUtils.copy(in, out);
-                in.close();
-                out.close();
-                return BitmapFactory.decodeStream(new FileInputStream(f));
+                return downloadImage(cover, f);
             } else {
                 return BitmapFactory.decodeFile(cover.getPath());
             }

@@ -1,12 +1,14 @@
 package com.github.axet.androidlibrary.net;
 
 import android.annotation.TargetApi;
+import android.content.Context;
 import android.net.Uri;
 import android.os.Build;
 import android.text.TextUtils;
 import android.util.Log;
 
 import com.github.axet.androidlibrary.app.AlarmManager;
+import com.github.axet.androidlibrary.app.AssetsDexLoader;
 
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
@@ -19,7 +21,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
-import java.io.StringBufferInputStream;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpCookie;
@@ -34,7 +35,9 @@ import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
+import java.security.Provider;
 import java.security.SecureRandom;
+import java.security.Security;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Date;
@@ -117,13 +120,37 @@ public class HttpClient {
     protected HttpHost proxy;
     protected CredentialsProvider credsProvider;
 
+    public static void init(Context context) { // if you have 'LinearAlloc exceeded capacity' issue
+        ClassLoader l = AssetsDexLoader.deps(context, "core", "prov", "bcpkix", "bctls");
+        init(l);
+    }
+
+    public static void init(ClassLoader l) {
+        if (Build.VERSION.SDK_INT <= 19) {
+            try {
+                Security.insertProviderAt((Provider) l.loadClass("org.spongycastle.jce.provider.BouncyCastleProvider").newInstance(), 1); // new TLS depend on 'AlgorithmParameters EC implementation'
+                Security.insertProviderAt((Provider) l.loadClass("org.spongycastle.jsse.provider.BouncyCastleJsseProvider").newInstance(), 1); // install new "TLS" provider
+            } catch (Exception e) {
+                Log.e(TAG, "load BouncyCastleProvider", e);
+            }
+        }
+    }
+
+    public static void init() { // if you do not have 'LinearAlloc exceeded capacity' issue
+        init(HttpClient.class.getClassLoader());
+    }
+
     public static HttpURLConnection openConnection(Uri uri) {
         return openConnection(uri, null);
     }
 
     public static HttpURLConnection openConnection(Uri uri, String useragent) {
+        return openConnection(uri.toString(), useragent);
+    }
+
+    public static HttpURLConnection openConnection(String uri, String useragent) {
         try {
-            URL url = new URL(uri.toString());
+            URL url = new URL(uri);
             return openConnection(0, url, useragent);
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -551,9 +578,14 @@ public class HttpClient {
             }
         });
 
+        // API16<
         // javax.net.ssl.SSLProtocolException: SSL handshake aborted: ssl=0xb89bbee8: Failure in SSL library, usually a protocol error
         // error:14077438:SSL routines:SSL23_GET_SERVER_HELLO:tlsv1 alert internal error (external/openssl/ssl/s23_clnt.c:741 0xaf144a4d:0x00000000)
-        if (Build.VERSION.SDK_INT <= 16) {
+        // API19<
+        // Caused by: javax.net.ssl.SSLException: Connection closed by peer
+        // at com.android.org.conscrypt.NativeCrypto.SSL_do_handshake(Native Method)
+        // at com.android.org.conscrypt.OpenSSLSocketImpl.startHandshake(OpenSSLSocketImpl.java:405)
+        if (Build.VERSION.SDK_INT <= 19) {
             TrustManager[] byPassTrustManagers = new TrustManager[]{new X509TrustManager() {
                 public X509Certificate[] getAcceptedIssuers() {
                     return new X509Certificate[0];
@@ -574,9 +606,9 @@ public class HttpClient {
             try {
                 SSLContext sc = SSLContext.getInstance("TLS");
                 sc.init(null, byPassTrustManagers, new SecureRandom());
+                builder.setSSLSocketFactory(new SSLConnectionSocketFactory(sc, v));
                 HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
                 HttpsURLConnection.setDefaultHostnameVerifier(v);
-                builder.setSSLSocketFactory(new SSLConnectionSocketFactory(sc, v));
             } catch (NoSuchAlgorithmException e) {
                 throw new RuntimeException(e);
             } catch (KeyManagementException e) {
