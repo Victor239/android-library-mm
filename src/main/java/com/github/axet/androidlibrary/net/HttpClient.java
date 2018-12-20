@@ -122,18 +122,22 @@ public class HttpClient {
 
     public static void init(Context context) { // if you have 'LinearAlloc exceeded capacity' issue
         ClassLoader l = AssetsDexLoader.deps(context, "core", "prov", "bcpkix", "bctls");
-        init(l);
+        if (l == null || !init(l))
+            init();
     }
 
-    public static void init(ClassLoader l) {
+    public static boolean init(ClassLoader l) {
         if (Build.VERSION.SDK_INT <= 19) {
             try {
                 Security.insertProviderAt((Provider) l.loadClass("org.spongycastle.jce.provider.BouncyCastleProvider").newInstance(), 1); // new TLS depend on 'AlgorithmParameters EC implementation'
                 Security.insertProviderAt((Provider) l.loadClass("org.spongycastle.jsse.provider.BouncyCastleJsseProvider").newInstance(), 1); // install new "TLS" provider
+                return true;
             } catch (Exception e) {
                 Log.e(TAG, "load BouncyCastleProvider", e);
+                return false;
             }
         }
+        return true;
     }
 
     public static void init() { // if you do not have 'LinearAlloc exceeded capacity' issue

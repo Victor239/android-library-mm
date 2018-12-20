@@ -40,19 +40,8 @@ public class AssetsDexLoader {
             return new File(context.getCacheDir(), "../code_cache");
     }
 
-    public static File extract(Context context, String asset, String ext) throws IOException {
-        AssetManager am = context.getAssets();
-        InputStream is = am.open(asset);
-        File tmp = File.createTempFile(Storage.getNameNoExt(asset), "." + ext, context.getCacheDir());
-        FileOutputStream os = new FileOutputStream(tmp);
-        IOUtils.copy(is, os);
-        os.close();
-        is.close();
-        return tmp;
-    }
-
     public static ClassLoader deps(Context context, String... deps) {
-        ClassLoader parent = DexClassLoader.getSystemClassLoader();
+        ClassLoader parent = null;
         try {
             for (String dep : deps) {
                 AssetManager am = context.getAssets();
@@ -60,7 +49,12 @@ public class AssetsDexLoader {
                 for (String a : aa) {
                     if (a.startsWith(dep)) {
                         if (a.endsWith("." + JAR)) {
-                            File tmp = extract(context, a, JAR);
+                            InputStream is = am.open(a);
+                            File tmp = File.createTempFile(Storage.getNameNoExt(a), "." + JAR, context.getCacheDir());
+                            FileOutputStream os = new FileOutputStream(tmp);
+                            IOUtils.copy(is, os);
+                            os.close();
+                            is.close();
                             parent = load(context, tmp, parent);
                             tmp.delete();
                         }
@@ -79,13 +73,15 @@ public class AssetsDexLoader {
                     }
                 }
             }
-            return parent;
+            return parent; // return null if no jars/dex found
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public static ClassLoader load(Context context, File tmp, ClassLoader parent) throws IOException {
+    public static ClassLoader load(Context context, File tmp, ClassLoader parent) {
+        if (parent == null)
+            parent = DexClassLoader.getSystemClassLoader();
         return new DexClassLoader(tmp.getPath(), getCodeCacheDir(context).getPath(), null, parent);
     }
 
