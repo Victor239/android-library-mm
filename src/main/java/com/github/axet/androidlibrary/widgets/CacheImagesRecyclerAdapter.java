@@ -8,6 +8,7 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 
 import java.io.File;
+import java.io.IOException;
 
 public abstract class CacheImagesRecyclerAdapter<T extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<T> {
     public static final String TAG = CacheImagesRecyclerAdapter.class.getSimpleName();
@@ -17,6 +18,11 @@ public abstract class CacheImagesRecyclerAdapter<T extends RecyclerView.ViewHold
     public class Adapter extends CacheImagesAdapter {
         public Adapter(Context context) {
             super(context);
+        }
+
+        @Override
+        public Bitmap downloadImage(Uri cover, File f) throws IOException {
+            return CacheImagesRecyclerAdapter.this.downloadImage(cover, f);
         }
 
         @Override
@@ -57,6 +63,10 @@ public abstract class CacheImagesRecyclerAdapter<T extends RecyclerView.ViewHold
 
     public void downloadTask(Object item, Object view) {
         adapter.downloadTask(item, view);
+    }
+
+    public Bitmap downloadImage(Uri cover, File f) throws IOException {
+        return adapter.downloadImage(cover, f);
     }
 
     public Bitmap downloadImage(Uri cover) {

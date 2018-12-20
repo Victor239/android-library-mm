@@ -8,6 +8,7 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 
 import java.io.File;
+import java.io.IOException;
 
 public abstract class CacheImagesListAdapter extends BaseAdapter {
     public static final String TAG = CacheImagesListAdapter.class.getSimpleName();
@@ -17,6 +18,11 @@ public abstract class CacheImagesListAdapter extends BaseAdapter {
     public class Adapter extends CacheImagesAdapter {
         public Adapter(Context context) {
             super(context);
+        }
+
+        @Override
+        public Bitmap downloadImage(Uri cover, File f) throws IOException {
+            return CacheImagesListAdapter.this.downloadImage(cover, f);
         }
 
         @Override
@@ -57,6 +63,10 @@ public abstract class CacheImagesListAdapter extends BaseAdapter {
 
     public void downloadTask(Object item, Object view) {
         adapter.downloadTask(item, view);
+    }
+
+    public Bitmap downloadImage(Uri cover, File f) throws IOException {
+        return adapter.downloadImage(cover, f);
     }
 
     public Bitmap downloadImage(Uri cover) {
