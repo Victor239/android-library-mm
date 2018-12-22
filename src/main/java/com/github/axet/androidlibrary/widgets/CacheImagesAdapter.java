@@ -18,8 +18,6 @@ import com.github.axet.androidlibrary.R;
 import com.github.axet.androidlibrary.app.Storage;
 import com.github.axet.androidlibrary.crypto.MD5;
 
-import org.apache.commons.io.IOUtils;
-
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -427,12 +425,13 @@ public class CacheImagesAdapter {
     }
 
     public Bitmap downloadImage(Uri cover, File f) throws IOException {
-        InputStream in = new URL(cover.toString()).openStream();
-        FileOutputStream out = new FileOutputStream(f);
-        IOUtils.copy(in, out);
-        in.close();
-        out.close();
-        return BitmapFactory.decodeStream(new FileInputStream(f));
+        InputStream is = new URL(cover.toString()).openStream();
+        Bitmap bm = createThumbnail(is);
+        is.close();
+        FileOutputStream os = new FileOutputStream(f);
+        bm.compress(Bitmap.CompressFormat.PNG, 100, os);
+        os.close();
+        return bm;
     }
 
     public Bitmap downloadImage(Uri cover) {
