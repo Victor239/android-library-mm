@@ -3,9 +3,12 @@ package com.github.axet.androidlibrary.widgets;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Rect;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.support.annotation.NonNull;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
@@ -17,6 +20,7 @@ import com.github.axet.androidlibrary.crypto.MD5;
 
 import org.apache.commons.io.IOUtils;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -41,6 +45,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class CacheImagesAdapter {
     public static final String TAG = CacheImagesAdapter.class.getSimpleName();
 
+    public static int COVER_SIZE = 128;
+
     public static int CACHE_MB = 30;
     public static int CACHE_DAYS = 30;
     public static String CACHE_NAME = "cacheimages_";
@@ -50,30 +56,68 @@ public class CacheImagesAdapter {
     public static final int MAXIMUM_POOL_SIZE = CPU_COUNT * 2 + 1;
     public static final int KEEP_ALIVE_SECONDS = 30;
 
-    public static final BlockingQueue<Runnable> sPoolWorkQueue = new LinkedBlockingQueue<Runnable>(128);
-
-    public static class SortDate implements Comparator<File> {
-        @Override
-        public int compare(File o1, File o2) {
-            return Long.valueOf(o1.lastModified()).compareTo(o2.lastModified());
-        }
-    }
-
-    public static final ThreadFactory sThreadFactory = new ThreadFactory() {
-        private final AtomicInteger mCount = new AtomicInteger(1);
-
-        public Thread newThread(Runnable r) {
-            return new Thread(r, "CacheImagesAdapter #" + mCount.getAndIncrement());
-        }
-    };
-
     public Context context;
     public Map<Object, DownloadImageTask> downloadViews = new HashMap<>();
     public Map<Object, DownloadImageTask> downloadItems = new HashMap<>();
     public Map<DownloadImageTask, Runnable> tasks = new ConcurrentHashMap<>();
     public Map<Runnable, DownloadImageTask> runs = new ConcurrentHashMap<>();
     protected DownloadImageTask current;
+
     public UriImagesExecutor executor = new UriImagesExecutor();
+    public static final BlockingQueue<Runnable> sPoolWorkQueue = new LinkedBlockingQueue<Runnable>(128);
+    public static final ThreadFactory sThreadFactory = new ThreadFactory() {
+        AtomicInteger mCount = new AtomicInteger(1);
+
+        public Thread newThread(Runnable r) {
+            return new Thread(r, "CacheImagesAdapter #" + mCount.getAndIncrement());
+        }
+    };
+
+    public static Rect getImageSize(InputStream is) {
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        Rect outPadding = new Rect();
+        BitmapFactory.decodeStream(is, outPadding, options);
+        if (options.outWidth == -1 || options.outHeight == -1)
+            return null;
+        return new Rect(0, 0, options.outWidth, options.outHeight);
+    }
+
+    public static Bitmap createThumbnail(InputStream is) {
+        SeekInputStream sis = new SeekInputStream(is);
+        Rect size = getImageSize(sis);
+        sis.reset();
+        BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
+        bitmapOptions.inSampleSize = (int) Math.ceil(size.width() / (double) COVER_SIZE);
+        Rect out = new Rect();
+        Bitmap bm = BitmapFactory.decodeStream(sis, out, bitmapOptions);
+        return createThumbnail(bm, COVER_SIZE);
+    }
+
+    public static Bitmap createThumbnail(Bitmap bm, int cover) { // scale by width and cut top and bottom
+        float ratio = cover / (float) bm.getWidth();
+        Bitmap sbm = Bitmap.createScaledBitmap(bm, (int) (bm.getWidth() * ratio), (int) (bm.getHeight() * ratio), true);
+        if (sbm != bm)
+            bm.recycle();
+        if (sbm.getHeight() > cover) {
+            bm = Bitmap.createBitmap(cover, cover, sbm.getConfig());
+            Canvas canvas = new Canvas(bm);
+            canvas.drawBitmap(sbm, 0, -(sbm.getHeight() - cover) / 2, null);
+            sbm.recycle();
+            sbm = bm;
+        }
+        return sbm;
+    }
+
+    public static boolean isImage(String name) { // supported image by BitmapFactory
+        name = name.toLowerCase();
+        String[] ss = new String[]{"webp", "png", "jpg", "jpeg", "gif", "bmp"};
+        for (String s : ss) {
+            if (name.endsWith("." + s))
+                return true;
+        }
+        return false;
+    }
 
     public static File getCache(Context context) {
         File cache = context.getExternalCacheDir();
@@ -129,6 +173,97 @@ public class CacheImagesAdapter {
             return;
         for (File f : ff) {
             f.delete();
+        }
+    }
+
+    public static class SortDate implements Comparator<File> {
+        @Override
+        public int compare(File o1, File o2) {
+            return Long.valueOf(o1.lastModified()).compareTo(o2.lastModified());
+        }
+    }
+
+    public static class ReadByteArrayOutputStream extends ByteArrayOutputStream {
+        public int read(int pos) {
+            if (pos >= count)
+                return -1;
+            return buf[pos];
+        }
+
+        public int read(int pos, byte[] b, int off, int len) {
+            len = Math.min(len, count - pos);
+            System.arraycopy(buf, pos, b, off, len);
+            return len;
+        }
+
+        public int getSize() {
+            return count;
+        }
+    }
+
+    public static class SeekInputStream extends InputStream { // allow to reread inputstream. only effective if first read was partial and small (few bytes)
+        public InputStream is;
+        public ReadByteArrayOutputStream cache = new ReadByteArrayOutputStream();
+        public int pos; // current reading position
+        public boolean reset = false; // clear cache after read
+
+        public SeekInputStream(InputStream is) {
+            this.is = is;
+        }
+
+        @Override
+        public int read() throws IOException {
+            if (cache == null) {
+                int b = is.read();
+                pos++;
+                return b;
+            } else {
+                if (pos >= cache.getSize()) {
+                    int b = is.read();
+                    cache.write(b);
+                    pos++;
+                    return b;
+                } else {
+                    int b = cache.read(pos++);
+                    if (reset && pos >= cache.getSize())
+                        cache = null;
+                    return b;
+                }
+            }
+        }
+
+        @Override
+        public int read(@NonNull byte[] b, int off, int len) throws IOException {
+            if (cache == null) {
+                int l = is.read(b, off, len);
+                pos += l;
+                return l;
+            } else {
+                if (pos >= cache.getSize()) {
+                    int l = is.read(b, off, len);
+                    cache.write(b, off, l);
+                    pos += l;
+                    return l;
+                } else {
+                    int l = cache.read(pos, b, off, len);
+                    pos += l;
+                    if (reset && pos >= cache.getSize())
+                        cache = null;
+                    if (len > l) {
+                        off += l;
+                        len -= l;
+                        int k = is.read(b, off, len);
+                        pos += k;
+                        return l + k;
+                    }
+                    return l;
+                }
+            }
+        }
+
+        public void reset() { // reset position to zero
+            pos = 0;
+            reset = true;
         }
     }
 

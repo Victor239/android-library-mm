@@ -114,6 +114,24 @@ public class HttpClient {
 
     public static int CONNECTION_TIMEOUT = 10 * AlarmManager.SEC1;
 
+    public static TrustManager[] TRUST_ALL = new TrustManager[]{new X509TrustManager() {
+        public X509Certificate[] getAcceptedIssuers() {
+            return new X509Certificate[0];
+        }
+
+        public void checkClientTrusted(X509Certificate[] chain, String authType) {
+        }
+
+        public void checkServerTrusted(X509Certificate[] chain, String authType) {
+        }
+    }};
+    public static HostnameVerifier HOST_ALL= new HostnameVerifier() {
+        @Override
+        public boolean verify(String hostname, SSLSession session) {
+            return true;
+        }
+    };
+
     protected CloseableHttpClient httpclient;
     protected HttpClientContext httpClientContext = HttpClientContext.create();
     protected AbstractExecutionAwareRequest request;
@@ -131,6 +149,10 @@ public class HttpClient {
             try {
                 Security.insertProviderAt((Provider) l.loadClass("org.spongycastle.jce.provider.BouncyCastleProvider").newInstance(), 1); // new TLS depend on 'AlgorithmParameters EC implementation'
                 Security.insertProviderAt((Provider) l.loadClass("org.spongycastle.jsse.provider.BouncyCastleJsseProvider").newInstance(), 1); // install new "TLS" provider
+                SSLContext sc = SSLContext.getInstance("TLS");
+                sc.init(null, TRUST_ALL, new SecureRandom());
+                HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+                HttpsURLConnection.setDefaultHostnameVerifier(HOST_ALL);
                 return true;
             } catch (Exception e) {
                 Log.e(TAG, "load BouncyCastleProvider", e);
@@ -590,29 +612,10 @@ public class HttpClient {
         // at com.android.org.conscrypt.NativeCrypto.SSL_do_handshake(Native Method)
         // at com.android.org.conscrypt.OpenSSLSocketImpl.startHandshake(OpenSSLSocketImpl.java:405)
         if (Build.VERSION.SDK_INT <= 19) {
-            TrustManager[] byPassTrustManagers = new TrustManager[]{new X509TrustManager() {
-                public X509Certificate[] getAcceptedIssuers() {
-                    return new X509Certificate[0];
-                }
-
-                public void checkClientTrusted(X509Certificate[] chain, String authType) {
-                }
-
-                public void checkServerTrusted(X509Certificate[] chain, String authType) {
-                }
-            }};
-            HostnameVerifier v = new HostnameVerifier() {
-                @Override
-                public boolean verify(String hostname, SSLSession session) {
-                    return true;
-                }
-            };
             try {
                 SSLContext sc = SSLContext.getInstance("TLS");
-                sc.init(null, byPassTrustManagers, new SecureRandom());
-                builder.setSSLSocketFactory(new SSLConnectionSocketFactory(sc, v));
-                HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-                HttpsURLConnection.setDefaultHostnameVerifier(v);
+                sc.init(null, TRUST_ALL, new SecureRandom());
+                builder.setSSLSocketFactory(new SSLConnectionSocketFactory(sc, HOST_ALL));
             } catch (NoSuchAlgorithmException e) {
                 throw new RuntimeException(e);
             } catch (KeyManagementException e) {
