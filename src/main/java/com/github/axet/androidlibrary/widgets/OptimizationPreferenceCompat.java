@@ -724,10 +724,14 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
                     return;
                 }
             }
+            next();
+            am.set(next, serviceCheck(context, service));
+        }
+
+        public void next() {
             long cur = System.currentTimeMillis();
             if (next < cur)
                 next = cur + REFRESH;
-            am.set(next, serviceCheck(context, service));
         }
 
         public void unregister() {
