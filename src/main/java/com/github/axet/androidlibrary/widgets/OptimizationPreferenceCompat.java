@@ -116,16 +116,10 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         ICON = b;
     }
 
-    public static void enable(Context context, long next, Class<? extends Service> service) {
+    public static Intent serviceCheck(Context context, Class<? extends Service> service) {
         Intent intent = new Intent(context, service);
         intent.setAction(SERVICE_CHECK);
-        AlarmManager.set(context, next, intent);
-    }
-
-    public static void disable(Context context, Class<? extends Service> service) {
-        Intent intent = new Intent(context, service);
-        intent.setAction(SERVICE_CHECK);
-        AlarmManager.cancel(context, intent);
+        return intent;
     }
 
     public static void disableKill(Context context, Class<?> klass) {
@@ -652,10 +646,12 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
 
     public static class ServiceReceiver extends BroadcastReceiver {
         public Context context;
+        public AlarmManager am;
         public String key;
         public Handler handler = new Handler();
         public Class<? extends Service> service;
         public long next;
+        public IntentFilter filters;
         public Runnable check = new Runnable() {
             @Override
             public void run() {
@@ -664,15 +660,15 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
                 OptimizationPreferenceCompat.startService(context, intent);
             }
         };
-        public IntentFilter filters;
 
         public ServiceReceiver(final Context context, final Class<? extends Service> service, String key) {
             this.key = key;
             this.context = context;
+            this.am = new AlarmManager(context);
             this.service = service;
-            filters = new IntentFilter();
-            filters.addAction(SERVICE_UPDATE);
-            filters.addAction(service.getCanonicalName() + PONG);
+            this.filters = new IntentFilter();
+            this.filters.addAction(SERVICE_UPDATE);
+            this.filters.addAction(service.getCanonicalName() + PONG);
         }
 
         public void create() {
@@ -731,11 +727,11 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
             long cur = System.currentTimeMillis();
             if (next < cur)
                 next = cur + REFRESH;
-            enable(context, next, service);
+            am.set(next, serviceCheck(context, service));
         }
 
         public void unregister() {
-            disable(context, service);
+            am.cancel(serviceCheck(context, service));
         }
 
         @Override
