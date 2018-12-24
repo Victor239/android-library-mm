@@ -133,6 +133,11 @@ public class BrowserDialogFragment extends DialogFragmentCompat {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+    }
+
+    @Override
+    public void onCreateDialog(AlertDialog.Builder builder, Bundle savedInstanceState) {
+        super.onCreateDialog(builder, savedInstanceState);
         builder.setNeutralButton(getContext().getString(R.string.close),
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int whichButton) {

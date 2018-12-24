@@ -4,35 +4,35 @@
     <string name="filedialog_delete">删除</string>
     <string name="filedialog_newfolder">新建文件夹</string>
     <string name="filedialog_foldername">文件夹名称</string>
-    <string name="filedialog_unablecreatefolder">无法创建文件夹：\'%1$s\'</string>
+    <string name="filedialog_unablecreatefolder">无法创建文件夹: \'%1$s\'</string>
     <string name="filedialog_foldercreated">文件夹 \'%1$s\' 已创建</string>
-    <string name="filedialog_folderdeleted">已删除：\'%1$s\'</string>
-    <string name="filedialog_renameto">重命名为：\'%1$s\'</string>
+    <string name="filedialog_folderdeleted">已删除: \'%1$s\'</string>
+    <string name="filedialog_renameto">重命名为: \'%1$s\'</string>
     <string name="filedialog_empty">空列表</string>
     <string name="filedialog_readonly">只读目录</string>
-    <string name="filedialog_selectfolder">请选择一个文件夹</string>
+    <string name="filedialog_selectfolder">请选择文件夹</string>
 
     <string name="ShareAction">分享</string>
-    <string name="shared_via">通过 %1$s 分享</string>
+    <string name="shared_via">分享至%1$s</string>
 
     <plurals name="days">
-        <item quantity="one">%d 天</item>
-        <item quantity="other">%d 天</item>
+        <item quantity="one">%d天</item>
+        <item quantity="other">%d天</item>
     </plurals>
 
     <plurals name="hours">
-        <item quantity="one">%d 小时</item>
-        <item quantity="other">%d 小时</item>
+        <item quantity="one">%d小时</item>
+        <item quantity="other">%d小时</item>
     </plurals>
 
     <plurals name="minutes">
-        <item quantity="one">%d 分钟</item>
-        <item quantity="other">%d 分钟</item>
+        <item quantity="one">%d分</item>
+        <item quantity="other">%d分</item>
     </plurals>
 
     <plurals name="seconds">
-        <item quantity="one">%d 秒</item>
-        <item quantity="other">%d 秒</item>
+        <item quantity="one">%d秒</item>
+        <item quantity="other">%d秒</item>
     </plurals>
 
     <string name="days_symbol">"d"</string>
@@ -42,20 +42,20 @@
     <string name="size_kb">%1$.1f kb</string>
 
     <string name="optimization_dialog">优化设置</string>
-    <string name="optimization_message">请考虑将应用添加到手机电池管理器白名单，以防止将应用从内存中移除。</string>
-    <string name="optimization_killed">应用被操作系统清除。 考虑将应用添加到白名单</string>
-    <string name="optimization_alive">保持活动服务</string>
-    <string name="optimization_alive_summary">保持应用运行的后台服务</string>
-    <string name="optimization_icon">永久图标</string>
-    <string name="optimization_icon_summary">在某些设备上需要如果应用程序不断被删除</string>
-    <string name="optimization_system">电池优化</string>
-    <string name="optimization_system_summary">打开系统电池优化对话框</string>
+    <string name="optimization_message">添加应用程序到电源管理白名单，以防止应用程序从内存中清除</string>
+    <string name="optimization_killed">应用程序已停止。请添加应用程序到白名单。</string>
+    <string name="optimization_alive">保持服务</string>
+    <string name="optimization_alive_summary">使应用程序后台运行</string>
+    <string name="optimization_icon">保持图标</string>
+    <string name="optimization_icon_summary">当应用程序不断地被清理，需要设备支持</string>
+    <string name="optimization_system">电源优化</string>
+    <string name="optimization_system_summary">打开系统电源优化对话框</string>
 
     <string name="menu_settings">设置</string>
     <string name="menu_about">关于</string>
 
     <string name="open_browser">打开浏览器</string>
-    <string name="are_you_sure">你确定吗？</string>
+    <string name="are_you_sure">确定?</string>
     <string name="default_button">默认</string>
 
     <string name="not_permitted">不允许</string>
@@ -63,14 +63,14 @@
 
     <string-array name="screen_lock_text">
         <item>系统默认</item>
-        <item>保持开启</item>
-        <item>30 秒后关闭</item>
-        <item>1 分钟后关闭</item>
-        <item>5 分钟后关闭</item>
-        <item>30 分钟后关闭</item>
+        <item>保持亮屏</item>
+        <item>30秒后关闭</item>
+        <item>1分钟后关闭</item>
+        <item>5分钟后关闭</item>
+        <item>30分钟后关闭</item>
     </string-array>
 
-    <string name="pref_screenlock_title">保持屏幕开启</string>
+    <string name="pref_screenlock_title">保持亮屏</string>
 
-    <string name="migrating_data">迁移数据</string>
+    <string name="migrating_data">数据迁移</string>
 </resources>
