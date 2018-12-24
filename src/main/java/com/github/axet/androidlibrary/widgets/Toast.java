@@ -196,6 +196,7 @@ public class Toast {
         Runnable show = new Runnable() {
             @Override
             public void run() {
+                context = context.getApplicationContext(); // toast can crash internally if activity context used
                 View v = toast.getView();
                 ViewParent p = v.getParent();
                 if (p != null) // second show same view (after exception)
@@ -241,7 +242,6 @@ public class Toast {
                 } catch (WindowManager.BadTokenException e) { // happens in onCreate when screen is locked (and about to be unlocked)
                     Log.d(TAG, "unable to use activity", e);
                     w = null; // nothing to dismiss, dismiss may crash due to IllegalArgumentException
-                    context = context.getApplicationContext(); // toast can crash internally if activity context used
                     show.run();
                 }
             } else { // from Application / Service
