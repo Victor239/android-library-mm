@@ -80,7 +80,7 @@ public class CacheImagesAdapter {
         return new Rect(0, 0, options.outWidth, options.outHeight);
     }
 
-    public static Bitmap createThumbnail(InputStream is) {
+    public static Bitmap createScaled(InputStream is) { // scaled by min
         SeekInputStream sis = new SeekInputStream(is);
         Rect size = getImageSize(sis);
         sis.reset();
@@ -89,8 +89,26 @@ public class CacheImagesAdapter {
             bitmapOptions.inSampleSize = (int) Math.ceil(size.width() / (double) COVER_SIZE);
         else
             bitmapOptions.inSampleSize = (int) Math.ceil(size.height() / (double) COVER_SIZE);
-        Bitmap bm = BitmapFactory.decodeStream(sis, null, bitmapOptions);
-        return createThumbnail(bm);
+        return BitmapFactory.decodeStream(sis, null, bitmapOptions);
+    }
+
+    public static Bitmap createScaled(Bitmap bm) { // scaled by min
+        float ratio;
+        if (bm.getWidth() < bm.getHeight())
+            ratio = CacheImagesAdapter.COVER_SIZE / (float) bm.getWidth();
+        else
+            ratio = CacheImagesAdapter.COVER_SIZE / (float) bm.getHeight();
+        int w = (int) (bm.getWidth() * ratio);
+        int h = (int) (bm.getHeight() * ratio);
+        Bitmap sbm = Bitmap.createScaledBitmap(bm, w, h, true);
+        if (sbm != bm)
+            bm.recycle();
+        bm = sbm;
+        return bm;
+    }
+
+    public static Bitmap createThumbnail(InputStream is) {
+        return createThumbnail(createScaled(is));
     }
 
     public static Bitmap createThumbnail(Bitmap bm) { // scale by min width and cut rest
