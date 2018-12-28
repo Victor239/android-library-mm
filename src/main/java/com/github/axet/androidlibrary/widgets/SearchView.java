@@ -1,6 +1,7 @@
 package com.github.axet.androidlibrary.widgets;
 
 import android.content.Context;
+import android.support.annotation.Keep;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
@@ -28,11 +29,8 @@ import java.util.Locale;
 //            <meta-data
 //            android:name="android.app.searchable"
 //            android:resource="@xml/searchable" />
-//
-// proguard-rules.pro
-//
-// -keep class com.github.axet.androidlibrary.widgets.SearchView {*;}
-//
+
+@Keep
 public class SearchView extends android.support.v7.widget.SearchView {
     public static String TAG = SearchView.class.getSimpleName();
 
