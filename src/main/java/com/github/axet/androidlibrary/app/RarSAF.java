@@ -14,12 +14,23 @@ import java.nio.channels.FileChannel;
 
 import de.innosystec.unrar.NativeFile;
 import de.innosystec.unrar.NativeStorage;
+import de.innosystec.unrar.rarfile.FileHeader;
+import de.innosystec.unrar.rarfile.HostSystem;
 
 public class RarSAF extends NativeStorage {
     Context context;
     Uri u;
     Uri parent;
     RarSAF parentFolder;
+
+    public static String getRarFileName(FileHeader header) {
+        String s = header.getFileNameW();
+        if (s == null || s.isEmpty())
+            s = header.getFileNameString();
+        if (header.getHostOS().equals(HostSystem.win32))
+            s = s.replaceAll("\\\\", "/");
+        return s;
+    }
 
     public static class File extends NativeFile {
         ParcelFileDescriptor fd;

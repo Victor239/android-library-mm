@@ -7,15 +7,18 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.ParcelFileDescriptor;
 import android.provider.DocumentsContract;
+import android.support.annotation.NonNull;
 import android.support.v4.provider.DocumentFile;
 
 import net.lingala.zip4j.core.NativeFile;
 import net.lingala.zip4j.core.NativeStorage;
+import net.lingala.zip4j.io.ZipInputStream;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 
@@ -25,6 +28,29 @@ public class ZipSAF extends NativeStorage {
     Uri u;
     Uri parent;
     ZipSAF parentFolder;
+
+    public static class ZipInputStreamSafe extends InputStream {
+        ZipInputStream is;
+
+        public ZipInputStreamSafe(ZipInputStream is) {
+            this.is = is;
+        }
+
+        @Override
+        public int read() throws IOException {
+            return is.read();
+        }
+
+        @Override
+        public int read(@NonNull byte[] b, int off, int len) throws IOException {
+            return is.read(b, off, len);
+        }
+
+        @Override
+        public void close() throws IOException {
+            is.close(true);
+        }
+    }
 
     public static class File extends NativeFile {
         ParcelFileDescriptor fd;
