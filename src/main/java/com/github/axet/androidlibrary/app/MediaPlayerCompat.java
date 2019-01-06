@@ -148,7 +148,10 @@ public class MediaPlayerCompat {
 
             @Override
             public void setPlayWhenReady(boolean b) {
-                player.start();
+                if (b)
+                    player.start();
+                else
+                    player.pause();
             }
 
             @Override
@@ -163,6 +166,8 @@ public class MediaPlayerCompat {
                         MediaMetadataRetriever m = new MediaMetadataRetriever();
                         setDataSource(context, m, uri);
                         byte art[] = m.getEmbeddedPicture();
+                        if (art == null)
+                            return null;
                         return BitmapFactory.decodeByteArray(art, 0, art.length);
                     } catch (IOException e) {
                         Log.e(TAG, "artwork", e);
@@ -453,7 +458,10 @@ public class MediaPlayerCompat {
                 @Override
                 public View createView() {
                     try {
-                        return (View) PlayerView.getConstructor(Context.class).newInstance(context);
+                        View v = (View) PlayerView.getConstructor(Context.class).newInstance(context);
+                        PlayerView.getDeclaredMethod("setPlayer", Player).invoke(v, player);
+                        PlayerView.getDeclaredMethod("setUseController", boolean.class).invoke(v, false);
+                        return v;
                     } catch (InvocationTargetException e) {
                         throw new RuntimeException(e);
                     } catch (IllegalAccessException e) {
@@ -588,7 +596,7 @@ public class MediaPlayerCompat {
 
         public void setPlayer(MediaPlayerCompat c) {
             removeAllViews();
-            addView(c.createView(), new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            addView(c.createView(), new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         }
     }
 
@@ -598,13 +606,19 @@ public class MediaPlayerCompat {
         public int frame = 0;
         public int duration;
         public boolean mRunning;
+        public int w;
+        public int h;
 
         public MovieDrawable(Movie m) {
+            if (m == null)
+                return;
             this.m = m;
             int d = m.duration();
             if (d == 0)
                 d = 1000;
             duration = d / STEP;
+            w = m.width();
+            h = m.height();
         }
 
         public MovieDrawable(InputStream is) {
@@ -617,12 +631,12 @@ public class MediaPlayerCompat {
 
         @Override
         public int getIntrinsicWidth() {
-            return m.width();
+            return w;
         }
 
         @Override
         public int getIntrinsicHeight() {
-            return m.height();
+            return h;
         }
 
         @Override
