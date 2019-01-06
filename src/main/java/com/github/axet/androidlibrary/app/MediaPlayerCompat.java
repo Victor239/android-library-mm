@@ -41,7 +41,9 @@ import java.lang.reflect.Proxy;
 public class MediaPlayerCompat {
     public static String TAG = MediaPlayerCompat.class.getSimpleName();
 
-    Listener listener;
+    public static ClassLoader ClassLoader = MediaPlayerCompat.class.getClassLoader();
+
+    protected Listener listener;
 
     public static ParcelFileDescriptor getFD(Context context, Uri uri) throws IOException {
         String s = uri.getScheme();
@@ -101,8 +103,11 @@ public class MediaPlayerCompat {
     }
 
     public static MediaPlayerCompat createMediaPlayer(final Context context, final Uri uri) {
+        final android.media.MediaPlayer mp = createMediaPlayer(context, uri, null);
+        if (mp == null)
+            return null;
         return new MediaPlayerCompat() {
-            android.media.MediaPlayer player = createMediaPlayer(context, uri, null);
+            android.media.MediaPlayer player = mp;
 
             {
                 setListeners();
@@ -245,28 +250,28 @@ public class MediaPlayerCompat {
 
     @SuppressWarnings("unchecked")
     public static Object createExoPlayer(Context context) throws ClassNotFoundException, IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
-        Class BandwidthMeter = Class.forName("com.google.android.exoplayer2.upstream.BandwidthMeter");
-        Class DefaultBandwidthMeter = Class.forName("com.google.android.exoplayer2.upstream.DefaultBandwidthMeter");
+        Class BandwidthMeter = ClassLoader.loadClass("com.google.android.exoplayer2.upstream.BandwidthMeter");
+        Class DefaultBandwidthMeter = ClassLoader.loadClass("com.google.android.exoplayer2.upstream.DefaultBandwidthMeter");
         Object defaultBandwidthMeter = DefaultBandwidthMeter.newInstance();
-        Object videoTrackSelectionFactory = Class.forName("com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection$Factory").getConstructor(BandwidthMeter).newInstance(defaultBandwidthMeter);
-        Class TrackSelection$Factory = Class.forName("com.google.android.exoplayer2.trackselection.TrackSelection$Factory");
-        Class DefaultTrackSelector = Class.forName("com.google.android.exoplayer2.trackselection.DefaultTrackSelector");
-        Class TrackSelector = Class.forName("com.google.android.exoplayer2.trackselection.TrackSelector");
+        Object videoTrackSelectionFactory = ClassLoader.loadClass("com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection$Factory").getConstructor(BandwidthMeter).newInstance(defaultBandwidthMeter);
+        Class TrackSelection$Factory = ClassLoader.loadClass("com.google.android.exoplayer2.trackselection.TrackSelection$Factory");
+        Class DefaultTrackSelector = ClassLoader.loadClass("com.google.android.exoplayer2.trackselection.DefaultTrackSelector");
+        Class TrackSelector = ClassLoader.loadClass("com.google.android.exoplayer2.trackselection.TrackSelector");
         final Object trackSelector = DefaultTrackSelector.getConstructor(TrackSelection$Factory).newInstance(videoTrackSelectionFactory);
-        return Class.forName("com.google.android.exoplayer2.ExoPlayerFactory").getMethod("newSimpleInstance", Context.class, TrackSelector).invoke(null, context, trackSelector);
+        return ClassLoader.loadClass("com.google.android.exoplayer2.ExoPlayerFactory").getMethod("newSimpleInstance", Context.class, TrackSelector).invoke(null, context, trackSelector);
     }
 
     @SuppressWarnings("unchecked")
     public static MediaPlayerCompat createExoPlayer(final Context context, final Object player) {
         try {
-            final Class Player = Class.forName("com.google.android.exoplayer2.Player");
-            final Class ExoPlayer = Class.forName("com.google.android.exoplayer2.ExoPlayer");
-            final Class SimpleExoPlayer = Class.forName("com.google.android.exoplayer2.SimpleExoPlayer");
-            Class EventListener = Class.forName("com.google.android.exoplayer2.Player$EventListener");
+            final Class Player = ClassLoader.loadClass("com.google.android.exoplayer2.Player");
+            final Class ExoPlayer = ClassLoader.loadClass("com.google.android.exoplayer2.ExoPlayer");
+            final Class SimpleExoPlayer = ClassLoader.loadClass("com.google.android.exoplayer2.SimpleExoPlayer");
+            Class EventListener = ClassLoader.loadClass("com.google.android.exoplayer2.Player$EventListener");
             final int STATE_READY = ExoPlayer.getField("STATE_READY").getInt(null);
             final int STATE_ENDED = ExoPlayer.getField("STATE_ENDED").getInt(null);
-            final Class ExoPlaybackException = Class.forName("com.google.android.exoplayer2.ExoPlaybackException");
-            final Class UnrecognizedInputFormatException = Class.forName("com.google.android.exoplayer2.source.UnrecognizedInputFormatException");
+            final Class ExoPlaybackException = ClassLoader.loadClass("com.google.android.exoplayer2.ExoPlaybackException");
+            final Class UnrecognizedInputFormatException = ClassLoader.loadClass("com.google.android.exoplayer2.source.UnrecognizedInputFormatException");
             final Method getSourceException = ExoPlaybackException.getDeclaredMethod("getSourceException");
             final Method getCurrentPosition = Player.getDeclaredMethod("getCurrentPosition");
             final Method seekTo = Player.getDeclaredMethod("seekTo", long.class);
@@ -275,28 +280,29 @@ public class MediaPlayerCompat {
             final Method setPlayWhenReady = Player.getDeclaredMethod("setPlayWhenReady", boolean.class);
             final Method getDuration = Player.getDeclaredMethod("getDuration");
             final Method getCurrentTrackSelections = Player.getDeclaredMethod("getCurrentTrackSelections");
-            final Class AudioAttributes = Class.forName("com.google.android.exoplayer2.audio.AudioAttributes");
+            final Class AudioAttributes = ClassLoader.loadClass("com.google.android.exoplayer2.audio.AudioAttributes");
             final Method setAudioAttributes = SimpleExoPlayer.getDeclaredMethod("setAudioAttributes", AudioAttributes);
             final Method setAudioStreamType = SimpleExoPlayer.getDeclaredMethod("setAudioStreamType", int.class);
-            Class TrackSelectionArray = Class.forName("com.google.android.exoplayer2.trackselection.TrackSelectionArray");
+            Class TrackSelectionArray = ClassLoader.loadClass("com.google.android.exoplayer2.trackselection.TrackSelectionArray");
             final Field TrackSelectionsLength = TrackSelectionArray.getField("length");
             final Method TrackSelectionsGet = TrackSelectionArray.getDeclaredMethod("get", int.class);
-            Class TrackSelection = Class.forName("com.google.android.exoplayer2.trackselection.TrackSelection");
+            Class TrackSelection = ClassLoader.loadClass("com.google.android.exoplayer2.trackselection.TrackSelection");
             final Method TrackSelectionLength = TrackSelection.getDeclaredMethod("length");
             final Method TrackSelectionGetFormat = TrackSelection.getDeclaredMethod("getFormat", int.class);
-            Class Metadata = Class.forName("com.google.android.exoplayer2.metadata.Metadata");
+            Class Metadata = ClassLoader.loadClass("com.google.android.exoplayer2.metadata.Metadata");
             final Method MetadataLength = Metadata.getDeclaredMethod("length");
             final Method MetadataGet = Metadata.getDeclaredMethod("get", int.class);
-            Class Format = Class.forName("com.google.android.exoplayer2.Format");
+            Class Format = ClassLoader.loadClass("com.google.android.exoplayer2.Format");
             final Field FormatMetadata = Format.getField("metadata");
-            final Class ApicFrame = Class.forName("com.google.android.exoplayer2.metadata.id3.ApicFrame");
+            final Class ApicFrame = ClassLoader.loadClass("com.google.android.exoplayer2.metadata.id3.ApicFrame");
             final Field pictureData = ApicFrame.getField("pictureData");
-            final Class Util = Class.forName("com.google.android.exoplayer2.util.Util");
+            final Class Util = ClassLoader.loadClass("com.google.android.exoplayer2.util.Util");
             final Method getAudioUsageForStreamType = Util.getMethod("getAudioUsageForStreamType", int.class);
             final Method getAudioContentTypeForStreamType = Util.getMethod("getAudioContentTypeForStreamType", int.class);
-            Class C = Class.forName("com.google.android.exoplayer2.C");
+            Class C = ClassLoader.loadClass("com.google.android.exoplayer2.C");
             final Field TIME_UNSET = C.getField("TIME_UNSET");
-            final Class PlayerView = Class.forName("com.google.android.exoplayer2.ui.PlayerView");
+            final Class PlayerView = ClassLoader.loadClass("com.google.android.exoplayer2.ui.PlayerView");
+            final Class AudioAttributes$Builder = ClassLoader.loadClass("com.google.android.exoplayer2.audio.AudioAttributes.Builder");
             final MediaPlayerCompat mp = new MediaPlayerCompat() {
                 @Override
                 public long getCurrentPosition() {
@@ -402,7 +408,6 @@ public class MediaPlayerCompat {
                 @Override
                 public void setAudioAttributes(AudioAttributes audioAttributes) {
                     try {
-                        Class AudioAttributes$Builder = Class.forName("com.google.android.exoplayer2.audio.AudioAttributes.Builder");
                         Object b = AudioAttributes$Builder.newInstance();
                         AudioAttributes$Builder.getDeclaredMethod("setUsage", int.class).invoke(b, audioAttributes.getUsage());
                         AudioAttributes$Builder.getDeclaredMethod("setContentType", int.class).invoke(b, audioAttributes.getContentType());
@@ -427,7 +432,6 @@ public class MediaPlayerCompat {
                         try {
                             int usage = (int) getAudioUsageForStreamType.invoke(null, streamType);
                             int contentType = (int) getAudioContentTypeForStreamType.invoke(null, streamType);
-                            Class AudioAttributes$Builder = Class.forName("com.google.android.exoplayer2.audio.AudioAttributes.Builder");
                             Object b = AudioAttributes$Builder.newInstance();
                             AudioAttributes$Builder.getDeclaredMethod("setUsage", int.class).invoke(b, usage);
                             AudioAttributes$Builder.getDeclaredMethod("setContentType", int.class).invoke(b, contentType);
@@ -519,16 +523,16 @@ public class MediaPlayerCompat {
         try {
             Object player = createExoPlayer(context);
             MediaPlayerCompat mp = createExoPlayer(context, player);
-            Class Util = Class.forName("com.google.android.exoplayer2.util.Util");
-            Object dataSourceFactory = Class.forName("com.google.android.exoplayer2.upstream.DefaultDataSourceFactory").getConstructor(Context.class, String.class).newInstance(context, Util.getMethod("getUserAgent", Context.class, String.class).invoke(null, context, StorageProvider.getApplicationName(context)));
-            Class DataSource$Factory = Class.forName("com.google.android.exoplayer2.upstream.DataSource$Factory");
-            Class ExtractorMediaSource = Class.forName("com.google.android.exoplayer2.source.ExtractorMediaSource");
-            Class DefaultExtractorsFactory = Class.forName("com.google.android.exoplayer2.extractor.DefaultExtractorsFactory");
-            Class EventListener = Class.forName("com.google.android.exoplayer2.source.ExtractorMediaSource$EventListener");
-            Class ExtractorsFactory = Class.forName("com.google.android.exoplayer2.extractor.ExtractorsFactory");
+            Class Util = ClassLoader.loadClass("com.google.android.exoplayer2.util.Util");
+            Object dataSourceFactory = ClassLoader.loadClass("com.google.android.exoplayer2.upstream.DefaultDataSourceFactory").getConstructor(Context.class, String.class).newInstance(context, Util.getMethod("getUserAgent", Context.class, String.class).invoke(null, context, StorageProvider.getApplicationName(context)));
+            Class DataSource$Factory = ClassLoader.loadClass("com.google.android.exoplayer2.upstream.DataSource$Factory");
+            Class ExtractorMediaSource = ClassLoader.loadClass("com.google.android.exoplayer2.source.ExtractorMediaSource");
+            Class DefaultExtractorsFactory = ClassLoader.loadClass("com.google.android.exoplayer2.extractor.DefaultExtractorsFactory");
+            Class EventListener = ClassLoader.loadClass("com.google.android.exoplayer2.source.ExtractorMediaSource$EventListener");
+            Class ExtractorsFactory = ClassLoader.loadClass("com.google.android.exoplayer2.extractor.ExtractorsFactory");
             Object source = ExtractorMediaSource.getConstructor(Uri.class, DataSource$Factory, ExtractorsFactory, Handler.class, EventListener).newInstance(uri, dataSourceFactory, DefaultExtractorsFactory.newInstance(), null, null);
-            Class MediaSource = Class.forName("com.google.android.exoplayer2.source.MediaSource");
-            final Class ExoPlayer = Class.forName("com.google.android.exoplayer2.ExoPlayer");
+            Class MediaSource = ClassLoader.loadClass("com.google.android.exoplayer2.source.MediaSource");
+            final Class ExoPlayer = ClassLoader.loadClass("com.google.android.exoplayer2.ExoPlayer");
             ExoPlayer.getDeclaredMethod("prepare", MediaSource).invoke(player, source);
             return mp;
         } catch (ClassNotFoundException e) {
@@ -551,14 +555,14 @@ public class MediaPlayerCompat {
         try {
             Object player = createExoPlayer(context);
             MediaPlayerCompat mp = createExoPlayer(context, player);
-            Class Util = Class.forName("com.google.android.exoplayer2.util.Util");
-            Object dataSourceFactory = Class.forName("com.google.android.exoplayer2.upstream.DefaultDataSourceFactory").getConstructor(Context.class, String.class).newInstance(context, Util.getMethod("getUserAgent", Context.class, String.class).invoke(null, context, StorageProvider.getApplicationName(context)));
-            Class DataSource$Factory = Class.forName("com.google.android.exoplayer2.upstream.DataSource$Factory");
-            Class ExtractorMediaSource$Factory = Class.forName("com.google.android.exoplayer2.source.ExtractorMediaSource$Factory");
+            Class Util = ClassLoader.loadClass("com.google.android.exoplayer2.util.Util");
+            Object dataSourceFactory = ClassLoader.loadClass("com.google.android.exoplayer2.upstream.DefaultDataSourceFactory").getConstructor(Context.class, String.class).newInstance(context, Util.getMethod("getUserAgent", Context.class, String.class).invoke(null, context, StorageProvider.getApplicationName(context)));
+            Class DataSource$Factory = ClassLoader.loadClass("com.google.android.exoplayer2.upstream.DataSource$Factory");
+            Class ExtractorMediaSource$Factory = ClassLoader.loadClass("com.google.android.exoplayer2.source.ExtractorMediaSource$Factory");
             Object factory = ExtractorMediaSource$Factory.getConstructor(DataSource$Factory).newInstance(dataSourceFactory);
             Object source = ExtractorMediaSource$Factory.getDeclaredMethod("createMediaSource", Uri.class).invoke(factory, uri);
-            Class MediaSource = Class.forName("com.google.android.exoplayer2.source.MediaSource");
-            final Class ExoPlayer = Class.forName("com.google.android.exoplayer2.ExoPlayer");
+            Class MediaSource = ClassLoader.loadClass("com.google.android.exoplayer2.source.MediaSource");
+            final Class ExoPlayer = ClassLoader.loadClass("com.google.android.exoplayer2.ExoPlayer");
             ExoPlayer.getDeclaredMethod("prepare", MediaSource).invoke(player, source);
             return mp;
         } catch (ClassNotFoundException e) {
