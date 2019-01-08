@@ -90,6 +90,15 @@ public class StorageProvider extends ContentProvider {
         return result;
     }
 
+    public static FileNotFoundException fnfe(final Throwable e) {
+        return (FileNotFoundException) new FileNotFoundException() {
+            @Override
+            public String getMessage() {
+                return e.getMessage();
+            }
+        }.initCause(e);
+    }
+
     public static String getApplicationName(Context context) {
         ApplicationInfo applicationInfo = context.getApplicationInfo();
         int stringId = applicationInfo.labelRes;
@@ -558,7 +567,7 @@ public class StorageProvider extends ContentProvider {
                 throw new Storage.UnknownUri();
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw fnfe(e);
         }
     }
 
@@ -580,7 +589,7 @@ public class StorageProvider extends ContentProvider {
                 throw new Storage.UnknownUri();
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw fnfe(e);
         }
     }
 
@@ -596,7 +605,7 @@ public class StorageProvider extends ContentProvider {
         return mode;
     }
 
-    public ParcelFileDescriptor openInputStream(final InputStreamWriter is, String mode) {
+    public ParcelFileDescriptor openInputStream(final InputStreamWriter is, String mode) throws FileNotFoundException {
         deleteTmp(); // will not delete opened files
         try {
             if (checkMode(mode).equals("r")) { // r - can be pipe. check ContentProvider#openFile
@@ -638,7 +647,7 @@ public class StorageProvider extends ContentProvider {
                 return ParcelFileDescriptor.open(tmp, FileProvider.modeToMode(mode));
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw fnfe(e);
         }
     }
 }

@@ -43,7 +43,7 @@ public class MediaPlayerCompat {
 
     public static ClassLoader classLoader = MediaPlayerCompat.class.getClassLoader();
 
-    protected Listener listener;
+    public Listener listener;
 
     public static Class forName(String className) throws ClassNotFoundException {
         return Class.forName(className, true, classLoader);
@@ -157,10 +157,13 @@ public class MediaPlayerCompat {
 
             @Override
             public void setPlayWhenReady(boolean b) {
-                if (b)
-                    player.start();
-                else
-                    player.pause();
+                if (b) {
+                    if (!player.isPlaying())
+                        player.start();
+                } else {
+                    if (player.isPlaying())
+                        player.pause();
+                }
             }
 
             @Override
