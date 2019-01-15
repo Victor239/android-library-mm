@@ -1,5 +1,6 @@
 package com.github.axet.androidlibrary.services;
 
+import android.annotation.SuppressLint;
 import android.app.ActivityManager;
 import android.app.Service;
 import android.content.ComponentName;
@@ -31,7 +32,7 @@ import java.net.UnknownHostException;
  * &lt;uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" /&gt;
  */
 public class WifiKeepService extends Service {
-    public static String TAG = WifiKeepService.class.getSimpleName();
+    public static final String TAG = WifiKeepService.class.getSimpleName();
 
     public static int REFRESH = 1 * 60 * 1000; // check every ms
     public static int NOTIFICATION_ICON = 200; // notificaion icon id
@@ -40,7 +41,9 @@ public class WifiKeepService extends Service {
 
     public static final String WIFI = WifiKeepService.class.getCanonicalName() + ".WIFI";
 
-    public static final String BIN_PING = SuperUser.which("ping");
+    public static String[] WHICH = SuperUser.concat(SuperUser.WHICH_USER, SuperUser.WHICH_XBIN);
+
+    public static final String BIN_PING = SuperUser.which(WHICH, "ping");
 
     public Thread t;
     public OptimizationPreferenceCompat.NotificationIcon icon;
@@ -66,6 +69,11 @@ public class WifiKeepService extends Service {
         context.stopService(intent);
     }
 
+    public static String format(int ip) {
+        return String.format("%d.%d.%d.%d", (ip & 0xff), (ip >> 8 & 0xff), (ip >> 16 & 0xff), (ip >> 24 & 0xff));
+    }
+
+    @SuppressLint("MissingPermission")
     public static void wifi(final Context context) {
         ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
@@ -77,17 +85,32 @@ public class WifiKeepService extends Service {
             isWiFi = activeNetwork.getType() == ConnectivityManager.TYPE_WIFI;
         }
 
-        WifiManager w = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+        final WifiManager w = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
         DhcpInfo d = w.getDhcpInfo();
 
-        if (!isWiFi || !isConnected || !ping(d.gateway) || !dns()) {
-            w.setWifiEnabled(false);
-            w.setWifiEnabled(true);
+        Runnable restart = new Runnable() {
+            @Override
+            public void run() {
+                w.setWifiEnabled(false);
+                w.setWifiEnabled(true);
+            }
+        };
+        if (!isWiFi) {
+            Log.d(TAG, "!isWiFi");
+            restart.run();
+        } else if (!isConnected) {
+            Log.d(TAG, "!isConnected");
+            restart.run();
+        } else if (!ping(d.gateway)) {
+            Log.d(TAG, "!ping");
+            restart.run();
+        } else if (!dns()) {
+            Log.d(TAG, "!dns");
+            restart.run();
         }
 
-        if (Build.VERSION.SDK_INT <= 18 && SuperUser.isRooted()) {
+        if (Build.VERSION.SDK_INT <= 18 && SuperUser.isRooted())
             gtalk(context);
-        }
 
         if (isWiFi && isConnected) {
             Intent gt = new Intent("com.google.android.intent.action.GTALK_HEARTBEAT");
@@ -119,15 +142,9 @@ public class WifiKeepService extends Service {
     }
 
     public static boolean ping(String ip) {
-        Runtime runtime = Runtime.getRuntime();
         try {
-            Process mIpAddrProcess = runtime.exec(BIN_PING + " -q -c1 -w2 " + ip);
-            int mExitValue = mIpAddrProcess.waitFor();
-            if (mExitValue == 0) {
-                return true;
-            } else {
-                return false;
-            }
+            Process ping = Runtime.getRuntime().exec(BIN_PING + " -q -c1 -w2 " + ip);
+            return ping.waitFor() == 0;
         } catch (InterruptedException ignore) {
             Thread.currentThread().interrupt();
         } catch (IOException e) {
@@ -137,17 +154,16 @@ public class WifiKeepService extends Service {
     }
 
     public static boolean ping(int ip) {
-        String ipStr = String.format("%d.%d.%d.%d", (ip & 0xff), (ip >> 8 & 0xff), (ip >> 16 & 0xff), (ip >> 24 & 0xff));
-        return ping(ipStr);
+        return ping(format(ip));
     }
 
     public static boolean dns() {
         InetAddress a = null;
         try {
             a = InetAddress.getByName("google.com");
-        } catch (UnknownHostException e) {
+        } catch (UnknownHostException ignore) {
         }
-        return a != null && !a.equals("");
+        return a != null;
     }
 
     // https://forum.fairphone.com/t/help-with-xprivacy-settings-relating-to-google-apps/5741/7

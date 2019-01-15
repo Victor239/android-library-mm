@@ -29,6 +29,7 @@ import java.text.MessageFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -47,6 +48,13 @@ public class SuperUser {
     public static final String XBIN = "/xbin";
     public static final String SBIN = "/sbin";
     public static final String BIN = "/bin";
+
+    public static String[] WHICH_USER = new String[]{SYSTEM + SBIN, SYSTEM + BIN,
+            SYSTEM + USR + SBIN, SYSTEM + USR + BIN,
+            USR + SBIN, USR + BIN,
+            SBIN, BIN};
+    public static String[] WHICH_XBIN = new String[]{SYSTEM + XBIN};
+    public static String[] WHICH = concat(WHICH_XBIN, WHICH_USER);
 
     public static final String BIN_SH = which("sh");
     public static final String BIN_SU = which("su");
@@ -99,6 +107,12 @@ public class SuperUser {
 
     public static boolean EXITCODE = false; // does su support for exit code for pipe scripts? run exitTest()
     public static boolean TRAPERR = false; // does sh support for trap ERR for scripts? run trapTest()
+
+    public static String[] concat(String[] s1, String[] s2) {
+        String[] ss = Arrays.copyOf(s1, s1.length + s2.length);
+        System.arraycopy(s2, 0, ss, s1.length, s2.length);
+        return ss;
+    }
 
     public FileDescriptor dup(FileDescriptor fd) {
         try {
@@ -306,8 +320,7 @@ public class SuperUser {
     public static boolean trapTest() {
         try {
             Process sh = Runtime.getRuntime().exec(new String[]{BIN_SH, "-c", BIN_TRAP + " '" + BIN_TRUE + "' ERR"});
-            sh.waitFor();
-            return TRAPERR = sh.exitValue() == 0;
+            return TRAPERR = sh.waitFor() == 0;
         } catch (IOException e) {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -367,10 +380,11 @@ public class SuperUser {
     }
 
     public static String which(String cmd) {
-        for (String s : new String[]{SYSTEM + XBIN, SYSTEM + SBIN, SYSTEM + BIN,
-                SYSTEM + USR + SBIN, SYSTEM + USR + BIN,
-                USR + SBIN, USR + BIN,
-                SBIN, BIN}) {
+        return which(WHICH, cmd);
+    }
+
+    public static String which(String[] ss, String cmd) {
+        for (String s : ss) {
             String f = find(s + "/" + cmd);
             if (f != null)
                 return f;
