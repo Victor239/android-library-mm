@@ -61,6 +61,12 @@ import java.util.regex.Pattern;
 public class OpenFileDialog extends AlertDialog.Builder {
     public static final String TAG = OpenFileDialog.class.getSimpleName();
 
+    public enum DIALOG_TYPE {
+        FILE_DIALOG,
+        FOLDER_DIALOG,
+        BOOTH
+    }
+
     public static final String ANDROID_STORAGE = "ANDROID_STORAGE"; // environment variable, TODO: add 'EXTERNAL_STORAGE' and 'SECONDARY_STORAGE'. do not have device to test
     public static final String DEFAULT_STORAGE_PATH = "/storage";
     public static final Pattern DEFAULT_STORAGE_PATTERN = Pattern.compile("\\w\\w\\w\\w-\\w\\w\\w\\w");
@@ -74,18 +80,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
     protected static int FOLDER_ICON = R.drawable.ic_folder;
     protected static int FILE_ICON = R.drawable.ic_file;
 
-    public static long getTotalBytes(StatFs fs) {
-        if (Build.VERSION.SDK_INT >= 18)
-            return fs.getTotalBytes();
-        else
-            return fs.getBlockCount() * (long) fs.getBlockSize();
-    }
-
-    public enum DIALOG_TYPE {
-        FILE_DIALOG,
-        FOLDER_DIALOG,
-        BOOTH
-    }
+    protected static Map<File, Set<File>> CACHE = new TreeMap<>(); // cache folders, keep folder visible, when android shows _none_
 
     protected String title;
     protected File currentPath;
@@ -93,12 +88,6 @@ public class OpenFileDialog extends AlertDialog.Builder {
     protected TextView path;
     protected TextView message;
     protected RecyclerView listView;
-    protected RecyclerView.AdapterDataObserver observer = new RecyclerView.AdapterDataObserver() {
-        @Override
-        public void onChanged() {
-            OpenFileDialog.this.onChanged();
-        }
-    };
     protected FileAdapter adapter;
     protected DialogInterface.OnShowListener onshow;
     protected DialogInterface.OnClickListener neutral;
@@ -115,6 +104,20 @@ public class OpenFileDialog extends AlertDialog.Builder {
     protected DIALOG_TYPE type = DIALOG_TYPE.BOOTH;
 
     protected Button positive; // enable / disable OK
+
+    protected RecyclerView.AdapterDataObserver observer = new RecyclerView.AdapterDataObserver() {
+        @Override
+        public void onChanged() {
+            OpenFileDialog.this.onChanged();
+        }
+    };
+
+    public static long getTotalBytes(StatFs fs) {
+        if (Build.VERSION.SDK_INT >= 18)
+            return fs.getTotalBytes();
+        else
+            return fs.getBlockCount() * (long) fs.getBlockSize();
+    }
 
     public static File getPortable() {
         String path = System.getenv(OpenFileDialog.ANDROID_STORAGE);
@@ -135,8 +138,6 @@ public class OpenFileDialog extends AlertDialog.Builder {
         });
     }
 
-    protected static Map<File, Set<File>> cache = new TreeMap<>(); // cache folders, keep folder visible, when android shows _none_
-
     protected static void cache(Context context) {
         cache(context.getExternalCacheDir());
         if (Build.VERSION.SDK_INT >= 19) {
@@ -156,7 +157,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
         while (path != null) {
             TreeSet<File> list = new TreeSet<>();
             list.add(old);
-            Set<File> tmp = cache.put(path, list);
+            Set<File> tmp = CACHE.put(path, list);
             if (tmp != null) {
                 for (File f : tmp) {
                     list.add(f);
@@ -178,25 +179,20 @@ public class OpenFileDialog extends AlertDialog.Builder {
     public static boolean isDirectory(File f) {
         if (f.isDirectory())
             return true;
-        if (cache.get(f) != null)
+        if (CACHE.get(f) != null)
             return true;
         return false;
     }
 
-    public static class SortFiles implements Comparator<File> {
-        @Override
-        public int compare(File f1, File f2) {
-            if (isDirectory(f1) && isFile(f2))
-                return -1;
-            else if (isFile(f1) && isDirectory(f2))
-                return 1;
-            else
-                return f1.getPath().compareTo(f2.getPath());
-        }
+    public static File getDataDir(Context context) {
+        return new File(context.getApplicationContext().getApplicationInfo().dataDir);
     }
 
     public static File getLocalInternal(Context context) {
-        return context.getFilesDir();
+        File file = context.getFilesDir();
+        if (file == null)
+            return getDataDir(context);
+        return file;
     }
 
     public static File[] getLocalExternals(Context context, boolean readonly) {
@@ -240,6 +236,18 @@ public class OpenFileDialog extends AlertDialog.Builder {
         return d;
     }
 
+    public static class SortFiles implements Comparator<File> {
+        @Override
+        public int compare(File f1, File f2) {
+            if (isDirectory(f1) && isFile(f2))
+                return -1;
+            else if (isFile(f1) && isDirectory(f2))
+                return 1;
+            else
+                return f1.getPath().compareTo(f2.getPath());
+        }
+    }
+
     public static class StorageAdapter implements ListAdapter {
         ArrayList<File> list = new ArrayList<>();
         OpenFileDialog builder;
@@ -251,7 +259,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
             if (ext == null || (!builder.readonly && !ext.canWrite()))
                 ext = getLocalInternal(builder.getContext());
             add(ext);
-            File data = new File(builder.getContext().getApplicationInfo().dataDir);
+            File data = getDataDir(builder.getContext());
             File datae = builder.getContext().getExternalCacheDir();
             if (datae != null)
                 datae = datae.getParentFile();
@@ -526,14 +534,14 @@ public class OpenFileDialog extends AlertDialog.Builder {
                 list = new TreeSet<>(Arrays.asList(ff));
             if (list == null)
                 list = new TreeSet<>();
-            Set<File> old = cache.get(path);
+            Set<File> old = CACHE.get(path);
             if (old != null) {
                 for (File f : old) {
                     if (f.exists()) // purge cache from non existen files
                         list.add(f);
                 }
             }
-            cache.put(path, list);
+            CACHE.put(path, list);
 
             ArrayList<File> files = new ArrayList<>();
             for (File f : list) {
@@ -865,8 +873,8 @@ public class OpenFileDialog extends AlertDialog.Builder {
                             if (item.getTitle().equals(getContext().getString(R.string.filedialog_delete))) {
                                 File ff = adapter.files.get(position);
                                 ff.delete();
-                                cache.remove(ff);
-                                cache.get(ff.getParentFile()).remove(ff);
+                                CACHE.remove(ff);
+                                CACHE.get(ff.getParentFile()).remove(ff);
                                 toast(getContext().getString(R.string.filedialog_folderdeleted, ff.getName()));
                                 adapter.scan();
                                 return true;

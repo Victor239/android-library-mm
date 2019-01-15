@@ -12,6 +12,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.graphics.drawable.DrawableCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
@@ -46,8 +47,10 @@ public class UnreadCountDrawable extends Drawable implements Drawable.Callback {
         this.count = count;
         this.rect = dr.getBounds();
 
-        this.backgroundCallback = dr.getCallback();
-        setCallback(backgroundCallback);
+        if (Build.VERSION.SDK_INT >= 11) {
+            this.backgroundCallback = dr.getCallback();
+            setCallback(backgroundCallback);
+        }
 
         this.background = dr;
         this.background.setCallback(this);
@@ -65,7 +68,8 @@ public class UnreadCountDrawable extends Drawable implements Drawable.Callback {
         if (backgroundCallback != null)
             background.setCallback(this);
 
-        background.jumpToCurrentState();
+        if (Build.VERSION.SDK_INT >= 11)
+            background.jumpToCurrentState();
     }
 
     @Override
@@ -194,22 +198,28 @@ public class UnreadCountDrawable extends Drawable implements Drawable.Callback {
 
     @Override
     public void invalidateDrawable(Drawable who) {
-        Callback c = getCallback();
-        if (c != null)
-            c.invalidateDrawable(this);
+        if (Build.VERSION.SDK_INT >= 11) {
+            Callback c = getCallback();
+            if (c != null)
+                c.invalidateDrawable(this);
+        }
     }
 
     @Override
     public void scheduleDrawable(Drawable who, Runnable what, long when) {
-        Callback c = getCallback();
-        if (c != null)
-            c.scheduleDrawable(this, what, when);
+        if (Build.VERSION.SDK_INT >= 11) {
+            Callback c = getCallback();
+            if (c != null)
+                c.scheduleDrawable(this, what, when);
+        }
     }
 
     @Override
     public void unscheduleDrawable(Drawable who, Runnable what) {
-        Callback c = getCallback();
-        if (c != null)
-            c.unscheduleDrawable(this, what);
+        if (Build.VERSION.SDK_INT >= 11) {
+            Callback c = getCallback();
+            if (c != null)
+                c.unscheduleDrawable(this, what);
+        }
     }
 }

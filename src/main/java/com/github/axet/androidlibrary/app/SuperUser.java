@@ -98,6 +98,7 @@ public class SuperUser {
     public static final File DOTDOT = new File("..");
 
     public static boolean EXITCODE = false; // does su support for exit code for pipe scripts? run exitTest()
+    public static boolean TRAPERR = false; // does sh support for trap ERR for scripts? run trapTest()
 
     public FileDescriptor dup(FileDescriptor fd) {
         try {
@@ -231,7 +232,7 @@ public class SuperUser {
             OutputStream os = su.getOutputStream();
             if (cmd.sete)
                 writeString(SETE + EOL, os);
-            if (cmd.exit && !EXITCODE) // without 'trap' scrips with or without (set -e) always exit with '0'
+            if (cmd.exit && !EXITCODE && TRAPERR) // without 'trap' scrips with or without (set -e) always exit with '0'
                 writeString(BIN_TRAP + " '" + KILL_SELF + "' ERR" + EOL, os);
             writeString(cmd.build(), os);
             writeString(BIN_EXIT + EOL, os);
@@ -300,6 +301,18 @@ public class SuperUser {
 
     public static boolean exitTest() {
         return EXITCODE = !su(new Commands(BIN_FALSE)).ok(); // && su(new Commands(BIN_TRUE)).ok();
+    }
+
+    public static boolean trapTest() {
+        try {
+            Process sh = Runtime.getRuntime().exec(new String[]{BIN_SH, "-c", BIN_TRAP + " '" + BIN_TRUE + "' ERR"});
+            sh.waitFor();
+            return TRAPERR = sh.exitValue() == 0;
+        } catch (IOException e) {
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        return TRAPERR = false;
     }
 
     public static Result rename(File f, File t) {

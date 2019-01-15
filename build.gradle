@@ -1,18 +1,18 @@
 buildscript {
     repositories {
-        jcenter()
         mavenLocal()
+        jcenter()
         google()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.2.1'
+        classpath 'com.android.tools.build:gradle:3.3.0'
         classpath 'com.github.dcendents:android-maven-gradle-plugin:2.1'
     }
 }
 
 repositories {
-    jcenter()
     mavenLocal()
+    jcenter()
     google()
 }
 
@@ -28,8 +28,8 @@ android {
     defaultConfig {
         minSdkVersion 9
         targetSdkVersion 23 // 24+ - unable to start intent with 'file://'
-        versionCode 532
-        versionName "1.30.5"
+        versionCode 533
+        versionName "1.30.6"
         consumerProguardFiles 'consumer-proguard-rules.pro'
     }
     buildTypes {

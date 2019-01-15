@@ -87,7 +87,7 @@ public class AssetsProvider extends ContentProvider {
         try {
             return am.openFd(file_name);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw StorageProvider.fnfe(e);
         }
     }
 
