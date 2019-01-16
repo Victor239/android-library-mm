@@ -108,10 +108,10 @@ public class SuperUser {
     public static boolean EXITCODE = false; // does su support for exit code for pipe scripts? run exitTest()
     public static boolean TRAPERR = false; // does sh support for trap ERR for scripts? run trapTest()
 
-    public static String[] concat(String[] s1, String[] s2) {
-        String[] ss = Arrays.copyOf(s1, s1.length + s2.length);
-        System.arraycopy(s2, 0, ss, s1.length, s2.length);
-        return ss;
+    public static <T> T[] concat(T[] first, T[] second) {
+        T[] result = Arrays.copyOf(first, first.length + second.length);
+        System.arraycopy(second, 0, result, first.length, second.length);
+        return result;
     }
 
     public FileDescriptor dup(FileDescriptor fd) {

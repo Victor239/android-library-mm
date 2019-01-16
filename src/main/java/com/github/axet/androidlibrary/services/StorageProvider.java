@@ -84,12 +84,6 @@ public class StorageProvider extends ContentProvider {
     protected Storage storage;
     protected ContentResolver resolver;
 
-    public static <T> T[] concat(T[] first, T[] second) {
-        T[] result = Arrays.copyOf(first, first.length + second.length);
-        System.arraycopy(second, 0, result, first.length, second.length);
-        return result;
-    }
-
     public static FileNotFoundException fnfe(final Throwable e) {
         return (FileNotFoundException) new FileNotFoundException() {
             @Override

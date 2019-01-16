@@ -24,13 +24,12 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-/**
- * &lt;service android:name="com.github.axet.androidlibrary.services.WifiKeepService"/&gt;
- * <p>
- * &lt;uses-permission android:name="android.permission.ACCESS_WIFI_STATE" /&gt;
- * &lt;uses-permission android:name="android.permission.CHANGE_WIFI_STATE" /&gt;
- * &lt;uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" /&gt;
- */
+// <service android:name="com.github.axet.androidlibrary.services.WifiKeepService"/>;
+//
+// <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+// <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+// <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+//
 public class WifiKeepService extends Service {
     public static final String TAG = WifiKeepService.class.getSimpleName();
 
@@ -171,9 +170,8 @@ public class WifiKeepService extends Service {
         ComponentName gtalk = new ComponentName("com.google.android.gsf", "com.google.android.gsf.gtalkservice.service.GTalkService");
         ActivityManager manager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
         for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
-            if (gtalk.compareTo(service.service) == 0) {
+            if (gtalk.compareTo(service.service) == 0)
                 return;
-            }
         }
         try {
             SuperUser.startService(gtalk);
