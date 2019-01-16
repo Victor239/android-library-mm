@@ -34,10 +34,14 @@ public class AssetsDexLoader {
     }
 
     public static File getCodeCacheDir(Context context) {
-        if (Build.VERSION.SDK_INT >= 21)
+        if (Build.VERSION.SDK_INT >= 21) {
             return context.getCodeCacheDir();
-        else
-            return new File(context.getCacheDir(), "../code_cache");
+        } else {
+            File file = new File(context.getApplicationInfo().dataDir, "code_cache");
+            if (!file.exists() && !file.mkdirs())
+                throw new RuntimeException("unable to create: " + file);
+            return file;
+        }
     }
 
     public static File extract(Context context, String asset) throws IOException { // extract asset into .jar
