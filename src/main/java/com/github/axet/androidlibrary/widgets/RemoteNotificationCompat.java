@@ -101,13 +101,17 @@ public class RemoteNotificationCompat extends NotificationCompat {
             return this;
         }
 
-        public Builder setImageViewTint(int id, int attr) { // android:tint="?attr/..." crashing <API21
+        public int getThemeColor(int attr) {
             Context context = theme;
             if (context == null)
                 context = mContext;
-            RemoteViewsCompat.setImageViewTint(compact, id, ThemeUtils.getThemeColor(context, attr));
+            return ThemeUtils.getThemeColor(context, attr);
+        }
+
+        public Builder setImageViewTint(int id, int color) { // android:tint="?attr/..." crashing <API21
+            RemoteViewsCompat.setImageViewTint(compact, id, color);
             if (big != null)
-                RemoteViewsCompat.setImageViewTint(big, id, ThemeUtils.getThemeColor(context, attr));
+                RemoteViewsCompat.setImageViewTint(big, id, color);
             return this;
         }
 
@@ -206,11 +210,11 @@ public class RemoteNotificationCompat extends NotificationCompat {
         public NotificationCompat.Builder setSmallIcon(int icon) {
             compact.setImageViewResource(R.id.icon, icon);
             if (theme != null)
-                setImageViewTint(R.id.icon_circle, R.attr.colorButtonNormal);
+                setImageViewTint(R.id.icon_circle, getThemeColor(R.attr.colorButtonNormal));
             else if (Build.VERSION.SDK_INT >= 21)
-                setImageViewTint(R.id.icon_circle, android.R.attr.colorButtonNormal);
+                setImageViewTint(R.id.icon_circle, getThemeColor(android.R.attr.colorButtonNormal));
             else
-                setImageViewTint(R.id.icon_circle, android.R.attr.windowBackground);
+                setImageViewTint(R.id.icon_circle, getThemeColor(android.R.attr.windowBackground));
             return super.setSmallIcon(icon);
         }
     }
