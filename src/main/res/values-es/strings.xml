@@ -62,12 +62,12 @@
         <item>Apagar en 30 min</item>
     </string-array>
     <string name="pref_screenlock_title">Mantener pantalla encendida</string>
-    <string name="optimization_alive">Keep Alive Service</string>
-    <string name="optimization_alive_summary">Background service keep application running</string>
-    <string name="optimization_icon">Persistent Icon</string>
-    <string name="optimization_icon_summary">Requires on some devices when application constantly get removed</string>
-    <string name="optimization_system">Battery Optimization</string>
-    <string name="optimization_system_summary">Open system battery optimization dialog</string>
+    <string name="optimization_alive">Mantener servicio activo</string>
+    <string name="optimization_alive_summary">El servicio en segundo plano mantendrá la aplicación funcionando</string>
+    <string name="optimization_icon">Ícono Persistente</string>
+    <string name="optimization_icon_summary">Requerido en algunos dispositivos cuando la aplicación es cerrada constantemente</string>
+    <string name="optimization_system">Optimización de Batería</string>
+    <string name="optimization_system_summary">Abre el diálogo para la optimización del sistema de la batería</string>
 
     <string name="migrating_data">Migrando datos</string>
 </resources>
