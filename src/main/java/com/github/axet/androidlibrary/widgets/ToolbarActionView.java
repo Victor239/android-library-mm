@@ -5,7 +5,10 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.graphics.Color;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
 import android.support.annotation.Keep;
+import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v7.view.CollapsibleActionView;
 import android.support.v7.view.menu.MenuBuilder;
@@ -50,6 +53,24 @@ public class ToolbarActionView extends LinearLayoutCompat implements Collapsible
         else if (itemImpl.requestsActionButton()) return MenuItemImpl.SHOW_AS_ACTION_IF_ROOM;
         else if (itemImpl.showsTextAsAction()) return MenuItemImpl.SHOW_AS_ACTION_WITH_TEXT;
         else return MenuItemImpl.SHOW_AS_ACTION_NEVER;
+    }
+
+    public static void setTint(MenuItem item, int color) {
+        Drawable d = item.getIcon();
+        d = DrawableCompat.wrap(d);
+        d.mutate();
+        d.setColorFilter(color, PorterDuff.Mode.SRC_ATOP); // DrawableCompat.setTint(d, color);
+        item.setIcon(d);
+    }
+
+    public static void setEnable(MenuItem item, boolean b) {
+        if (b) {
+            item.setEnabled(true);
+            setTint(item, Color.WHITE);
+        } else {
+            item.setEnabled(false);
+            setTint(item, Color.GRAY);
+        }
     }
 
     public ToolbarActionView(Context context) {
@@ -168,6 +189,20 @@ public class ToolbarActionView extends LinearLayoutCompat implements Collapsible
         m.setVisible(true);
         View v = findViewById(id);
         v.setVisibility(VISIBLE);
+    }
+
+    @SuppressLint("RestrictedApi")
+    public void setEnable(int id, boolean b) {
+        MenuItem m = appbar.findItem(id);
+        if (m != null) {
+            m.setVisible(b);
+            return;
+        }
+        m = menu.findItem(id);
+        setEnable(m, b);
+        AppCompatImageButton v = (AppCompatImageButton) findViewById(id);
+        v.setEnabled(b);
+        v.setColorFilter(b ? Color.WHITE : Color.GRAY);
     }
 
     @SuppressLint("RestrictedApi")
