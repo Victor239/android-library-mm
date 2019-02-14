@@ -8,16 +8,18 @@ import android.os.Build;
 import android.os.Handler;
 
 public class AudioTrack extends android.media.AudioTrack {
-    public static int SHORT_SIZE = Short.SIZE / Byte.SIZE;
+    public static final int SHORT_SIZE = Short.SIZE / Byte.SIZE;
 
-    int markerInFrames = -1;
-    int periodInFrames = 1000;
     public long playStart = 0;
+    public int len; // len in frames (stereo frames = len * 2)
+    public int frames; // frames written to audiotrack (including zeros, stereo frames = frames)
+
     Handler playbackHandler = new Handler();
     Runnable playbackUpdate;
     OnPlaybackPositionUpdateListener playbackListener;
-    int len; // len in frames (stereo frames = len * 2)
-    int frames; // frames written to audiotrack (including zeros, stereo frames = frames)
+
+    int markerInFrames = -1;
+    int periodInFrames = 1000;
 
     // AudioTrack unable to play shorter then 'min' size of data, fill it with zeros
     public static int getMinSize(int sampleRate, int c, int audioFormat, int b) {
@@ -284,16 +286,20 @@ public class AudioTrack extends android.media.AudioTrack {
     @Override
     public int write(short[] audioData, int offsetInShorts, int sizeInShorts) {
         int out = super.write(audioData, offsetInShorts, sizeInShorts);
-        this.len += out / getChannelCount();
-        this.frames += out;
+        if (out > 0) {
+            this.len += out / getChannelCount();
+            this.frames += out;
+        }
         return out;
     }
 
     public int write(AudioBuffer buf) {
         int out = write(buf, buf.pos, buf.buffer.length - buf.pos); // use 'buffer.length' instead of 'len'
-        if (out < 0)
-            return out;
-        buf.pos += out;
+        if (out > 0) {
+            buf.pos += out;
+            this.len += out / getChannelCount();
+            this.frames += out;
+        }
         return out;
     }
 
