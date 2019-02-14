@@ -37,6 +37,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -91,6 +92,11 @@ public class StorageProvider extends ContentProvider {
                 return e.getMessage();
             }
         }.initCause(e);
+    }
+
+    public static boolean isExternal(Uri uri) { // need to share()
+        String s = uri.getScheme();
+        return s.equals(ContentResolver.SCHEME_FILE) || uri.getAuthority().startsWith(Storage.SAF);
     }
 
     public static String getApplicationName(Context context) {
@@ -206,6 +212,17 @@ public class StorageProvider extends ContentProvider {
         Intent intent = new Intent(Intent.ACTION_SEND);
         intent.setType(type);
         intent.putExtra(Intent.EXTRA_STREAM, uri);
+        intent.putExtra(Intent.EXTRA_EMAIL, "");
+        intent.putExtra(Intent.EXTRA_SUBJECT, subject);
+        intent.putExtra(Intent.EXTRA_TEXT, context.getString(R.string.shared_via, getApplicationName(context)));
+        FileProvider.grantPermissions(context, intent, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        return intent;
+    }
+
+    public static Intent shareIntent23(Context context, ArrayList<Uri> uris, String type, String subject) {
+        Intent intent = new Intent(Intent.ACTION_SEND_MULTIPLE);
+        intent.setType(type); // image/*
+        intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris);
         intent.putExtra(Intent.EXTRA_EMAIL, "");
         intent.putExtra(Intent.EXTRA_SUBJECT, subject);
         intent.putExtra(Intent.EXTRA_TEXT, context.getString(R.string.shared_via, getApplicationName(context)));
@@ -361,6 +378,24 @@ public class StorageProvider extends ContentProvider {
             if (name != null)
                 uri = share(uri, name);
             return shareIntent23(getContext(), uri, type, subject);
+        }
+    }
+
+    public Intent shareIntent(ArrayList<Uri> uris, String type, String name) {
+        return shareIntent(uris, null, type, name);
+    }
+
+    public Intent shareIntent(ArrayList<Uri> uris, String name, String type, String subject) {
+        if (Build.VERSION.SDK_INT >= 24 && getContext().getApplicationInfo().targetSdkVersion >= 24) { // API24+ failed to open file:// with FileUriExposedException
+            for (int i = 0; i < uris.size(); i++)
+                uris.set(i, share(uris.get(i), name));
+            return shareIntent23(getContext(), uris, type, subject);
+        } else { // API23 can open file://
+            if (name != null) {
+                for (int i = 0; i < uris.size(); i++)
+                    uris.set(i, share(uris.get(i), name));
+            }
+            return shareIntent23(getContext(), uris, type, subject);
         }
     }
 

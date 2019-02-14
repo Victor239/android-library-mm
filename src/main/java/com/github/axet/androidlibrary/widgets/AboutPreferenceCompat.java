@@ -25,13 +25,36 @@ import org.apache.commons.io.IOUtils;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 
-/**
- * &lt;com.github.axet.androidlibrary.widgets.AboutPreferenceCompat
- * app:html="@raw/about"
- * android:persistent="false" /&gt;
- */
+//
+// <com.github.axet.androidlibrary.widgets.AboutPreferenceCompat
+// app:html="@raw/about"
+// android:persistent="false" />
+//
 public class AboutPreferenceCompat extends DialogPreference {
     int id;
+
+    public static void setName(PackageManager pm, TextView t) throws PackageManager.NameNotFoundException {
+        Context context = t.getContext();
+        ApplicationInfo a = pm.getApplicationInfo(context.getPackageName(), 0);
+        t.setText(a.loadLabel(pm));
+    }
+
+    public static void setVersion(TextView ver) {
+        try {
+            Context context = ver.getContext();
+            PackageManager pm = context.getPackageManager();
+            setVersion(pm, ver);
+        } catch (PackageManager.NameNotFoundException e) {
+            ver.setVisibility(View.GONE);
+        }
+    }
+
+    public static void setVersion(PackageManager pm, TextView ver) throws PackageManager.NameNotFoundException {
+        Context context = ver.getContext();
+        PackageInfo info = pm.getPackageInfo(context.getPackageName(), 0);
+        String version = "v" + info.versionName;
+        ver.setText(version);
+    }
 
     public static View buildTitle(Context context) {
         LayoutInflater inflater = LayoutInflater.from(context);
@@ -41,11 +64,8 @@ public class AboutPreferenceCompat extends DialogPreference {
 
         try {
             PackageManager pm = context.getPackageManager();
-            ApplicationInfo a = pm.getApplicationInfo(context.getPackageName(), 0);
-            t.setText(a.loadLabel(pm));
-            PackageInfo pInfo = pm.getPackageInfo(context.getPackageName(), 0);
-            String version = "v" + pInfo.versionName;
-            v.setText(version);
+            setName(pm, t);
+            setVersion(pm, v);
         } catch (PackageManager.NameNotFoundException e) {
             throw new RuntimeException(e);
         }

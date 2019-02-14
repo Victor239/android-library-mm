@@ -1,9 +1,15 @@
 package com.github.axet.androidlibrary.widgets;
 
+import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
 import android.support.annotation.Keep;
+import android.support.v4.internal.view.SupportMenuItem;
+import android.support.v4.view.MenuItemCompat;
+import android.support.v7.app.ActionBar;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 
@@ -29,15 +35,46 @@ import java.util.Locale;
 //            <meta-data
 //            android:name="android.app.searchable"
 //            android:resource="@xml/searchable" />
-
+//
 @Keep
 public class SearchView extends android.support.v7.widget.SearchView {
     public static String TAG = SearchView.class.getSimpleName();
 
-    public OnCollapsedListener collapsedListener;
-    public OnCloseButtonListener closeButtonListener;
     ImageView mCloseButton;
     SearchAutoComplete mSearchSrcTextView;
+
+    public OnExpandedListener expandedListener;
+    public OnCollapsedListener collapsedListener;
+    public OnCloseButtonListener closeButtonListener;
+
+    public static class CollapseListener implements MenuItemCompat.OnActionExpandListener {
+        public ActionBar appbar;
+        public MenuItem current = null;
+
+        public CollapseListener(final ActionBar appbar) {
+            this.appbar = appbar;
+        }
+
+        @SuppressLint("RestrictedApi")
+        public void addItem(MenuItem search) {
+            ((SupportMenuItem) search).setSupportOnActionExpandListener(this);
+        }
+
+        @SuppressLint("RestrictedApi")
+        @Override
+        public boolean onMenuItemActionExpand(MenuItem item) {
+            if (current != item) {
+                current = item;
+                appbar.collapseActionView();
+            }
+            return true;
+        }
+
+        @Override
+        public boolean onMenuItemActionCollapse(MenuItem item) {
+            return true;
+        }
+    }
 
     public interface OnCollapsedListener {
         void onCollapsed();
@@ -45,6 +82,10 @@ public class SearchView extends android.support.v7.widget.SearchView {
 
     public interface OnCloseButtonListener {
         void onClosed();
+    }
+
+    public interface OnExpandedListener {
+        void onExpanded();
     }
 
     public static String normalize(String s) {
@@ -111,4 +152,14 @@ public class SearchView extends android.support.v7.widget.SearchView {
             collapsedListener.onCollapsed();
     }
 
+    public void setOnExpandedListener(OnExpandedListener l) {
+        expandedListener = l;
+    }
+
+    @Override
+    public void onActionViewExpanded() {
+        super.onActionViewExpanded();
+        if (expandedListener != null)
+            expandedListener.onExpanded();
+    }
 }
