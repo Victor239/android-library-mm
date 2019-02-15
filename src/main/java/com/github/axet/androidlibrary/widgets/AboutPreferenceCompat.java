@@ -38,17 +38,21 @@ public class AboutPreferenceCompat extends DialogPreference {
     public static String getApplicationName(Context context) {
         ApplicationInfo a = context.getApplicationInfo();
         int id = a.labelRes;
-        return id == 0 ? a.nonLocalizedLabel.toString() : context.getString(id); // a.loadLabel()
+        return id == 0 ? a.nonLocalizedLabel.toString() : context.getString(id); // a.loadLabel() for external resource
     }
 
     public static String getVersion(Context context) {
         try {
             PackageManager pm = context.getPackageManager();
-            PackageInfo pInfo = pm.getPackageInfo(context.getPackageName(), 0);
-            return V + pInfo.versionName;
+            return getVersion(pm, context);
         } catch (PackageManager.NameNotFoundException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static String getVersion(PackageManager pm, Context context) throws PackageManager.NameNotFoundException {
+        PackageInfo pInfo = pm.getPackageInfo(context.getPackageName(), 0);
+        return V + pInfo.versionName;
     }
 
     public static void setName(PackageManager pm, TextView t) throws PackageManager.NameNotFoundException {
@@ -66,10 +70,7 @@ public class AboutPreferenceCompat extends DialogPreference {
     }
 
     public static void setVersion(PackageManager pm, TextView ver) throws PackageManager.NameNotFoundException {
-        Context context = ver.getContext();
-        PackageInfo info = pm.getPackageInfo(context.getPackageName(), 0);
-        String version = V + info.versionName;
-        ver.setText(version);
+        ver.setText(getVersion(pm, ver.getContext()));
     }
 
     public static View buildTitle(Context context) {
