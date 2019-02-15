@@ -31,7 +31,19 @@ import java.nio.charset.Charset;
 // android:persistent="false" />
 //
 public class AboutPreferenceCompat extends DialogPreference {
+    public static final String V = "v";
+
     int id;
+
+    public static String getVersion(Context context) {
+        try {
+            PackageManager pm = context.getPackageManager();
+            PackageInfo pInfo = pm.getPackageInfo(context.getPackageName(), 0);
+            return V + pInfo.versionName;
+        } catch (PackageManager.NameNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     public static void setName(PackageManager pm, TextView t) throws PackageManager.NameNotFoundException {
         Context context = t.getContext();
@@ -52,7 +64,7 @@ public class AboutPreferenceCompat extends DialogPreference {
     public static void setVersion(PackageManager pm, TextView ver) throws PackageManager.NameNotFoundException {
         Context context = ver.getContext();
         PackageInfo info = pm.getPackageInfo(context.getPackageName(), 0);
-        String version = "v" + info.versionName;
+        String version = V + info.versionName;
         ver.setText(version);
     }
 
@@ -183,7 +195,7 @@ public class AboutPreferenceCompat extends DialogPreference {
             ApplicationInfo a = pm.getApplicationInfo(getContext().getPackageName(), PackageManager.GET_META_DATA);
             sum += a.loadLabel(pm);
             PackageInfo pInfo = pm.getPackageInfo(getContext().getPackageName(), PackageManager.GET_META_DATA);
-            sum += " v" + pInfo.versionName;
+            sum += " " + V + pInfo.versionName;
             setSummary(sum);
         } catch (PackageManager.NameNotFoundException e) {
             throw new RuntimeException(e);
