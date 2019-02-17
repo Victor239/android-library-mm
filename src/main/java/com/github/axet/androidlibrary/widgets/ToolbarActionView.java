@@ -24,6 +24,7 @@ import android.view.Window;
 import com.github.axet.androidlibrary.R;
 
 import java.util.ArrayList;
+import java.util.TreeSet;
 
 @Keep
 public class ToolbarActionView extends LinearLayoutCompat implements CollapsibleActionView {
@@ -44,6 +45,17 @@ public class ToolbarActionView extends LinearLayoutCompat implements Collapsible
     public static void hideMenu(Menu m, int id) {
         MenuItem item = m.findItem(id);
         item.setVisible(false);
+    }
+
+    public static int getFirst(Menu m) {
+        TreeSet<Integer> ii = new TreeSet<>();
+        for (int i = m.size() - 1; i >= 0; i--) {
+            MenuItem item = m.getItem(i);
+            int o = item.getOrder();
+            if (o != 0)
+                ii.add(o);
+        }
+        return ii.first();
     }
 
     @SuppressLint("RestrictedApi")
@@ -131,7 +143,7 @@ public class ToolbarActionView extends LinearLayoutCompat implements Collapsible
             return;
         View c = findViewById(id);
         c.setVisibility(GONE);
-        appbar.add(m.getGroupId(), m.getItemId(), Menu.FIRST, m.getTitle()); // do we need better order then FIRST?
+        appbar.add(Menu.NONE, m.getItemId(), getFirst(appbar) - 1, m.getTitle()); // do we need better order then FIRST?
         items.add(m);
     }
 

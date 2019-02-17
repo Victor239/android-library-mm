@@ -27,6 +27,7 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
 import com.github.axet.androidlibrary.services.StorageProvider;
+import com.github.axet.androidlibrary.widgets.AboutPreferenceCompat;
 
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
@@ -527,7 +528,7 @@ public class MediaPlayerCompat {
             Object player = createExoPlayer(context);
             MediaPlayerCompat mp = createExoPlayer(context, player);
             Class Util = forName("com.google.android.exoplayer2.util.Util");
-            Object dataSourceFactory = forName("com.google.android.exoplayer2.upstream.DefaultDataSourceFactory").getConstructor(Context.class, String.class).newInstance(context, Util.getMethod("getUserAgent", Context.class, String.class).invoke(null, context, StorageProvider.getApplicationName(context)));
+            Object dataSourceFactory = forName("com.google.android.exoplayer2.upstream.DefaultDataSourceFactory").getConstructor(Context.class, String.class).newInstance(context, Util.getMethod("getUserAgent", Context.class, String.class).invoke(null, context, AboutPreferenceCompat.getApplicationName(context)));
             Class DataSource$Factory = forName("com.google.android.exoplayer2.upstream.DataSource$Factory");
             Class ExtractorMediaSource = forName("com.google.android.exoplayer2.source.ExtractorMediaSource");
             Class DefaultExtractorsFactory = forName("com.google.android.exoplayer2.extractor.DefaultExtractorsFactory");
@@ -559,7 +560,7 @@ public class MediaPlayerCompat {
             Object player = createExoPlayer(context);
             MediaPlayerCompat mp = createExoPlayer(context, player);
             Class Util = forName("com.google.android.exoplayer2.util.Util");
-            Object dataSourceFactory = forName("com.google.android.exoplayer2.upstream.DefaultDataSourceFactory").getConstructor(Context.class, String.class).newInstance(context, Util.getMethod("getUserAgent", Context.class, String.class).invoke(null, context, StorageProvider.getApplicationName(context)));
+            Object dataSourceFactory = forName("com.google.android.exoplayer2.upstream.DefaultDataSourceFactory").getConstructor(Context.class, String.class).newInstance(context, Util.getMethod("getUserAgent", Context.class, String.class).invoke(null, context, AboutPreferenceCompat.getApplicationName(context)));
             Class DataSource$Factory = forName("com.google.android.exoplayer2.upstream.DataSource$Factory");
             Class ExtractorMediaSource$Factory = forName("com.google.android.exoplayer2.source.ExtractorMediaSource$Factory");
             Object factory = ExtractorMediaSource$Factory.getConstructor(DataSource$Factory).newInstance(dataSourceFactory);

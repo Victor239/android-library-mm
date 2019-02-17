@@ -193,7 +193,7 @@ public class RemoteNotificationCompat extends NotificationCompat {
         public void create(int layoutId) {
             super.create(layoutId);
             if (compact.getLayoutId() == LOW)
-                compact.setTextViewText(R.id.app_name_text, StorageProvider.getApplicationName(mContext));
+                compact.setTextViewText(R.id.app_name_text, AboutPreferenceCompat.getApplicationName(mContext));
         }
 
         @Override

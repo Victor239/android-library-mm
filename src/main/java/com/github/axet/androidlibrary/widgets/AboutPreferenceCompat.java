@@ -27,16 +27,36 @@ import java.nio.charset.Charset;
 
 //
 // <com.github.axet.androidlibrary.widgets.AboutPreferenceCompat
-// app:html="@raw/about"
-// android:persistent="false" />
+//   app:html="@raw/about"
+//   android:persistent="false" />
 //
 public class AboutPreferenceCompat extends DialogPreference {
+    public static final String V = "v";
+
     int id;
 
-    public static void setName(PackageManager pm, TextView t) throws PackageManager.NameNotFoundException {
-        Context context = t.getContext();
-        ApplicationInfo a = pm.getApplicationInfo(context.getPackageName(), 0);
-        t.setText(a.loadLabel(pm));
+    public static String getApplicationName(Context context) {
+        ApplicationInfo a = context.getApplicationInfo();
+        int id = a.labelRes;
+        return id == 0 ? a.nonLocalizedLabel.toString() : context.getString(id); // a.loadLabel() for external package
+    }
+
+    public static String getVersion(Context context) {
+        try {
+            PackageManager pm = context.getPackageManager();
+            return getVersion(pm, context);
+        } catch (PackageManager.NameNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static String getVersion(PackageManager pm, Context context) throws PackageManager.NameNotFoundException {
+        PackageInfo pInfo = pm.getPackageInfo(context.getPackageName(), 0);
+        return V + pInfo.versionName;
+    }
+
+    public static void setName(TextView t) {
+        t.setText(getApplicationName(t.getContext()));
     }
 
     public static void setVersion(TextView ver) {
@@ -50,10 +70,7 @@ public class AboutPreferenceCompat extends DialogPreference {
     }
 
     public static void setVersion(PackageManager pm, TextView ver) throws PackageManager.NameNotFoundException {
-        Context context = ver.getContext();
-        PackageInfo info = pm.getPackageInfo(context.getPackageName(), 0);
-        String version = "v" + info.versionName;
-        ver.setText(version);
+        ver.setText(getVersion(pm, ver.getContext()));
     }
 
     public static View buildTitle(Context context) {
@@ -62,13 +79,8 @@ public class AboutPreferenceCompat extends DialogPreference {
         TextView t = (TextView) title.findViewById(R.id.about_title_name);
         TextView v = (TextView) title.findViewById(R.id.about_title_version);
 
-        try {
-            PackageManager pm = context.getPackageManager();
-            setName(pm, t);
-            setVersion(pm, v);
-        } catch (PackageManager.NameNotFoundException e) {
-            throw new RuntimeException(e);
-        }
+        setName(t);
+        setVersion(v);
 
         return title;
     }
@@ -177,17 +189,7 @@ public class AboutPreferenceCompat extends DialogPreference {
             id = a.getResourceId(R.styleable.AboutPreferenceCompat_html, -1);
         }
         setPersistent(false);
-        try {
-            String sum = "";
-            PackageManager pm = getContext().getPackageManager();
-            ApplicationInfo a = pm.getApplicationInfo(getContext().getPackageName(), PackageManager.GET_META_DATA);
-            sum += a.loadLabel(pm);
-            PackageInfo pInfo = pm.getPackageInfo(getContext().getPackageName(), PackageManager.GET_META_DATA);
-            sum += " v" + pInfo.versionName;
-            setSummary(sum);
-        } catch (PackageManager.NameNotFoundException e) {
-            throw new RuntimeException(e);
-        }
+        setSummary(getApplicationName(getContext()) + " " + getVersion(getContext()));
         setTitle(getContext().getString(R.string.menu_about));
     }
 
@@ -197,6 +199,10 @@ public class AboutPreferenceCompat extends DialogPreference {
     }
 
     public void setDialog(int id) {
+        this.id = id;
+    }
+
+    public void setRawId(int id) {
         this.id = id;
     }
 }

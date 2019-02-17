@@ -25,6 +25,7 @@ import android.webkit.MimeTypeMap;
 
 import com.github.axet.androidlibrary.R;
 import com.github.axet.androidlibrary.app.Storage;
+import com.github.axet.androidlibrary.widgets.AboutPreferenceCompat;
 import com.github.axet.androidlibrary.widgets.OpenFileDialog;
 import com.github.axet.androidlibrary.widgets.OptimizationPreferenceCompat;
 
@@ -97,12 +98,6 @@ public class StorageProvider extends ContentProvider {
     public static boolean isExternal(Uri uri) { // need to share()
         String s = uri.getScheme();
         return s.equals(ContentResolver.SCHEME_FILE) || uri.getAuthority().startsWith(Storage.SAF);
-    }
-
-    public static String getApplicationName(Context context) {
-        ApplicationInfo applicationInfo = context.getApplicationInfo();
-        int stringId = applicationInfo.labelRes;
-        return stringId == 0 ? applicationInfo.nonLocalizedLabel.toString() : context.getString(stringId);
     }
 
     public static boolean isFolderCallable(Context context, Intent intent, String authory) {
@@ -214,7 +209,7 @@ public class StorageProvider extends ContentProvider {
         intent.putExtra(Intent.EXTRA_STREAM, uri);
         intent.putExtra(Intent.EXTRA_EMAIL, "");
         intent.putExtra(Intent.EXTRA_SUBJECT, subject);
-        intent.putExtra(Intent.EXTRA_TEXT, context.getString(R.string.shared_via, getApplicationName(context)));
+        intent.putExtra(Intent.EXTRA_TEXT, context.getString(R.string.shared_via, AboutPreferenceCompat.getApplicationName(context)));
         FileProvider.grantPermissions(context, intent, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
         return intent;
     }
@@ -225,7 +220,7 @@ public class StorageProvider extends ContentProvider {
         intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris);
         intent.putExtra(Intent.EXTRA_EMAIL, "");
         intent.putExtra(Intent.EXTRA_SUBJECT, subject);
-        intent.putExtra(Intent.EXTRA_TEXT, context.getString(R.string.shared_via, getApplicationName(context)));
+        intent.putExtra(Intent.EXTRA_TEXT, context.getString(R.string.shared_via, AboutPreferenceCompat.getApplicationName(context)));
         FileProvider.grantPermissions(context, intent, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
         return intent;
     }
