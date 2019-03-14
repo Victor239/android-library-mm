@@ -1,4 +1,4 @@
-package com.github.axet.androidlibrary.app;
+package com.github.axet.androidlibrary.sound;
 
 import android.annotation.TargetApi;
 import android.content.ContentResolver;
@@ -26,7 +26,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
-import com.github.axet.androidlibrary.services.StorageProvider;
+import com.github.axet.androidlibrary.app.Storage;
 import com.github.axet.androidlibrary.widgets.AboutPreferenceCompat;
 
 import java.io.FileDescriptor;
@@ -39,6 +39,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
+// To load different exoplayer versions '2.7.3' API 14+ or 'r2.5.4' API9+
+// dynamically requires reflection to load clasees.
 public class MediaPlayerCompat {
     public static String TAG = MediaPlayerCompat.class.getSimpleName();
 

@@ -67,6 +67,8 @@ public class Storage {
     public static final String CONTENTTYPE_FB2 = "application/x-fictionbook";
     public static final String CONTENTTYPE_RAR = "application/x-rar-compressed";
 
+    public static final String SCHEME_PACKAGE = "package";
+
     public static final String COLON = ":";
     public static final String CSS = COLON + "//"; // COLON SLASH SLASH
 
@@ -332,6 +334,10 @@ public class Storage {
         return to;
     }
 
+    public static boolean mkdirs(File f) {
+        return f.exists() || f.mkdirs() || f.exists(); // double check for multiprocess folder creation
+    }
+
     public static File copy(File f, File to) {
         long last = f.lastModified();
         try {
@@ -591,7 +597,6 @@ public class Storage {
         }
     }
 
-
     @TargetApi(19)
     public static String getContentName(Context context, Uri uri) {
         if (uri.getAuthority().startsWith(SAF)) // query crashed for DocumentsContract.isTreeUri() uris
@@ -678,6 +683,25 @@ public class Storage {
         return DocumentsContract.createDocument(resolver, docUri, DocumentsContract.Document.MIME_TYPE_DIR, p.getName());
     }
 
+    @TargetApi(21)
+    public static Uri move(Context context, File f, Uri dir, String t) {
+        Uri u = createFile(context, dir, t);
+        if (u == null)
+            throw new RuntimeException("Unable to create file " + t);
+        ContentResolver resolver = context.getContentResolver();
+        try {
+            InputStream is = new FileInputStream(f);
+            OutputStream os = resolver.openOutputStream(u);
+            IOUtils.copy(is, os);
+            is.close();
+            os.close();
+            delete(f);
+            return u;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     // context methods
 
     public static boolean permitted(Context context, String[] ss) {
@@ -734,12 +758,12 @@ public class Storage {
     public static void showPermissions(Context context) {
         Intent intent = new Intent();
         intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-        Uri uri = Uri.fromParts("package", context.getPackageName(), null);
+        Uri uri = Uri.fromParts(SCHEME_PACKAGE, context.getPackageName(), null);
         intent.setData(uri);
         context.startActivity(intent);
     }
 
-    // file and content
+    // file and content twists
 
     public static String getName(Context context, Uri uri) {
         String s = uri.getScheme();
@@ -892,9 +916,9 @@ public class Storage {
 
     public static boolean ejected(Context context, Uri path) { // check target 'parent RW' access if child does not exist, and 'child R' if exists
         String s = path.getScheme();
-        if (Build.VERSION.SDK_INT >= 21 && s.startsWith(ContentResolver.SCHEME_CONTENT)) {
+        if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
             return isEjected(context, path, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        } else if (s.startsWith(ContentResolver.SCHEME_FILE)) {
+        } else if (s.equals(ContentResolver.SCHEME_FILE)) {
             return ejected(getFile(path));
         } else {
             throw new UnknownUri();
@@ -963,7 +987,6 @@ public class Storage {
         return null;
     }
 
-
     public static long getLength(Context context, Uri uri) {
         String s = uri.getScheme();
         if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
@@ -999,25 +1022,6 @@ public class Storage {
         }
     }
 
-    @TargetApi(21)
-    public static Uri move(Context context, File f, Uri dir, String t) {
-        ContentResolver resolver = context.getContentResolver();
-        Uri u = createFile(context, dir, t);
-        if (u == null)
-            throw new RuntimeException("unable to create file " + t);
-        try {
-            InputStream is = new FileInputStream(f);
-            OutputStream os = resolver.openOutputStream(u);
-            IOUtils.copy(is, os);
-            is.close();
-            os.close();
-            delete(f);
-            return u;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     // call getNextFile() on 't'
     public static Uri move(Context context, File f, Uri t) {
         String s = t.getScheme();
@@ -1036,8 +1040,8 @@ public class Storage {
             if (isSame(parent, td))
                 return null;
 
-            if (!td.exists() && !td.mkdirs())
-                throw new RuntimeException("unable to create: " + td);
+            if (!mkdirs(td))
+                throw new RuntimeException("Unable to create: " + td);
 
             File to = getNextFile(td, n, ext);
 
@@ -1076,7 +1080,8 @@ public class Storage {
                 if (files != null) {
                     for (File ff : files) {
                         File tt = new File(getFile(dir), ff.getName());
-                        tt.mkdirs();
+                        if (!mkdirs(tt))
+                            throw new RuntimeException("No permissions: " + tt);
                         move(ff, tt);
                     }
                 }
@@ -1084,7 +1089,7 @@ public class Storage {
                 return dir;
             } else {
                 File to = getFile(dir);
-                if (!to.exists() && !to.mkdirs())
+                if (!mkdirs(to))
                     throw new RuntimeException("No permissions: " + to);
                 File tofile = new File(to, f.getName());
                 return Uri.fromFile(move(f, tofile));
@@ -1112,7 +1117,7 @@ public class Storage {
                 }
                 return files;
             }
-            throw new RuntimeException("unable to read");
+            throw new RuntimeException("Unable to read");
         } else if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
             String id;
             if (DocumentsContract.isDocumentUri(context, uri))
@@ -1131,7 +1136,7 @@ public class Storage {
                 cursor.close();
                 return files;
             }
-            throw new RuntimeException("unable to read");
+            throw new RuntimeException("Unable to read");
         } else {
             throw new UnknownUri();
         }
