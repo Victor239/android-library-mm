@@ -30,9 +30,9 @@ import java.util.TreeSet;
 public class ToolbarActionView extends LinearLayoutCompat implements CollapsibleActionView {
     public MenuBuilder menu;
     public CollapsibleActionView listener;
-    public Menu appbar;
+    public Menu appbar; // dropdown menu (three dots)
+    ArrayList<MenuItem> items = new ArrayList<>(); // appbar added items
     int old;
-    ArrayList<MenuItem> items = new ArrayList<>(); // appbar items
 
     public static Activity from(Context context) {
         if (context instanceof Activity)
@@ -145,6 +145,10 @@ public class ToolbarActionView extends LinearLayoutCompat implements Collapsible
         c.setVisibility(GONE);
         appbar.add(Menu.NONE, m.getItemId(), getFirst(appbar) - 1, m.getTitle()); // do we need better order then FIRST?
         items.add(m);
+        if (!m.isEnabled()) {
+            MenuItem a = appbar.findItem(m.getItemId());
+            a.setVisible(false);
+        }
     }
 
     @SuppressLint("RestrictedApi")
@@ -183,21 +187,21 @@ public class ToolbarActionView extends LinearLayoutCompat implements Collapsible
     public void hide(int id) {
         View v = findViewById(id);
         v.setVisibility(GONE);
-        MenuItem m = appbar.findItem(id);
-        if (m != null)
-            m.setVisible(false);
-        m = menu.findItem(id);
+        MenuItem a = appbar.findItem(id);
+        if (a != null)
+            a.setVisible(false);
+        MenuItem m = menu.findItem(id);
         m.setVisible(false);
     }
 
     @SuppressLint("RestrictedApi")
     public void show(int id) {
-        MenuItem m = appbar.findItem(id);
-        if (m != null) {
-            m.setVisible(true);
+        MenuItem a = appbar.findItem(id);
+        if (a != null) {
+            a.setVisible(true);
             return;
         }
-        m = menu.findItem(id);
+        MenuItem m = menu.findItem(id);
         m.setVisible(true);
         View v = findViewById(id);
         v.setVisibility(VISIBLE);
@@ -205,12 +209,12 @@ public class ToolbarActionView extends LinearLayoutCompat implements Collapsible
 
     @SuppressLint("RestrictedApi")
     public void setEnable(int id, boolean b) {
-        MenuItem m = appbar.findItem(id);
-        if (m != null) {
-            m.setVisible(b);
+        MenuItem a = appbar.findItem(id);
+        if (a != null) {
+            a.setVisible(b);
             return;
         }
-        m = menu.findItem(id);
+        MenuItem m = menu.findItem(id);
         setEnable(m, b);
         AppCompatImageButton v = (AppCompatImageButton) findViewById(id);
         v.setEnabled(b);
@@ -235,10 +239,5 @@ public class ToolbarActionView extends LinearLayoutCompat implements Collapsible
             }
         }
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-    }
-
-    @Override
-    protected void onLayout(boolean changed, int l, int t, int r, int b) {
-        super.onLayout(changed, l, t, r, b);
     }
 }
