@@ -80,15 +80,15 @@ public class CacheImagesAdapter {
         return new Rect(0, 0, options.outWidth, options.outHeight);
     }
 
-    public static Bitmap createScaled(InputStream is) { // scaled by min
+    public static Bitmap createScaled(InputStream is, int max) { // make image equals max or less
         SeekInputStream sis = new SeekInputStream(is);
         Rect size = getImageSize(sis);
         sis.reset();
         BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
         if (size.width() < size.height())
-            bitmapOptions.inSampleSize = (int) Math.ceil(size.width() / (double) COVER_SIZE);
+            bitmapOptions.inSampleSize = (int) Math.ceil(size.width() / (double) max);
         else
-            bitmapOptions.inSampleSize = (int) Math.ceil(size.height() / (double) COVER_SIZE);
+            bitmapOptions.inSampleSize = (int) Math.ceil(size.height() / (double) max);
         return BitmapFactory.decodeStream(sis, null, bitmapOptions);
     }
 
@@ -108,7 +108,7 @@ public class CacheImagesAdapter {
     }
 
     public static Bitmap createThumbnail(InputStream is) {
-        return createThumbnail(createScaled(is));
+        return createThumbnail(createScaled(is, COVER_SIZE));
     }
 
     public static Bitmap createThumbnail(Bitmap bm) { // scale by min width and cut rest
