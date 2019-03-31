@@ -672,9 +672,9 @@ public class Storage {
 
     @TargetApi(21)
     synchronized public static Uri createFile(Context context, Uri parent, String path) {
-        Uri u = child(context, parent, path);
-        if (exists(context, u))
-            return u;
+        DocumentFile k = getDocumentFile(context, parent, path);
+        if (k != null && k.exists())
+            return k.getUri();
 
         String id;
         if (DocumentsContract.isDocumentUri(context, parent))
@@ -683,20 +683,21 @@ public class Storage {
             id = DocumentsContract.getTreeDocumentId(parent);
         Uri docUri = DocumentsContract.buildDocumentUriUsingTree(parent, id);
 
-        String p = new File(path).getParent();
+        File f = new File(path);
+        String p = f.getParent();
         if (p != null && !p.isEmpty())
             docUri = createFolder(context, docUri, p);
 
         Log.d(TAG, "createFile " + path);
-        String n = getDocumentName(context, u);
+        String n = f.getName();
         return createDocumentFile(context, docUri, n);
     }
 
     @TargetApi(21)
     synchronized public static Uri createFolder(Context context, Uri parent, String path) {
-        Uri c = child(context, parent, path);
-        if (exists(context, c))
-            return c;
+        DocumentFile k = getDocumentFile(context, parent, path);
+        if (k != null && k.exists())
+            return k.getUri();
 
         String id;
         if (DocumentsContract.isDocumentUri(context, parent))
@@ -1097,7 +1098,7 @@ public class Storage {
             String e = getExt(f);
             Uri t = getNextFile(context, dir, n, e);
             if (f.isDirectory()) {
-                Uri tt = createFolder(context, dir, getContentName(context, t));
+                Uri tt = createDocumentFolder(context, dir, getContentName(context, t));
                 File[] files = f.listFiles();
                 if (files != null) {
                     for (File m : files)
