@@ -174,7 +174,7 @@ public class ZipSAF extends NativeStorage {
 
     @Override
     public NativeStorage open(String name) {
-        return new ZipSAF(context, this, Storage.getDocumentChild(context, parent, name));
+        return new ZipSAF(context, this, Storage.getDocumentFile(context, parent, name).getUri());
     }
 
     @Override

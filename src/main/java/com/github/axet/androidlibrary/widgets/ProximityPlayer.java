@@ -5,7 +5,6 @@ import android.media.AudioDeviceInfo;
 import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.media.MediaPlayer;
-import android.os.Build;
 import android.support.v7.media.MediaRouter;
 
 import java.lang.reflect.Method;

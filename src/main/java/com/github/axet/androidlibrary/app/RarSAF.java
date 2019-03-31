@@ -136,7 +136,7 @@ public class RarSAF extends NativeStorage {
 
     @Override
     public NativeStorage open(String name) {
-        return new RarSAF(context, this, Storage.getDocumentChild(context, parent, name));
+        return new RarSAF(context, this, Storage.getDocumentFile(context, parent, name).getUri());
     }
 
     @Override

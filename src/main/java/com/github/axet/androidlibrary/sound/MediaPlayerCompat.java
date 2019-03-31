@@ -11,6 +11,7 @@ import android.graphics.Paint;
 import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.Drawable;
 import android.media.AudioAttributes;
+import android.media.AudioManager;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -243,11 +244,10 @@ public class MediaPlayerCompat {
 
     public static MediaPlayer createMediaPlayer(final Context context, final Uri uri, int streamType) {
         final MediaPlayer mp = new MediaPlayer();
-        if (Build.VERSION.SDK_INT >= 21) {
+        if (Build.VERSION.SDK_INT >= 21)
             mp.setAudioAttributes(new AudioAttributes.Builder().setLegacyStreamType(streamType).build());
-        } else {
+        else
             mp.setAudioStreamType(streamType);
-        }
         try {
             mp.setDataSource(context, uri);
             mp.prepare();

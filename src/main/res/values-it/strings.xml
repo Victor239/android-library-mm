@@ -35,7 +35,7 @@
         <item quantity="other">%d secondi</item>
     </plurals>
 
-    <string name="days_symbol">"d"</string>
+    <string name="days_symbol">G</string>
 
     <string name="size_gb">%1$.1f GB</string>
     <string name="size_mb">%1$.1f MB</string>
@@ -43,31 +43,31 @@
 
     <string name="optimization_dialog">Impostazioni di ottimizzazione della batteria</string>
     <string name="optimization_message">Valuta di aggiungere questa applicazione alle eccezioni tra le  impostazioni di gestione della batteria del telefono al fine di evitare che l\'applicazione sia rimossa dalla memoria volatile.</string>
-    <string name="optimization_killed">Application were killed by OS. Consider adding application to whitelist.</string>
+    <string name="optimization_killed">L\'applicazione è stata chiusa dal sistema operativo. Considerare l\'aggiunta dell\'applicazione all\'elenco delle eccezioni del gestore Batteria.</string>
 
     <string name="menu_settings">Impostazioni</string>
     <string name="menu_about">About</string>
     <string name="open_browser">Open Browser</string>
     <string name="are_you_sure">Sei sicuro ?</string>
-    <string name="default_button">Default</string>
+    <string name="default_button">Standard</string>
     <string name="not_permitted">Non permesso</string>
-    <string name="close">Close</string>
+    <string name="close">Chiudere</string>
 
     <string-array name="screen_lock_text">
-        <item>System Default</item>
-        <item>Keep On</item>
-        <item>Off after 30 sec</item>
-        <item>Off after 1 min</item>
-        <item>Off after 5 min</item>
-        <item>Off after 30 min</item>
+        <item>Standard di sistema</item>
+        <item>Continuare</item>
+        <item>Spegnimento dopo 30 Sec</item>
+        <item>Spegnimento dopo 1 Min</item>
+        <item>Spegnimento dopo 5 Min</item>
+        <item>Spegnimento dopo 30 Min</item>
     </string-array>
-    <string name="pref_screenlock_title">Keep Screen On</string>
-    <string name="optimization_alive">Keep Alive Service</string>
-    <string name="optimization_alive_summary">Background service keep application running</string>
-    <string name="optimization_icon">Persistent Icon</string>
-    <string name="optimization_icon_summary">Requires on some devices when application constantly get removed</string>
-    <string name="optimization_system">Battery Optimization</string>
-    <string name="optimization_system_summary">Open system battery optimization dialog</string>
+    <string name="pref_screenlock_title">Mantenere lo schermo attivo</string>
+    <string name="optimization_alive">Servizio di ottimizzazione</string>
+    <string name="optimization_alive_summary">Il servizio in background mantiene l\'applicazione in funzione.</string>
+    <string name="optimization_icon">Simbolo permanente</string>
+    <string name="optimization_icon_summary">Richiesto su alcuni dispositivi se l\'applicazione viene costantemente rimossa.</string>
+    <string name="optimization_system">Ottimizzazione della Batteria</string>
+    <string name="optimization_system_summary">Aprire il dialogo di sistema per l\'ottimizzazione della batteria.</string>
 
-    <string name="migrating_data">Migrating data</string>
+    <string name="migrating_data">Migrazione dei dati</string>
 </resources>
