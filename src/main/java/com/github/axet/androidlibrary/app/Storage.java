@@ -371,6 +371,23 @@ public class Storage {
     }
 
     // document methods
+    //
+    // tree - content://com.android.externalstorage.documents/tree/A598-18E4%3A
+    //        content://com.android.externalstorage.documents/tree/A598-18E4%3A222
+    //        content://com.android.externalstorage.documents/tree/A598-18E4%3A222%2Feeee
+    // actions: takePersistableUriPermission, query throws UnsupportedOperationException
+    //
+    // document - content://com.android.externalstorage.documents/tree/A598-18E4%3A/document/A598-18E4%3A
+    //            content://com.android.externalstorage.documents/tree/A598-18E4%3A/document/A598-18E4%3Aeeee
+    //            content://com.android.externalstorage.documents/tree/A598-18E4%3A222/document/A598-18E4%3A222
+    //            content://com.android.externalstorage.documents/tree/A598-18E4%3A222/document/A598-18E4%3A222%2Feeee
+    //            content://com.android.externalstorage.documents/tree/A598-18E4%3A222%2Feeee/document/A598-18E4%3A222%2Feeee%2Fhhhh
+    // actions: query returns current document info
+    //
+    // childrens - content://com.android.externalstorage.documents/tree/A598-18E4%3A/document/A598-18E4%3A/children
+    //             content://com.android.externalstorage.documents/tree/A598-18E4%3A222/document/A598-18E4%3A222/children
+    //             content://com.android.externalstorage.documents/tree/A598-18E4%3A222%2Feeee/document/A598-18E4%3A222%2Feeee/children
+    // actions: query returns documents list or empty cursor
 
     public static String getDocumentStorage(String s) {
         if (s.equals(STORAGE_PRIMARY))
@@ -486,7 +503,7 @@ public class Storage {
     }
 
     @TargetApi(21)
-    public static String getDocumentChildPath(Uri uri) { // tree documents points to id:system/f1/ child points to id:system/f1/bin/ == 'bin/'
+    public static String getDocumentChildPath(Uri uri) { // tree documents points to id:system/f1/ child points to id:system/f1/bin/1/ == 'bin/1/'
         String id = DocumentsContract.getDocumentId(uri);
         String parent = DocumentsContract.getTreeDocumentId(uri);
         String r = relative(parent, id, '/'); // folder can ends with ':' so, we try '/' first
@@ -517,7 +534,8 @@ public class Storage {
 
     @TargetApi(19)
     public static boolean isDocumentExists(Context context, Uri uri) {
-        return getDocumentFile(context, uri).exists();
+        DocumentFile k = getDocumentFile(context, uri);
+        return k != null && k.exists();
     }
 
     @TargetApi(21)
@@ -669,9 +687,8 @@ public class Storage {
                 if (childCursor != null && childCursor.moveToNext()) {
                     Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(uri, DocumentsContract.getTreeDocumentId(uri));
                     childCursor2 = resolver.query(childrenUri, null, null, null, null); // check read directory content
-                    if (childCursor2 != null) {
+                    if (childCursor2 != null)
                         return false;
-                    }
                 }
             } finally {
                 if (childCursor != null)

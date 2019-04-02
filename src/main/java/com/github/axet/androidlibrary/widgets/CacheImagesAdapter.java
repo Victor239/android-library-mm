@@ -49,6 +49,8 @@ public class CacheImagesAdapter {
     public static int CACHE_DAYS = 30;
     public static String CACHE_NAME = "cacheimages_";
 
+    public static String[] IMAGES = new String[]{"webp", "png", "jpg", "jpeg", "gif", "bmp"};
+
     public static final int CPU_COUNT = Runtime.getRuntime().availableProcessors();
     public static final int CORE_POOL_SIZE = Math.max(2, Math.min(CPU_COUNT - 1, 4));
     public static final int MAXIMUM_POOL_SIZE = CPU_COUNT * 2 + 1;
@@ -80,9 +82,15 @@ public class CacheImagesAdapter {
         return new Rect(0, 0, options.outWidth, options.outHeight);
     }
 
+    public static Bitmap createScaled(InputStream is) { // make image equals max or less
+        return createScaled(is, COVER_SIZE);
+    }
+
     public static Bitmap createScaled(InputStream is, int max) { // make image equals max or less
         SeekInputStream sis = new SeekInputStream(is);
         Rect size = getImageSize(sis);
+        if (size == null)
+            return null;
         sis.reset();
         BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
         if (size.width() < size.height())
@@ -108,7 +116,10 @@ public class CacheImagesAdapter {
     }
 
     public static Bitmap createThumbnail(InputStream is) {
-        return createThumbnail(createScaled(is, COVER_SIZE));
+        Bitmap bm = createScaled(is, COVER_SIZE);
+        if (bm == null)
+            return null;
+        return createThumbnail(bm);
     }
 
     public static Bitmap createThumbnail(Bitmap bm) { // scale by min width and cut rest
@@ -130,8 +141,7 @@ public class CacheImagesAdapter {
 
     public static boolean isImage(String name) { // supported images by BitmapFactory
         name = name.toLowerCase();
-        String[] ss = new String[]{"webp", "png", "jpg", "jpeg", "gif", "bmp"};
-        for (String s : ss) {
+        for (String s : IMAGES) {
             if (name.endsWith("." + s))
                 return true;
         }
@@ -480,11 +490,10 @@ public class CacheImagesAdapter {
     }
 
     public void updateView(DownloadImageTask task, ImageView image, ProgressBar progress) {
-        if (task != null && task.bm != null) {
+        if (task != null && task.bm != null)
             image.setImageBitmap(task.bm);
-        } else {
+        else
             image.setImageResource(R.drawable.ic_image_black_24dp);
-        }
         progress.setVisibility((task == null || task.done) ? View.GONE : View.VISIBLE);
     }
 }
