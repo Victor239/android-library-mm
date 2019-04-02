@@ -240,6 +240,8 @@ public class ZipSAF extends NativeStorage {
     @Override
     public boolean mkdirs() {
         DocumentFile f = Storage.getDocumentFile(context, parent);
+        if (f == null)
+            return false;
         DocumentFile t = f.createDirectory(Storage.buildDocumentPath(context, parent, u));
         return t != null;
     }
