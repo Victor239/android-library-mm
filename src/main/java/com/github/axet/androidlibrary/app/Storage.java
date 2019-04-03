@@ -45,6 +45,9 @@ import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -1358,6 +1361,50 @@ public class Storage {
 
     public interface NodeFilter {
         boolean accept(Node n);
+    }
+
+    public static class SAFCache extends HashMap<Uri, Uri> {
+        public Uri getParent(Context context, Uri uri) {
+            String s = uri.getScheme();
+            if (s.equals(ContentResolver.SCHEME_CONTENT) && !uri.getAuthority().startsWith(Storage.SAF))
+                return get(uri);
+            return Storage.getParent(context, uri);
+        }
+
+        public void addParents(Uri u, ArrayList<Storage.Node> nn) {
+            for (Storage.Node n : nn)
+                put(n.uri, u);
+        }
+
+        public void removeParents(Uri u, boolean keep) {
+            for (Map.Entry<Uri, Uri> e : new HashSet<>(entrySet())) {
+                if (e.getValue().equals(u)) {
+                    if (!keep)
+                        remove(e.getKey());
+                    removeParents(e.getKey(), false);
+                }
+            }
+        }
+    }
+
+    public static class SAFCaches<T> extends HashMap<T, SAFCache> {
+        public Uri getParent(Context context, Uri uri) {
+            for (SAFCache safCache : values()) {
+                if (safCache.containsKey(uri))
+                    return safCache.get(uri);
+            }
+            return Storage.getParent(context, uri);
+        }
+
+        @Override
+        public SAFCache get(Object t) {
+            SAFCache c = super.get(t);
+            if (c == null) {
+                c = new SAFCache();
+                put((T) t, c);
+            }
+            return c;
+        }
     }
 
     public Storage(Context context) {
