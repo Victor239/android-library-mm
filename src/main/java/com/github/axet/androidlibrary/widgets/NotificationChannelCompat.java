@@ -39,8 +39,8 @@ public class NotificationChannelCompat {
     public Class NotificationChannel;
 
     public static void setChannelId(NotificationCompat.Builder builder, String channelId) {
+        Class NotificationCompat = NotificationCompat.Builder.class;
         try {
-            Class NotificationCompat = NotificationCompat.Builder.class;
             Field mPublicVersion = NotificationCompat.getDeclaredField("mPublicVersion");
             mPublicVersion.setAccessible(true);
             Notification n = (Notification) mPublicVersion.get(builder);
@@ -51,7 +51,17 @@ public class NotificationChannelCompat {
         } catch (IllegalAccessException e) {
             Log.d(TAG, "unable to set public", e);
         }
-        NotificationChannelCompat.setChannelId(builder.mNotification, channelId);
+        try {
+            Field mNotification = NotificationCompat.getDeclaredField("mNotification"); // protected field on 26+ support libraries
+            mNotification.setAccessible(true);
+            Notification n = (Notification) mNotification.get(builder);
+            if (n != null)
+                NotificationChannelCompat.setChannelId(n, channelId);
+        } catch (NoSuchFieldException e) {
+            Log.d(TAG, "unable to set mNotification", e);
+        } catch (IllegalAccessException e) {
+            Log.d(TAG, "unable to set mNotification", e);
+        }
     }
 
     public static void setChannelId(Notification n, String channelId) {
