@@ -9,7 +9,6 @@ import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v7.widget.AppCompatImageView;
-import android.util.Log;
 import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -28,8 +27,8 @@ public class PinchView extends FrameLayout implements GestureDetector.OnGestureL
     float current;
     float centerx = 0.5f;
     float centery = 0.5f;
-    Rect page; // page rect
-    Rect box; // box is smaller then 'page rect', it can increace scroll distance
+    Rect page; // page rect, area on screen where to draw bm
+    Rect box; // box is smaller then 'page rect', cut by layout bounds, scrolling offscreen can increase scroll distance
     float sx;
     float sy;
     Bitmap bm;
@@ -115,7 +114,7 @@ public class PinchView extends FrameLayout implements GestureDetector.OnGestureL
         rotation += a;
         rotation %= 360;
         PopupWindowCompat.setRotationCompat(image, rotation);
-        //limitsOff();
+        limitsOff();
         calc();
     }
 
