@@ -9,6 +9,7 @@ import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v7.widget.AppCompatImageView;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -114,7 +115,7 @@ public class PinchView extends FrameLayout implements GestureDetector.OnGestureL
         rotation += a;
         rotation %= 360;
         PopupWindowCompat.setRotationCompat(image, rotation);
-        limitsOff();
+        //limitsOff();
         calc();
     }
 
@@ -155,7 +156,9 @@ public class PinchView extends FrameLayout implements GestureDetector.OnGestureL
     }
 
     public void onScale(ScaleGestureDetector detector) {
-        current = detector.getCurrentSpan() - start;
+        float k = lp.width / (float) page.width();
+
+        current = (detector.getCurrentSpan() - start) * k;
 
         centerx = (detector.getFocusX() - lp.leftMargin) / lp.width;
         centery = (detector.getFocusY() - lp.topMargin) / lp.height;
