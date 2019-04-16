@@ -11,6 +11,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -104,6 +106,75 @@ public class AssetsDexLoader {
             return parent; // return null if no jars/dex found
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    public static class ThreadLoader {
+        public static final HashMap<Class, Object> locks = new HashMap<>();
+        public static Thread thread;
+
+        public Context context;
+        public String[] deps;
+
+        public ThreadLoader(Context context, String... deps) {
+            this.context = context;
+            this.deps = Arrays.asList(deps).toArray(new String[]{});
+        }
+
+        public ThreadLoader(Context context, boolean block, String... deps) {
+            this(context, deps);
+            if (need())
+                load(block);
+        }
+
+        public boolean need() {
+            return true;
+        }
+
+        public void load() {
+            done(AssetsDexLoader.deps(context, deps));
+        }
+
+        public Object lock() {
+            Class k = getClass();
+            Object v = locks.get(k);
+            if (v == null) {
+                v = new Object();
+                locks.put(k, v);
+            }
+            return v;
+        }
+
+        public void load(boolean block) {
+            Thread t;
+            synchronized (lock()) {
+                if (thread == null) {
+                    if (block) {
+                        load();
+                    } else {
+                        thread = new Thread("ThreadLoader") {
+                            @Override
+                            public void run() {
+                                load();
+                            }
+                        };
+                        thread.start();
+                    }
+                    return;
+                } else {
+                    t = thread;
+                }
+            }
+            if (block) {
+                try {
+                    t.join();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            } // else return
+        }
+
+        public void done(ClassLoader l) {
         }
     }
 
