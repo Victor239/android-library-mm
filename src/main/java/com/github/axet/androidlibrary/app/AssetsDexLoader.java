@@ -20,7 +20,6 @@ import dalvik.system.DexClassLoader;
 import dalvik.system.DexFile;
 
 public class AssetsDexLoader {
-
     public static final String JAR = "jar";
     public static final String DEX = "dex";
     public static final String CLASSES = "classes.dex";
@@ -109,6 +108,15 @@ public class AssetsDexLoader {
         }
     }
 
+    public static ClassLoader load(Context context, File tmp, ClassLoader parent) {
+        if (parent == null)
+            parent = DexClassLoader.getSystemClassLoader();
+        File ext = getExternalCodeCacheDir(context);
+        if (ext == null)
+            ext = getCodeCacheDir(context);
+        return new DexClassLoader(tmp.getPath(), ext.getPath(), null, parent);
+    }
+
     public static class ThreadLoader {
         public static final HashMap<Class, Object> locks = new HashMap<>();
         public static Thread thread;
@@ -177,14 +185,4 @@ public class AssetsDexLoader {
         public void done(ClassLoader l) {
         }
     }
-
-    public static ClassLoader load(Context context, File tmp, ClassLoader parent) {
-        if (parent == null)
-            parent = DexClassLoader.getSystemClassLoader();
-        File ext = getExternalCodeCacheDir(context);
-        if (ext == null)
-            ext = getCodeCacheDir(context);
-        return new DexClassLoader(tmp.getPath(), ext.getPath(), null, parent);
-    }
-
 }
