@@ -89,6 +89,9 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
     public static final String SERVICE_UPDATE = OptimizationPreferenceCompat.class.getCanonicalName() + ".SERVICE_UPDATE";
     public static final String ICON_UPDATE = OptimizationPreferenceCompat.class.getCanonicalName() + ".ICON_UPDATE";
 
+    public static final String DONT_KEEP = "always_finish_activities"; // Don't keep activities global setting
+    public static final String SHOW_ANR = "anr_show_background"; // Show all ANRs secure setting
+
     // all service related code, for old phones, where AlarmManager will be used to keep app running
     protected Class<? extends Service> service;
 
