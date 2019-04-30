@@ -3,6 +3,7 @@ package com.github.axet.androidlibrary.app;
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.os.Build;
+import android.util.Log;
 
 import org.apache.commons.io.IOUtils;
 
@@ -11,6 +12,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -18,6 +21,7 @@ import dalvik.system.DexClassLoader;
 import dalvik.system.DexFile;
 
 public class AssetsDexLoader {
+    public static String TAG = AssetsDexLoader.class.getSimpleName();
 
     public static final String JAR = "jar";
     public static final String DEX = "dex";
@@ -116,4 +120,90 @@ public class AssetsDexLoader {
         return new DexClassLoader(tmp.getPath(), ext.getPath(), null, parent);
     }
 
+    public static class ThreadLoader {
+        public static final HashMap<Class, Object> locks = new HashMap<>();
+        public static Thread thread;
+
+        public Context context;
+        public String[] deps; // delayed load
+
+        public ThreadLoader(Context context, String... deps) {
+            this.context = context;
+            this.deps = Arrays.asList(deps).toArray(new String[]{});
+        }
+
+        public ThreadLoader(Context context, boolean block, String... deps) {
+            this(context, deps);
+            init(block);
+        }
+
+        public void init(boolean block) {
+            if (need())
+                load(block);
+        }
+
+        public boolean need() {
+            return true;
+        }
+
+        public ClassLoader deps() {
+            return AssetsDexLoader.deps(context, deps);
+        }
+
+        public void load() {
+            done(deps());
+        }
+
+        public Object lock() {
+            Class k = getClass();
+            synchronized (locks) {
+                Object v = locks.get(k);
+                if (v == null) {
+                    v = new Object();
+                    locks.put(k, v);
+                }
+                return v;
+            }
+        }
+
+        public void load(boolean block) {
+            Thread t;
+            synchronized (lock()) {
+                if (thread == null) {
+                    if (block) {
+                        load();
+                    } else {
+                        thread = new Thread("ThreadLoader") {
+                            @Override
+                            public void run() {
+                                try {
+                                    load();
+                                } catch (Exception e) {
+                                    Log.e(TAG, "error", e);
+                                    error(e);
+                                }
+                            }
+                        };
+                        thread.start();
+                    }
+                    return;
+                } else {
+                    t = thread;
+                }
+            }
+            if (block) {
+                try {
+                    t.join();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            } // else return
+        }
+
+        public void error(Exception e) {
+        }
+
+        public void done(ClassLoader l) {
+        }
+    }
 }

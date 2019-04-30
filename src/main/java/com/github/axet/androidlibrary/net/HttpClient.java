@@ -125,7 +125,7 @@ public class HttpClient {
         public void checkServerTrusted(X509Certificate[] chain, String authType) {
         }
     }};
-    public static HostnameVerifier HOST_ALL= new HostnameVerifier() {
+    public static HostnameVerifier HOST_ALL = new HostnameVerifier() {
         @Override
         public boolean verify(String hostname, SSLSession session) {
             return true;
@@ -139,9 +139,7 @@ public class HttpClient {
     protected CredentialsProvider credsProvider;
 
     public static void init(Context context) { // if you have 'LinearAlloc exceeded capacity' issue
-        ClassLoader l = AssetsDexLoader.deps(context, "core", "prov", "bcpkix", "bctls");
-        if (l == null || !init(l))
-            init();
+        new SpongyLoader(context, true);
     }
 
     public static boolean init(ClassLoader l) {
@@ -275,6 +273,23 @@ public class HttpClient {
             return (currentReq.getURI().isAbsolute()) ? currentReq.getURI().toString() : (currentHost.toURI() + currentReq.getURI());
         }
         return null;
+    }
+
+    public static class SpongyLoader extends AssetsDexLoader.ThreadLoader {
+        public SpongyLoader(Context context) {
+            super(context, "core", "prov", "bcpkix", "bctls");
+        }
+
+        public SpongyLoader(Context context, boolean block) {
+            this(context);
+            init(block);
+        }
+
+        @Override
+        public void done(ClassLoader l) {
+            if (l == null || !HttpClient.init(l))
+                HttpClient.init();
+        }
     }
 
     @TargetApi(11)
