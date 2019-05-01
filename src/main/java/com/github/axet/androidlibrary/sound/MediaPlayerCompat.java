@@ -11,7 +11,6 @@ import android.graphics.Paint;
 import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.Drawable;
 import android.media.AudioAttributes;
-import android.media.AudioManager;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -103,7 +102,7 @@ public class MediaPlayerCompat {
 
     public static MediaPlayerCompat create(Context context, Uri uri) {
         try {
-            return createExoPlayer25(context, uri);
+            return new ExoUnrecognized(context, uri, createExoPlayer25(context, uri));
         } catch (RuntimeException e) {
             Log.e(TAG, "exo failed", e);
             return createMediaPlayer(context, uri);
@@ -282,7 +281,6 @@ public class MediaPlayerCompat {
             final int STATE_ENDED = ExoPlayer.getField("STATE_ENDED").getInt(null);
             final Class ExoPlaybackException = forName("com.google.android.exoplayer2.ExoPlaybackException");
             final Class UnrecognizedInputFormatException = forName("com.google.android.exoplayer2.source.UnrecognizedInputFormatException");
-            final Method getSourceException = ExoPlaybackException.getDeclaredMethod("getSourceException");
             final Method getCurrentPosition = Player.getDeclaredMethod("getCurrentPosition");
             final Method seekTo = Player.getDeclaredMethod("seekTo", long.class);
             final Method release = Player.getDeclaredMethod("release");
@@ -499,20 +497,11 @@ public class MediaPlayerCompat {
                         }
                     }
                     if (method.getName().equals("onPlayerError")) {
-                        try {
-                            Exception e = (Exception) getSourceException.invoke(args[0]);
-                            if (UnrecognizedInputFormatException.isInstance(e)) {
-                                if (mp.listener != null)
-                                    mp.listener.onError(new UnrecognizedInputFormatException(e));
-                            } else {
-                                if (mp.listener != null)
-                                    mp.listener.onError(e);
-                            }
-                        } catch (InvocationTargetException e) {
-                            throw new RuntimeException(e);
-                        } catch (IllegalAccessException e) {
-                            throw new RuntimeException(e);
-                        }
+                        Exception e = (Exception) ((Exception) args[0]).getCause();
+                        if (UnrecognizedInputFormatException.isInstance(e))
+                            e = new UnrecognizedInputFormatException(e);
+                        if (mp.listener != null)
+                            mp.listener.onError(e);
                     }
                     return null;
                 }
@@ -731,6 +720,90 @@ public class MediaPlayerCompat {
     public static class UnrecognizedInputFormatException extends RuntimeException {
         public UnrecognizedInputFormatException(Exception e) {
             super(e);
+        }
+    }
+
+    public static class ExoUnrecognized extends MediaPlayerCompat {
+        public MediaPlayerCompat player;
+
+        public ExoUnrecognized(final Context context, final Uri uri, MediaPlayerCompat mp) {
+            player = mp;
+            player.addListener(new Listener() {
+                @Override
+                public void onReady() {
+                    if (listener != null)
+                        listener.onReady();
+                }
+
+                @Override
+                public void onEnd() {
+                    if (listener != null)
+                        listener.onEnd();
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    if (e instanceof UnrecognizedInputFormatException) {
+                        Log.d(TAG, "onError", e);
+                        boolean b = player.getPlayWhenReady();
+                        player.release();
+                        player = MediaPlayerCompat.createMediaPlayer(context, uri);
+                        if (player != null) {
+                            player.setPlayWhenReady(b);
+                            return;
+                        }
+                        return;
+                    }
+                    if (listener != null)
+                        listener.onError(e);
+                }
+            });
+        }
+
+        public long getCurrentPosition() {
+            return player.getCurrentPosition();
+        }
+
+        public void seekTo(long pos) {
+            player.seekTo(pos);
+        }
+
+        public void release() {
+            player.release();
+            player = null;
+        }
+
+        public boolean getPlayWhenReady() {
+            return player.getPlayWhenReady();
+        }
+
+        public void setPlayWhenReady(boolean b) {
+            player.setPlayWhenReady(b);
+        }
+
+        public long getDuration() {
+            return player.getDuration();
+        }
+
+        public Bitmap getArtwork() {
+            return player.getArtwork();
+        }
+
+        @TargetApi(21)
+        public void setAudioAttributes(AudioAttributes audioAttributes) {
+            player.setAudioAttributes(audioAttributes);
+        }
+
+        public void setAudioStreamType(int streamType) {
+            player.setAudioStreamType(streamType);
+        }
+
+        public void addListener(Listener e) {
+            listener = e;
+        }
+
+        public View createView() {
+            return player.createView();
         }
     }
 
