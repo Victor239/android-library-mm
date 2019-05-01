@@ -53,8 +53,8 @@ public class MediaPlayerCompat {
     }
 
     public static ParcelFileDescriptor getFD(Context context, Uri uri) throws IOException {
-        String s = uri.getScheme();
         ParcelFileDescriptor pfd;
+        String s = uri.getScheme();
         if (s.equals(ContentResolver.SCHEME_CONTENT)) {
             ContentResolver resolver = context.getContentResolver();
             if (uri.getAuthority().startsWith(Storage.SAF))
@@ -277,6 +277,8 @@ public class MediaPlayerCompat {
             final Class ExoPlayer = forName("com.google.android.exoplayer2.ExoPlayer");
             final Class SimpleExoPlayer = forName("com.google.android.exoplayer2.SimpleExoPlayer");
             Class EventListener = forName("com.google.android.exoplayer2.Player$EventListener");
+            final int STATE_BUFFERING = ExoPlayer.getField("STATE_BUFFERING").getInt(null);
+            final int STATE_IDLE = ExoPlayer.getField("STATE_IDLE").getInt(null);
             final int STATE_READY = ExoPlayer.getField("STATE_READY").getInt(null);
             final int STATE_ENDED = ExoPlayer.getField("STATE_ENDED").getInt(null);
             final Class ExoPlaybackException = forName("com.google.android.exoplayer2.ExoPlaybackException");
@@ -482,26 +484,34 @@ public class MediaPlayerCompat {
                 }
             };
             InvocationHandler e = new InvocationHandler() {
+                public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
+                    if (playbackState == STATE_READY) {
+                        if (mp.listener != null)
+                            mp.listener.onReady();
+                    }
+                    if (playbackState == STATE_ENDED) {
+                        if (mp.listener != null)
+                            mp.listener.onEnd();
+                    }
+                }
+
+                public void onPlayerError(Exception e) {
+                    e = (Exception) e.getCause();
+                    if (UnrecognizedInputFormatException.isInstance(e))
+                        e = new UnrecognizedInputFormatException(e);
+                    if (mp.listener != null)
+                        mp.listener.onError(e);
+                }
+
                 @Override
                 public Object invoke(Object proxy, Method method, Object[] args) {
-                    if (method.getName().equals("onPlayerStateChanged")) {
-                        boolean playWhenReady = (boolean) args[0];
-                        int playbackState = (int) args[1];
-                        if (playbackState == STATE_READY) {
-                            if (mp.listener != null)
-                                mp.listener.onReady();
-                        }
-                        if (playbackState == STATE_ENDED) {
-                            if (mp.listener != null)
-                                mp.listener.onEnd();
-                        }
-                    }
-                    if (method.getName().equals("onPlayerError")) {
-                        Exception e = (Exception) ((Exception) args[0]).getCause();
-                        if (UnrecognizedInputFormatException.isInstance(e))
-                            e = new UnrecognizedInputFormatException(e);
-                        if (mp.listener != null)
-                            mp.listener.onError(e);
+                    switch (method.getName()) {
+                        case "onPlayerStateChanged":
+                            onPlayerStateChanged((boolean) args[0], (int) args[1]);
+                            break;
+                        case "onPlayerError":
+                            onPlayerError((Exception) args[0]);
+                            break;
                     }
                     return null;
                 }
@@ -750,9 +760,10 @@ public class MediaPlayerCompat {
                         player = MediaPlayerCompat.createMediaPlayer(context, uri);
                         if (player != null) {
                             player.setPlayWhenReady(b);
+                            if (listener != null)
+                                listener.onReady(); // getDuration
                             return;
                         }
-                        return;
                     }
                     if (listener != null)
                         listener.onError(e);
