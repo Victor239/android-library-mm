@@ -281,7 +281,6 @@ public class MediaPlayerCompat {
             final int STATE_ENDED = ExoPlayer.getField("STATE_ENDED").getInt(null);
             final Class ExoPlaybackException = forName("com.google.android.exoplayer2.ExoPlaybackException");
             final Class UnrecognizedInputFormatException = forName("com.google.android.exoplayer2.source.UnrecognizedInputFormatException");
-            final Method getSourceException = ExoPlaybackException.getDeclaredMethod("getSourceException");
             final Method getCurrentPosition = Player.getDeclaredMethod("getCurrentPosition");
             final Method seekTo = Player.getDeclaredMethod("seekTo", long.class);
             final Method release = Player.getDeclaredMethod("release");
@@ -498,20 +497,12 @@ public class MediaPlayerCompat {
                         }
                     }
                     if (method.getName().equals("onPlayerError")) {
-                        try {
-                            Exception e = (Exception) getSourceException.invoke(args[0]);
-                            if (UnrecognizedInputFormatException.isInstance(e)) {
-                                if (mp.listener != null)
-                                    mp.listener.onError(new UnrecognizedInputFormatException(e));
-                            } else {
-                                if (mp.listener != null)
-                                    mp.listener.onError(e);
-                            }
-                        } catch (InvocationTargetException e) {
-                            throw new RuntimeException(e);
-                        } catch (IllegalAccessException e) {
-                            throw new RuntimeException(e);
+                        Exception e = (Exception) ((Exception) args[0]).getCause();
+                        if (UnrecognizedInputFormatException.isInstance(e)) {
+                            e = new UnrecognizedInputFormatException(e);
                         }
+                        if (mp.listener != null)
+                            mp.listener.onError(e);
                     }
                     return null;
                 }
