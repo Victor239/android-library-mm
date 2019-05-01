@@ -139,6 +139,18 @@ public class MediaPlayerCompat {
             }
 
             @Override
+            public void prepare() {
+                try {
+                    player.prepare();
+                    if (listener != null)
+                        listener.onReady();
+                } catch (IOException e) {
+                    if (listener != null)
+                        listener.onError(e);
+                }
+            }
+
+            @Override
             public long getCurrentPosition() {
                 return player.getCurrentPosition();
             }
@@ -233,7 +245,6 @@ public class MediaPlayerCompat {
         }
         try {
             setDataSource(context, mp, uri);
-            mp.prepare();
             return mp;
         } catch (IOException e) {
             Log.d(TAG, "unable to create MediaPlayer", e);
@@ -249,7 +260,6 @@ public class MediaPlayerCompat {
             mp.setAudioStreamType(streamType);
         try {
             mp.setDataSource(context, uri);
-            mp.prepare();
             return mp;
         } catch (IOException e) {
             Log.d(TAG, "unable to create MediaPlayer", e);
@@ -271,7 +281,7 @@ public class MediaPlayerCompat {
     }
 
     @SuppressWarnings("unchecked")
-    public static MediaPlayerCompat createExoPlayer(final Context context, final Object player) {
+    public static MediaPlayerCompat createExoPlayer(final Context context, final Object player, final Object source) {
         try {
             final Class Player = forName("com.google.android.exoplayer2.Player");
             final Class ExoPlayer = forName("com.google.android.exoplayer2.ExoPlayer");
@@ -313,7 +323,21 @@ public class MediaPlayerCompat {
             final Field TIME_UNSET = C.getField("TIME_UNSET");
             final Class PlayerView = forName("com.google.android.exoplayer2.ui.PlayerView");
             final Class AudioAttributes$Builder = forName("com.google.android.exoplayer2.audio.AudioAttributes$Builder");
+            final Class MediaSource = forName("com.google.android.exoplayer2.source.MediaSource");
             final MediaPlayerCompat mp = new MediaPlayerCompat() {
+                @Override
+                public void prepare() {
+                    try {
+                        ExoPlayer.getDeclaredMethod("prepare", MediaSource).invoke(player, source);
+                    } catch (InvocationTargetException e) {
+                        throw new RuntimeException(e);
+                    } catch (IllegalAccessException e) {
+                        throw new RuntimeException(e);
+                    } catch (NoSuchMethodException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+
                 @Override
                 public long getCurrentPosition() {
                     try {
@@ -524,10 +548,9 @@ public class MediaPlayerCompat {
     }
 
     @SuppressWarnings("unchecked")
-    public static MediaPlayerCompat createExoPlayer25(Context context, Uri uri) {
+    public static MediaPlayerCompat createExoPlayer25(Context context, Uri uri) { // 2.7 compatible
         try {
             Object player = createExoPlayer(context);
-            MediaPlayerCompat mp = createExoPlayer(context, player);
             Class Util = forName("com.google.android.exoplayer2.util.Util");
             Object dataSourceFactory = forName("com.google.android.exoplayer2.upstream.DefaultDataSourceFactory").getConstructor(Context.class, String.class).newInstance(context, Util.getMethod("getUserAgent", Context.class, String.class).invoke(null, context, AboutPreferenceCompat.getApplicationName(context)));
             Class DataSource$Factory = forName("com.google.android.exoplayer2.upstream.DataSource$Factory");
@@ -536,10 +559,7 @@ public class MediaPlayerCompat {
             Class EventListener = forName("com.google.android.exoplayer2.source.ExtractorMediaSource$EventListener");
             Class ExtractorsFactory = forName("com.google.android.exoplayer2.extractor.ExtractorsFactory");
             Object source = ExtractorMediaSource.getConstructor(Uri.class, DataSource$Factory, ExtractorsFactory, Handler.class, EventListener).newInstance(uri, dataSourceFactory, DefaultExtractorsFactory.newInstance(), null, null);
-            Class MediaSource = forName("com.google.android.exoplayer2.source.MediaSource");
-            final Class ExoPlayer = forName("com.google.android.exoplayer2.ExoPlayer");
-            ExoPlayer.getDeclaredMethod("prepare", MediaSource).invoke(player, source);
-            return mp;
+            return createExoPlayer(context, player, source);
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         } catch (NoSuchMethodException e) {
@@ -559,17 +579,13 @@ public class MediaPlayerCompat {
     public static MediaPlayerCompat createExoPlayer27(Context context, Uri uri) {
         try {
             Object player = createExoPlayer(context);
-            MediaPlayerCompat mp = createExoPlayer(context, player);
             Class Util = forName("com.google.android.exoplayer2.util.Util");
             Object dataSourceFactory = forName("com.google.android.exoplayer2.upstream.DefaultDataSourceFactory").getConstructor(Context.class, String.class).newInstance(context, Util.getMethod("getUserAgent", Context.class, String.class).invoke(null, context, AboutPreferenceCompat.getApplicationName(context)));
             Class DataSource$Factory = forName("com.google.android.exoplayer2.upstream.DataSource$Factory");
             Class ExtractorMediaSource$Factory = forName("com.google.android.exoplayer2.source.ExtractorMediaSource$Factory");
             Object factory = ExtractorMediaSource$Factory.getConstructor(DataSource$Factory).newInstance(dataSourceFactory);
             Object source = ExtractorMediaSource$Factory.getDeclaredMethod("createMediaSource", Uri.class).invoke(factory, uri);
-            Class MediaSource = forName("com.google.android.exoplayer2.source.MediaSource");
-            final Class ExoPlayer = forName("com.google.android.exoplayer2.ExoPlayer");
-            ExoPlayer.getDeclaredMethod("prepare", MediaSource).invoke(player, source);
-            return mp;
+            return createExoPlayer(context, player, source);
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         } catch (NoSuchMethodException e) {
@@ -759,9 +775,27 @@ public class MediaPlayerCompat {
                         player.release();
                         player = MediaPlayerCompat.createMediaPlayer(context, uri);
                         if (player != null) {
+                            player.addListener(new Listener() {
+                                @Override
+                                public void onReady() {
+                                    if (listener != null)
+                                        listener.onReady();
+                                }
+
+                                @Override
+                                public void onEnd() {
+                                    if (listener != null)
+                                        listener.onEnd();
+                                }
+
+                                @Override
+                                public void onError(Exception e) {
+                                    if (listener != null)
+                                        listener.onError(e);
+                                }
+                            });
+                            player.prepare();
                             player.setPlayWhenReady(b);
-                            if (listener != null)
-                                listener.onReady(); // getDuration
                             return;
                         }
                     }
@@ -769,6 +803,11 @@ public class MediaPlayerCompat {
                         listener.onError(e);
                 }
             });
+        }
+
+        @Override
+        public void prepare() {
+            player.prepare();
         }
 
         public long getCurrentPosition() {
@@ -827,6 +866,9 @@ public class MediaPlayerCompat {
     }
 
     public MediaPlayerCompat() {
+    }
+
+    public void prepare() {
     }
 
     public long getCurrentPosition() {
