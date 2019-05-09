@@ -113,7 +113,7 @@ public class AssetsDexLoader {
 
     public static ClassLoader load(Context context, File tmp, ClassLoader parent) {
         if (parent == null)
-            parent = DexClassLoader.getSystemClassLoader();
+            parent = context.getClassLoader();
         File ext = getExternalCodeCacheDir(context);
         if (ext == null)
             ext = getCodeCacheDir(context);

@@ -44,6 +44,8 @@ import java.lang.reflect.Proxy;
 public class MediaPlayerCompat {
     public static String TAG = MediaPlayerCompat.class.getSimpleName();
 
+    public static final int MEDIA_ERROR_SYSTEM = -2147483648;
+
     public static ClassLoader classLoader = MediaPlayerCompat.class.getClassLoader();
 
     public Listener listener;
@@ -52,9 +54,46 @@ public class MediaPlayerCompat {
         return Class.forName(className, true, classLoader);
     }
 
+    public static String toStringError(int what, int extra) {
+        String str = "";
+        switch (what) {
+            case MediaPlayer.MEDIA_ERROR_UNKNOWN:
+                str += "MEDIA_ERROR_UNKNOWN";
+                break;
+            case MediaPlayer.MEDIA_ERROR_SERVER_DIED:
+                str += "MEDIA_ERROR_SERVER_DIED";
+                break;
+            default:
+                str += what;
+                break;
+        }
+        str += " ";
+        switch (extra) {
+            case MediaPlayer.MEDIA_ERROR_IO:
+                str += "MEDIA_ERROR_IO";
+                break;
+            case MediaPlayer.MEDIA_ERROR_MALFORMED:
+                str += "MEDIA_ERROR_MALFORMED";
+                break;
+            case MediaPlayer.MEDIA_ERROR_UNSUPPORTED:
+                str += "MEDIA_ERROR_UNSUPPORTED";
+                break;
+            case MediaPlayer.MEDIA_ERROR_TIMED_OUT:
+                str += "MEDIA_ERROR_TIMED_OUT";
+                break;
+            case MEDIA_ERROR_SYSTEM:
+                str += "MEDIA_ERROR_SYSTEM";
+                break;
+            default:
+                str += extra;
+                break;
+        }
+        return str;
+    }
+
     public static ParcelFileDescriptor getFD(Context context, Uri uri) throws IOException {
-        String s = uri.getScheme();
         ParcelFileDescriptor pfd;
+        String s = uri.getScheme();
         if (s.equals(ContentResolver.SCHEME_CONTENT)) {
             ContentResolver resolver = context.getContentResolver();
             if (uri.getAuthority().startsWith(Storage.SAF))
@@ -100,11 +139,61 @@ public class MediaPlayerCompat {
         pfd.close();
     }
 
-    public static MediaPlayerCompat create(Context context, Uri uri) {
+    public static MediaPlayerCompat create(final Context context, final Uri uri) {
         try {
-            return new ExoUnrecognized(context, uri, createExoPlayer25(context, uri));
+            final Wrapper w = new Wrapper(createExoPlayer25(context, uri));
+            w.player.addListener(new Listener() {
+                @Override
+                public void onReady() {
+                    if (w.listener != null)
+                        w.listener.onReady();
+                }
+
+                @Override
+                public void onEnd() {
+                    if (w.listener != null)
+                        w.listener.onEnd();
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    if (e instanceof UnrecognizedInputFormatException) {
+                        Log.d(TAG, "onError", e);
+                        boolean b = w.player.getPlayWhenReady();
+                        w.player.release();
+                        w.player = MediaPlayerCompat.createMediaPlayer(context, uri);
+                        if (w.player != null) {
+                            w.player.addListener(new Listener() {
+                                @Override
+                                public void onReady() {
+                                    if (w.listener != null)
+                                        w.listener.onReady();
+                                }
+
+                                @Override
+                                public void onEnd() {
+                                    if (w.listener != null)
+                                        w.listener.onEnd();
+                                }
+
+                                @Override
+                                public void onError(Exception e) {
+                                    if (w.listener != null)
+                                        w.listener.onError(e);
+                                }
+                            });
+                            w.player.prepare();
+                            w.player.setPlayWhenReady(b);
+                            return;
+                        }
+                    }
+                    if (w.listener != null)
+                        w.listener.onError(e);
+                }
+            });
+            return w;
         } catch (RuntimeException e) {
-            Log.e(TAG, "exo failed", e);
+            Log.e(TAG, "exo create failed", e);
             return createMediaPlayer(context, uri);
         }
     }
@@ -121,6 +210,13 @@ public class MediaPlayerCompat {
             }
 
             public void setListeners() {
+                player.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                    @Override
+                    public void onPrepared(MediaPlayer mp) {
+                        if (listener != null)
+                            listener.onReady();
+                    }
+                });
                 player.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                     @Override
                     public void onCompletion(MediaPlayer mp) {
@@ -132,10 +228,15 @@ public class MediaPlayerCompat {
                     @Override
                     public boolean onError(MediaPlayer mp, int what, int extra) {
                         if (listener != null)
-                            listener.onError(new Exception("" + what));
+                            listener.onError(new Exception(toStringError(what, extra)));
                         return true;
                     }
                 });
+            }
+
+            @Override
+            public void prepare() {
+                player.prepareAsync();
             }
 
             @Override
@@ -180,7 +281,7 @@ public class MediaPlayerCompat {
                     try {
                         MediaMetadataRetriever m = new MediaMetadataRetriever();
                         setDataSource(context, m, uri);
-                        byte art[] = m.getEmbeddedPicture();
+                        byte[] art = m.getEmbeddedPicture();
                         if (art == null)
                             return null;
                         return BitmapFactory.decodeByteArray(art, 0, art.length);
@@ -233,7 +334,6 @@ public class MediaPlayerCompat {
         }
         try {
             setDataSource(context, mp, uri);
-            mp.prepare();
             return mp;
         } catch (IOException e) {
             Log.d(TAG, "unable to create MediaPlayer", e);
@@ -248,8 +348,7 @@ public class MediaPlayerCompat {
         else
             mp.setAudioStreamType(streamType);
         try {
-            mp.setDataSource(context, uri);
-            mp.prepare();
+            setDataSource(context, mp, uri);
             return mp;
         } catch (IOException e) {
             Log.d(TAG, "unable to create MediaPlayer", e);
@@ -271,12 +370,14 @@ public class MediaPlayerCompat {
     }
 
     @SuppressWarnings("unchecked")
-    public static MediaPlayerCompat createExoPlayer(final Context context, final Object player) {
+    public static MediaPlayerCompat createExoPlayer(final Context context, final Object player, final Object source) {
         try {
             final Class Player = forName("com.google.android.exoplayer2.Player");
             final Class ExoPlayer = forName("com.google.android.exoplayer2.ExoPlayer");
             final Class SimpleExoPlayer = forName("com.google.android.exoplayer2.SimpleExoPlayer");
             Class EventListener = forName("com.google.android.exoplayer2.Player$EventListener");
+            final int STATE_BUFFERING = ExoPlayer.getField("STATE_BUFFERING").getInt(null);
+            final int STATE_IDLE = ExoPlayer.getField("STATE_IDLE").getInt(null);
             final int STATE_READY = ExoPlayer.getField("STATE_READY").getInt(null);
             final int STATE_ENDED = ExoPlayer.getField("STATE_ENDED").getInt(null);
             final Class ExoPlaybackException = forName("com.google.android.exoplayer2.ExoPlaybackException");
@@ -311,7 +412,21 @@ public class MediaPlayerCompat {
             final Field TIME_UNSET = C.getField("TIME_UNSET");
             final Class PlayerView = forName("com.google.android.exoplayer2.ui.PlayerView");
             final Class AudioAttributes$Builder = forName("com.google.android.exoplayer2.audio.AudioAttributes$Builder");
+            final Class MediaSource = forName("com.google.android.exoplayer2.source.MediaSource");
             final MediaPlayerCompat mp = new MediaPlayerCompat() {
+                @Override
+                public void prepare() {
+                    try {
+                        ExoPlayer.getDeclaredMethod("prepare", MediaSource).invoke(player, source);
+                    } catch (InvocationTargetException e) {
+                        throw new RuntimeException(e);
+                    } catch (IllegalAccessException e) {
+                        throw new RuntimeException(e);
+                    } catch (NoSuchMethodException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+
                 @Override
                 public long getCurrentPosition() {
                     try {
@@ -482,26 +597,34 @@ public class MediaPlayerCompat {
                 }
             };
             InvocationHandler e = new InvocationHandler() {
+                public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
+                    if (playbackState == STATE_READY) {
+                        if (mp.listener != null)
+                            mp.listener.onReady();
+                    }
+                    if (playbackState == STATE_ENDED) {
+                        if (mp.listener != null)
+                            mp.listener.onEnd();
+                    }
+                }
+
+                public void onPlayerError(Exception e) {
+                    e = (Exception) e.getCause();
+                    if (UnrecognizedInputFormatException.isInstance(e))
+                        e = new UnrecognizedInputFormatException(e);
+                    if (mp.listener != null)
+                        mp.listener.onError(e);
+                }
+
                 @Override
                 public Object invoke(Object proxy, Method method, Object[] args) {
-                    if (method.getName().equals("onPlayerStateChanged")) {
-                        boolean playWhenReady = (boolean) args[0];
-                        int playbackState = (int) args[1];
-                        if (playbackState == STATE_READY) {
-                            if (mp.listener != null)
-                                mp.listener.onReady();
-                        }
-                        if (playbackState == STATE_ENDED) {
-                            if (mp.listener != null)
-                                mp.listener.onEnd();
-                        }
-                    }
-                    if (method.getName().equals("onPlayerError")) {
-                        Exception e = (Exception) ((Exception) args[0]).getCause();
-                        if (UnrecognizedInputFormatException.isInstance(e))
-                            e = new UnrecognizedInputFormatException(e);
-                        if (mp.listener != null)
-                            mp.listener.onError(e);
+                    switch (method.getName()) {
+                        case "onPlayerStateChanged":
+                            onPlayerStateChanged((boolean) args[0], (int) args[1]);
+                            break;
+                        case "onPlayerError":
+                            onPlayerError((Exception) args[0]);
+                            break;
                     }
                     return null;
                 }
@@ -514,10 +637,9 @@ public class MediaPlayerCompat {
     }
 
     @SuppressWarnings("unchecked")
-    public static MediaPlayerCompat createExoPlayer25(Context context, Uri uri) {
+    public static MediaPlayerCompat createExoPlayer25(Context context, Uri uri) { // 2.7 compatible
         try {
             Object player = createExoPlayer(context);
-            MediaPlayerCompat mp = createExoPlayer(context, player);
             Class Util = forName("com.google.android.exoplayer2.util.Util");
             Object dataSourceFactory = forName("com.google.android.exoplayer2.upstream.DefaultDataSourceFactory").getConstructor(Context.class, String.class).newInstance(context, Util.getMethod("getUserAgent", Context.class, String.class).invoke(null, context, AboutPreferenceCompat.getApplicationName(context)));
             Class DataSource$Factory = forName("com.google.android.exoplayer2.upstream.DataSource$Factory");
@@ -526,10 +648,7 @@ public class MediaPlayerCompat {
             Class EventListener = forName("com.google.android.exoplayer2.source.ExtractorMediaSource$EventListener");
             Class ExtractorsFactory = forName("com.google.android.exoplayer2.extractor.ExtractorsFactory");
             Object source = ExtractorMediaSource.getConstructor(Uri.class, DataSource$Factory, ExtractorsFactory, Handler.class, EventListener).newInstance(uri, dataSourceFactory, DefaultExtractorsFactory.newInstance(), null, null);
-            Class MediaSource = forName("com.google.android.exoplayer2.source.MediaSource");
-            final Class ExoPlayer = forName("com.google.android.exoplayer2.ExoPlayer");
-            ExoPlayer.getDeclaredMethod("prepare", MediaSource).invoke(player, source);
-            return mp;
+            return createExoPlayer(context, player, source);
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         } catch (NoSuchMethodException e) {
@@ -549,17 +668,13 @@ public class MediaPlayerCompat {
     public static MediaPlayerCompat createExoPlayer27(Context context, Uri uri) {
         try {
             Object player = createExoPlayer(context);
-            MediaPlayerCompat mp = createExoPlayer(context, player);
             Class Util = forName("com.google.android.exoplayer2.util.Util");
             Object dataSourceFactory = forName("com.google.android.exoplayer2.upstream.DefaultDataSourceFactory").getConstructor(Context.class, String.class).newInstance(context, Util.getMethod("getUserAgent", Context.class, String.class).invoke(null, context, AboutPreferenceCompat.getApplicationName(context)));
             Class DataSource$Factory = forName("com.google.android.exoplayer2.upstream.DataSource$Factory");
             Class ExtractorMediaSource$Factory = forName("com.google.android.exoplayer2.source.ExtractorMediaSource$Factory");
             Object factory = ExtractorMediaSource$Factory.getConstructor(DataSource$Factory).newInstance(dataSourceFactory);
             Object source = ExtractorMediaSource$Factory.getDeclaredMethod("createMediaSource", Uri.class).invoke(factory, uri);
-            Class MediaSource = forName("com.google.android.exoplayer2.source.MediaSource");
-            final Class ExoPlayer = forName("com.google.android.exoplayer2.ExoPlayer");
-            ExoPlayer.getDeclaredMethod("prepare", MediaSource).invoke(player, source);
-            return mp;
+            return createExoPlayer(context, player, source);
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         } catch (NoSuchMethodException e) {
@@ -723,41 +838,16 @@ public class MediaPlayerCompat {
         }
     }
 
-    public static class ExoUnrecognized extends MediaPlayerCompat {
+    public static class Wrapper extends MediaPlayerCompat {
         public MediaPlayerCompat player;
 
-        public ExoUnrecognized(final Context context, final Uri uri, MediaPlayerCompat mp) {
+        public Wrapper(MediaPlayerCompat mp) {
             player = mp;
-            player.addListener(new Listener() {
-                @Override
-                public void onReady() {
-                    if (listener != null)
-                        listener.onReady();
-                }
+        }
 
-                @Override
-                public void onEnd() {
-                    if (listener != null)
-                        listener.onEnd();
-                }
-
-                @Override
-                public void onError(Exception e) {
-                    if (e instanceof UnrecognizedInputFormatException) {
-                        Log.d(TAG, "onError", e);
-                        boolean b = player.getPlayWhenReady();
-                        player.release();
-                        player = MediaPlayerCompat.createMediaPlayer(context, uri);
-                        if (player != null) {
-                            player.setPlayWhenReady(b);
-                            return;
-                        }
-                        return;
-                    }
-                    if (listener != null)
-                        listener.onError(e);
-                }
-            });
+        @Override
+        public void prepare() {
+            player.prepare();
         }
 
         public long getCurrentPosition() {
@@ -816,6 +906,9 @@ public class MediaPlayerCompat {
     }
 
     public MediaPlayerCompat() {
+    }
+
+    public void prepare() {
     }
 
     public long getCurrentPosition() {
