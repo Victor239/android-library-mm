@@ -6,7 +6,6 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.ProviderInfo;
 import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
@@ -65,6 +64,8 @@ public class StorageProvider extends ContentProvider {
 
     public static final String CONTENTTYPE_FOLDER = "resource/folder";
     public static final String SCHEME_FOLDER = "folder";
+
+    public static final String APK = "apk"; // ext
 
     public static final String FILE_PREFIX = "storage";
     public static final String FILE_SUFFIX = ".tmp";
@@ -347,6 +348,38 @@ public class StorageProvider extends ContentProvider {
     }
 
     public Intent openIntent(Uri uri, String name) {
+        String n = name;
+        if (n == null)
+            n = Storage.getName(getContext(), uri);
+        String e = Storage.getExt(n).toLowerCase();
+        if (e.equals(APK)) { // special handling for apk
+            if (Build.VERSION.SDK_INT >= 24 && getContext().getApplicationInfo().targetSdkVersion >= 24) {
+                uri = share(uri, n);
+            } else {
+                String s = uri.getScheme();
+                if (s.equals(ContentResolver.SCHEME_CONTENT) && Build.VERSION.SDK_INT >= 21 && uri.getAuthority().startsWith(Storage.SAF)) { // convert content:///primary to file://
+                    Uri old = uri;
+                    uri = StorageProvider.filterFolderIntent(getContext(), uri);
+                    if (old == uri) { // content:// uri not converted by filter, then copy apk to tmp folder
+                        File f = getContext().getExternalCacheDir();
+                        if (f == null)
+                            f = getContext().getCacheDir();
+                        f = new File(f, name);
+                        try {
+                            InputStream is = getContext().getContentResolver().openInputStream(uri);
+                            OutputStream os = new FileOutputStream(f);
+                            IOUtils.copy(is, os);
+                            is.close();
+                            os.close();
+                        } catch (Exception e1) {
+                            throw new RuntimeException(e1);
+                        }
+                        uri = Uri.fromFile(f);
+                    }
+                }
+            }
+            return openIntent23(getContext(), uri);
+        }
         if (Build.VERSION.SDK_INT >= 24 && getContext().getApplicationInfo().targetSdkVersion >= 24) { // API24+ failed to open file:// with FileUriExposedException
             String s = uri.getScheme();
             if (s.equals(ContentResolver.SCHEME_FILE)) {
@@ -358,7 +391,7 @@ public class StorageProvider extends ContentProvider {
             }
         }
         if (name != null)
-            uri = share(uri, name);
+            uri = share(uri, name); // we have to cover file:// and content:// schemes, so other apps can open it
         return openIntent23(getContext(), uri);
     }
 
