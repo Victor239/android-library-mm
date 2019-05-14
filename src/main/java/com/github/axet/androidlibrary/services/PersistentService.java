@@ -23,6 +23,7 @@ public class PersistentService extends Service {
     public static final String TAG = PersistentService.class.getSimpleName();
 
     public static int NOTIFICATION_PERSISTENT_ICON = 1;
+    public static boolean PERSISTENT_ICON = false;
     public static String PREFERENCE_OPTIMIZATION = "optimization";
     public static String PREFERENCE_NEXT = "next";
     public static Class MAIN_ACTIVITY;
@@ -61,7 +62,11 @@ public class PersistentService extends Service {
             super.onReceive(context, intent);
             String a = intent.getAction();
             if (a != null && a.equals(OptimizationPreferenceCompat.ICON_UPDATE))
-                updateIcon(true);
+                updateIcon();
+        }
+
+        public void updateIcon() {
+            PersistentService.this.updateIcon(new Intent());
         }
 
         @Override
@@ -109,10 +114,15 @@ public class PersistentService extends Service {
         super.onCreate();
         Log.d(TAG, "onCreate");
 
-        optimization = new ServiceReceiver(this, getClass(), PREFERENCE_OPTIMIZATION);
-        optimization.create();
+        optimization = createOptimization();
 
-        updateIcon(true);
+        updateIcon();
+    }
+
+    public ServiceReceiver createOptimization() {
+        ServiceReceiver optimization = new ServiceReceiver(this, getClass(), PREFERENCE_OPTIMIZATION);
+        optimization.create();
+        return optimization;
     }
 
     @Nullable
@@ -131,7 +141,7 @@ public class PersistentService extends Service {
             optimization = null;
         }
 
-        updateIcon(false);
+        hideIcon();
     }
 
     @Override
@@ -164,7 +174,7 @@ public class PersistentService extends Service {
         return R.style.AppThemeLightLib;
     }
 
-    public Notification build() {
+    public Notification build(Intent intent) {
         PendingIntent main = PendingIntent.getActivity(this, 0, new Intent(this, MAIN_ACTIVITY), PendingIntent.FLAG_UPDATE_CURRENT);
 
         RemoteNotificationCompat.Builder builder = new RemoteNotificationCompat.Low(this, R.layout.remoteview);
@@ -182,19 +192,29 @@ public class PersistentService extends Service {
         return builder.build();
     }
 
-    public void updateIcon(boolean show) {
+    public void updateIcon() {
+        updateIcon(new Intent());
+    }
+
+    public void updateIcon(Intent intent) {
         NotificationManagerCompat nm = NotificationManagerCompat.from(this);
         OptimizationPreferenceCompat.State state = OptimizationPreferenceCompat.getState(this, PREFERENCE_OPTIMIZATION);
-        if (show && (state.icon || Build.VERSION.SDK_INT >= 26 && getApplicationInfo().targetSdkVersion >= 26)) {
-            Notification n = build();
+        if (PERSISTENT_ICON || (state.icon || Build.VERSION.SDK_INT >= 26 && getApplicationInfo().targetSdkVersion >= 26)) {
+            Notification n = build(intent);
             if (notification == null)
                 startForeground(NOTIFICATION_PERSISTENT_ICON, n);
             else
                 nm.notify(NOTIFICATION_PERSISTENT_ICON, n);
             notification = n;
         } else {
-            stopForeground(false);
-            nm.cancel(NOTIFICATION_PERSISTENT_ICON);
+            hideIcon();
         }
+    }
+
+    public void hideIcon() {
+        NotificationManagerCompat nm = NotificationManagerCompat.from(this);
+        stopForeground(false);
+        nm.cancel(NOTIFICATION_PERSISTENT_ICON);
+        notification = null;
     }
 }
