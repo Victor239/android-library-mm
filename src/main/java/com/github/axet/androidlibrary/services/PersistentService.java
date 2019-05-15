@@ -39,12 +39,15 @@ public class PersistentService extends Service {
         context.stopService(intent);
     }
 
-    public static void startIfEnabled(Context context, boolean b, Intent intent) {
+    public static boolean startIfPersistent(Context context, boolean b, Intent intent) { // if service is optional keep running service for <API26
         OptimizationPreferenceCompat.State state = OptimizationPreferenceCompat.getState(context, PREFERENCE_OPTIMIZATION);
-        if ((Build.VERSION.SDK_INT < 26 && b) || state.icon) // always running service for <API26
+        if ((Build.VERSION.SDK_INT < 26 && b) || state.icon) {
             start(context, intent);
-        else
+            return true;
+        } else {
             stop(context, intent);
+            return false;
+        }
     }
 
     public class ServiceReceiver extends OptimizationPreferenceCompat.ServiceReceiver {
@@ -116,15 +119,14 @@ public class PersistentService extends Service {
         super.onCreate();
         Log.d(TAG, "onCreate");
 
-        optimization = createOptimization();
+        onCreateOptimization();
 
         updateIcon();
     }
 
-    public ServiceReceiver createOptimization() {
-        ServiceReceiver optimization = new ServiceReceiver(this, getClass(), PREFERENCE_OPTIMIZATION);
+    public void onCreateOptimization() {
+        optimization = new ServiceReceiver(this, getClass(), PREFERENCE_OPTIMIZATION);
         optimization.create();
-        return optimization;
     }
 
     @Nullable
@@ -176,16 +178,19 @@ public class PersistentService extends Service {
         return R.style.AppThemeLightLib;
     }
 
+    public NotificationChannelCompat getChannelStatus() {
+        return new NotificationChannelCompat(this, "status", "Status", NotificationManagerCompat.IMPORTANCE_LOW);
+    }
+
     public Notification build(Intent intent) {
         PackageManager pm = getPackageManager();
-        Intent l = pm.getLaunchIntentForPackage(getPackageName());
-
-        PendingIntent main = PendingIntent.getActivity(this, 0, l, PendingIntent.FLAG_UPDATE_CURRENT);
+        Intent launch = pm.getLaunchIntentForPackage(getPackageName());
+        PendingIntent main = PendingIntent.getActivity(this, 0, launch, PendingIntent.FLAG_UPDATE_CURRENT);
 
         RemoteNotificationCompat.Builder builder = new RemoteNotificationCompat.Low(this, R.layout.remoteview);
 
         builder.setTheme(getAppTheme())
-                .setChannel(CHANNEL_STATUS)
+                .setChannel(getChannelStatus())
                 .setImageViewTint(R.id.icon_circle, builder.getThemeColor(R.attr.colorButtonNormal))
                 .setTitle(AboutPreferenceCompat.getApplicationName(this))
                 .setText(getString(R.string.optimization_alive))
