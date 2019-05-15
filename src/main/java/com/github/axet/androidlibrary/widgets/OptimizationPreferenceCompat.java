@@ -80,7 +80,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
 
     public static int REFRESH = 15 * AlarmManager.MIN1;
     public static int CHECK_DELAY = 5 * AlarmManager.MIN1;
-    public static boolean ICON = false; // default no persistent icon option, use setIcon if default false
+    public static boolean ICON = false; // default no persistent icon option, use setIcon if default true and service persisted
 
     public static int BOOT_DELAY = 2 * 60 * 1000;
 
@@ -98,13 +98,13 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
     // all service related code, for old phones, where AlarmManager will be used to keep app running
     protected Class<? extends Service> service;
 
-    public static boolean findPermission(Context context, String p) {
+    public static boolean findPermission(Context context, String p) { // pm.checkPermission() - runtime method
         try {
             PackageManager pm = context.getPackageManager();
             PackageInfo info = pm.getPackageInfo(context.getPackageName(), PackageManager.GET_PERMISSIONS);
             for (String i : info.requestedPermissions) {
                 if (i.equals(p))
-                    return true; // or use pm.checkPermission()
+                    return true;
             }
         } catch (PackageManager.NameNotFoundException e) {
             Log.e(TAG, "unable to find permission", e);
@@ -140,7 +140,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
 
     public static void setIcon(Context context, boolean b) {
         if (Build.VERSION.SDK_INT >= 26 && context.getApplicationInfo().targetSdkVersion >= 26)
-            b = false; // api 26 requires mandatory persistent icon
+            b = false; // api 26 requires mandatory persistent icon, hide option
         ICON = b;
     }
 
@@ -572,7 +572,11 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
     }
 
     public static AlertDialog buildBootWarning(Context context) {
-        return new AlertDialog.Builder(context).setMessage("Application never received BOOT event, check if it has been removed from autostart").create();
+        return new AlertDialog.Builder(context).setMessage("Application never received BOOT event, check if it has been removed from autostart").setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+            }
+        }).create();
     }
 
     public static void setBootInstallTime(Context context, String pref, long time) {
@@ -890,8 +894,12 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
             this.bigID = bigID;
         }
 
+        public NotificationChannelCompat createChannel() {
+            return new NotificationChannelCompat(context, key, text, NotificationManagerCompat.IMPORTANCE_LOW);
+        }
+
         public void onCreate() {
-            channel = new NotificationChannelCompat(context, key, text, NotificationManagerCompat.IMPORTANCE_LOW);
+            channel = createChannel();
             if (Build.VERSION.SDK_INT >= 26 && context.getApplicationInfo().targetSdkVersion >= 26)
                 show(true);
         }
@@ -903,7 +911,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
 
         @SuppressLint("RestrictedApi")
         public Notification build() {
-            String title = context.getApplicationInfo().name;
+            String title = AboutPreferenceCompat.getApplicationName(context);
             String text = description;
 
             RemoteNotificationCompat.Builder builder;

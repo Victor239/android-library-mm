@@ -7,6 +7,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
@@ -23,32 +24,27 @@ public class PersistentService extends Service {
     public static final String TAG = PersistentService.class.getSimpleName();
 
     public static int NOTIFICATION_PERSISTENT_ICON = 1;
-    public static boolean PERSISTENT_ICON = false;
     public static String PREFERENCE_OPTIMIZATION = "optimization";
     public static String PREFERENCE_NEXT = "next";
-    public static Class MAIN_ACTIVITY;
-    public static Class SERVICE_CLASS;
     public static NotificationChannelCompat CHANNEL_STATUS;
 
     protected OptimizationPreferenceCompat.ServiceReceiver optimization;
     protected Notification notification;
 
-    public static void start(Context context) {
-        Intent intent = new Intent(context, SERVICE_CLASS);
+    public static void start(Context context, Intent intent) {
         OptimizationPreferenceCompat.startService(context, intent);
     }
 
-    public static void stop(Context context) {
-        Intent intent = new Intent(context, SERVICE_CLASS);
+    public static void stop(Context context, Intent intent) {
         context.stopService(intent);
     }
 
-    public static void registerNext(Context context, boolean b) {
+    public static void startIfEnabled(Context context, boolean b, Intent intent) {
         OptimizationPreferenceCompat.State state = OptimizationPreferenceCompat.getState(context, PREFERENCE_OPTIMIZATION);
-        if (Build.VERSION.SDK_INT < 26 && b || state.icon) // always running service for <API26
-            start(context);
+        if ((Build.VERSION.SDK_INT < 26 && b) || state.icon) // always running service for <API26
+            start(context, intent);
         else
-            stop(context);
+            stop(context, intent);
     }
 
     public class ServiceReceiver extends OptimizationPreferenceCompat.ServiceReceiver {
@@ -66,7 +62,7 @@ public class PersistentService extends Service {
         }
 
         public void updateIcon() {
-            PersistentService.this.updateIcon(new Intent());
+            PersistentService.this.updateIcon(null);
         }
 
         @Override
@@ -83,10 +79,16 @@ public class PersistentService extends Service {
     }
 
     public static class SettingsReceiver extends BroadcastReceiver {
+        public Intent intent;
+        public IntentFilter filters = new IntentFilter();
+
+        public SettingsReceiver(Intent intent) {
+            this.intent = intent;
+            filters.addAction(OptimizationPreferenceCompat.ICON_UPDATE);
+        }
+
         public void register(Context context) {
-            IntentFilter ff = new IntentFilter();
-            ff.addAction(OptimizationPreferenceCompat.ICON_UPDATE);
-            context.registerReceiver(this, ff);
+            context.registerReceiver(this, filters);
         }
 
         public void unregister(Context context) {
@@ -99,9 +101,9 @@ public class PersistentService extends Service {
             if (a.equals(OptimizationPreferenceCompat.ICON_UPDATE)) {
                 OptimizationPreferenceCompat.State state = OptimizationPreferenceCompat.getState(context, PREFERENCE_OPTIMIZATION);
                 if (state.icon)
-                    start(context);
+                    start(context, this.intent);
                 else
-                    stop(context);
+                    stop(context, this.intent);
             }
         }
     }
@@ -175,7 +177,10 @@ public class PersistentService extends Service {
     }
 
     public Notification build(Intent intent) {
-        PendingIntent main = PendingIntent.getActivity(this, 0, new Intent(this, MAIN_ACTIVITY), PendingIntent.FLAG_UPDATE_CURRENT);
+        PackageManager pm = getPackageManager();
+        Intent l = pm.getLaunchIntentForPackage(getPackageName());
+
+        PendingIntent main = PendingIntent.getActivity(this, 0, l, PendingIntent.FLAG_UPDATE_CURRENT);
 
         RemoteNotificationCompat.Builder builder = new RemoteNotificationCompat.Low(this, R.layout.remoteview);
 
@@ -183,23 +188,23 @@ public class PersistentService extends Service {
                 .setChannel(CHANNEL_STATUS)
                 .setImageViewTint(R.id.icon_circle, builder.getThemeColor(R.attr.colorButtonNormal))
                 .setTitle(AboutPreferenceCompat.getApplicationName(this))
-                .setText(TAG)
+                .setText(getString(R.string.optimization_alive))
                 .setWhen(notification)
                 .setMainIntent(main)
                 .setOngoing(true)
-                .setSmallIcon(R.drawable.ic_circle_black_24dp);
+                .setSmallIcon(R.drawable.ic_circle);
 
         return builder.build();
     }
 
     public void updateIcon() {
-        updateIcon(new Intent());
+        updateIcon(null);
     }
 
     public void updateIcon(Intent intent) {
         NotificationManagerCompat nm = NotificationManagerCompat.from(this);
         OptimizationPreferenceCompat.State state = OptimizationPreferenceCompat.getState(this, PREFERENCE_OPTIMIZATION);
-        if (PERSISTENT_ICON || (state.icon || Build.VERSION.SDK_INT >= 26 && getApplicationInfo().targetSdkVersion >= 26)) {
+        if (intent != null || state.icon || Build.VERSION.SDK_INT >= 26 && getApplicationInfo().targetSdkVersion >= 26) {
             Notification n = build(intent);
             if (notification == null)
                 startForeground(NOTIFICATION_PERSISTENT_ICON, n);
