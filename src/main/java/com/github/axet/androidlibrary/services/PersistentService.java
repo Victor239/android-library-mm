@@ -20,13 +20,26 @@ import com.github.axet.androidlibrary.widgets.NotificationChannelCompat;
 import com.github.axet.androidlibrary.widgets.OptimizationPreferenceCompat;
 import com.github.axet.androidlibrary.widgets.RemoteNotificationCompat;
 
+// Several services types available:
+//
+// 1) Persistent Service + Persistent Icon (Torrent Client)
+//    - Battery Optimization settings
+//    - No Persistent Icon option (override PersistentService.updateIcon() to keep intent != null)
+// 2) If Enabled Service + Periodic events (Hourly Reminder / Volume Warning)
+//    - Battery Optimization settings
+//    - Persistent Icon option (PersistentService.isPersistent mandatory call)
+// 3) If Enabled Service (Call Recorder / Media Merger)
+//    - Battery Optimization settings
+//    - Persistent Icon option (OptimizationPreferenceCompat.setIcon() mandatory call)
+// 4) Long Operation Service (Audio Recorder)
+//    - No Battery Optimization settings
+//    - No Persistent Icon option (override PersistentService.updateIcon() to keep intent != null)
 public class PersistentService extends Service {
     public static final String TAG = PersistentService.class.getSimpleName();
 
     public static int NOTIFICATION_PERSISTENT_ICON = 1;
     public static String PREFERENCE_OPTIMIZATION = "optimization";
     public static String PREFERENCE_NEXT = "next";
-    public static NotificationChannelCompat CHANNEL_STATUS;
 
     protected OptimizationPreferenceCompat.ServiceReceiver optimization;
     protected Notification notification;
@@ -122,9 +135,7 @@ public class PersistentService extends Service {
     public void onCreate() {
         super.onCreate();
         Log.d(TAG, "onCreate");
-
         onCreateOptimization();
-
         updateIcon();
     }
 
@@ -186,7 +197,7 @@ public class PersistentService extends Service {
         return new NotificationChannelCompat(this, "status", "Status", NotificationManagerCompat.IMPORTANCE_LOW);
     }
 
-    public Notification build(Intent intent) {
+    public Notification build(Intent intent) { // override getAppTheme() and getChannelStatus() if this method in use
         PackageManager pm = getPackageManager();
         Intent launch = pm.getLaunchIntentForPackage(getPackageName());
         PendingIntent main = PendingIntent.getActivity(this, 0, launch, PendingIntent.FLAG_UPDATE_CURRENT);
