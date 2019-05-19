@@ -14,6 +14,7 @@ import android.os.Build;
 import android.support.v4.app.NotificationCompat;
 import android.support.v7.view.ContextThemeWrapper;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.RemoteViews;
 
 import com.github.axet.androidlibrary.R;
@@ -50,6 +51,31 @@ public class RemoteNotificationCompat extends NotificationCompat {
     public static Bitmap getBitmap(Context context) {
         Drawable d = getApplicationIcon(context);
         return getBitmap(d);
+    }
+
+    @TargetApi(16)
+    public static void setAdaptiveIcon(Context context, RemoteViews view, int nw, int nh, int id) {
+        int fg = ThemeUtils.dp2px(context, 108);
+        int fp = ThemeUtils.dp2px(context, 72);
+        int ap = (fg - fp) / 2; // adaptive icon padding = 18dp
+        float nrw = nw / (float) fg; // layout icon ratio width
+        float nrh = nh / (float) fg; // layout icon ratio height
+        int wp = -(int) (ap * nrw);
+        int hp = -(int) (ap * nrh);
+        view.setViewPadding(R.id.icon, wp, hp, wp, hp);
+        view.setImageViewResource(R.id.icon, id);
+    }
+
+    public static void setAdaptiveIcon(Context context, ImageView view, int nw, int nh, int id) {
+        int fg = ThemeUtils.dp2px(context, 108);
+        int fp = ThemeUtils.dp2px(context, 72);
+        int ap = (fg - fp) / 2; // adaptive icon padding = 18dp
+        float nrw = nw / (float) fg; // layout icon ratio width
+        float nrh = nh / (float) fg; // layout icon ratio height
+        int wp = -(int) (ap * nrw);
+        int hp = -(int) (ap * nrh);
+        view.setPadding(wp, hp, wp, hp);
+        view.setImageResource(id);
     }
 
     public static class Builder extends NotificationCompat.Builder {
@@ -167,23 +193,9 @@ public class RemoteNotificationCompat extends NotificationCompat {
                 context = mContext;
             int nw = context.getResources().getDimensionPixelOffset(R.dimen.notification_large_icon_width); // 64dp
             int nh = context.getResources().getDimensionPixelOffset(R.dimen.notification_large_icon_height); // 64dp
-            setAdaptiveIcon(context, compact, nw, nh);
+            RemoteNotificationCompat.setAdaptiveIcon(context, compact, nw, nh, id);
             if (big != null)
-                setAdaptiveIcon(context, big, nw, nh);
-            setIcon(id);
-            return this;
-        }
-
-        @TargetApi(16)
-        public Builder setAdaptiveIcon(Context context, RemoteViews view, int nw, int nh) {
-            int fg = ThemeUtils.dp2px(context, 108);
-            int fp = ThemeUtils.dp2px(context, 72);
-            int ap = (fg - fp) / 2; // adaptive icon padding = 18dp
-            float nrw = nw / (float) fg; // layout icon ratio width
-            float nrh = nh / (float) fg; // layout icon ratio height
-            int wp = -(int) (ap * nrw);
-            int hp = -(int) (ap * nrh);
-            view.setViewPadding(R.id.icon, wp, hp, wp, hp);
+                RemoteNotificationCompat.setAdaptiveIcon(context, big, nw, nh, id);
             return this;
         }
 
@@ -310,14 +322,14 @@ public class RemoteNotificationCompat extends NotificationCompat {
             if (context == null)
                 context = mContext;
             if (compact.getLayoutId() == LOW) {
-                int dp = ThemeUtils.dp2px(context, 18); // 18dp
-                setAdaptiveIcon(context, compact, dp, dp);
+                int dp = ThemeUtils.dp2px(context, 18);
+                RemoteNotificationCompat.setAdaptiveIcon(context, compact, dp, dp, id);
                 if (big != null) {
                     int nw = context.getResources().getDimensionPixelOffset(R.dimen.notification_large_icon_width); // 64dp
                     int nh = context.getResources().getDimensionPixelOffset(R.dimen.notification_large_icon_height); // 64dp
-                    setAdaptiveIcon(context, big, nw, nh);
+                    RemoteNotificationCompat.setAdaptiveIcon(context, big, nw, nh, id);
                 }
-                return setIcon(id);
+                return this;
             } else {
                 return super.setAdaptiveIcon(id);
             }
@@ -325,7 +337,6 @@ public class RemoteNotificationCompat extends NotificationCompat {
 
         @Override
         public NotificationCompat.Builder setSmallIcon(int icon) {
-            compact.setImageViewResource(R.id.icon, icon);
             if (theme != null)
                 setImageViewTint(R.id.icon_circle, getThemeColor(R.attr.colorButtonNormal));
             else if (Build.VERSION.SDK_INT >= 21)
