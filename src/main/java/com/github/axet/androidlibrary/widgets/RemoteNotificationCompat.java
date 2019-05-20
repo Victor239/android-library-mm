@@ -1,21 +1,34 @@
 package com.github.axet.androidlibrary.widgets;
 
 import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
+import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.support.v4.app.NotificationCompat;
 import android.support.v7.view.ContextThemeWrapper;
+import android.util.AttributeSet;
+import android.util.TypedValue;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.RemoteViews;
 
 import com.github.axet.androidlibrary.R;
+
+import java.util.ArrayList;
+import java.util.Arrays;
 
 // Check android notification_template_base.xml for constants
 public class RemoteNotificationCompat extends NotificationCompat {
@@ -49,6 +62,143 @@ public class RemoteNotificationCompat extends NotificationCompat {
     public static Bitmap getBitmap(Context context) {
         Drawable d = getApplicationIcon(context);
         return getBitmap(d);
+    }
+
+    public static Rect getAdaptivePaddings(View view) {
+        ViewGroup.LayoutParams lp = view.getLayoutParams();
+        int nw = lp.width;
+        int nh = lp.height;
+        if (nw <= 0)
+            nw = view.getWidth();
+        if (nh <= 0)
+            nh = view.getHeight();
+        if (nw <= 0)
+            nw = view.getMeasuredWidth();
+        if (nh <= 0)
+            nh = view.getMeasuredHeight();
+        if (nw <= 0 || nh <= 0)
+            throw new RuntimeException("Adaptive Icon view must be fixed");
+        return getAdaptivePaddings(view.getContext(), nw, nh);
+    }
+
+    public static Rect getAdaptivePaddings(Context context, RemoteViews view, int id) {
+        DimensionFactory size = new DimensionFactory(context, id);
+        RemoteViewsCompat.applyTheme(context, view, size);
+        ViewGroup v;
+        v = size.view;
+        int width = v.getLayoutParams().width;
+        int height = v.getLayoutParams().height;
+        while (width == ViewGroup.LayoutParams.MATCH_PARENT) {
+            v = (ViewGroup) v.getParent();
+            width = v.getLayoutParams().width;
+        }
+        v = size.view;
+        while (height == ViewGroup.LayoutParams.MATCH_PARENT) {
+            v = (ViewGroup) v.getParent();
+            height = v.getLayoutParams().height;
+        }
+        if (width <= 0 || height <= 0)
+            throw new RuntimeException("Adaptive Icon view must be fixed");
+        return getAdaptivePaddings(context, width, height);
+    }
+
+    public static Rect getAdaptivePaddings(Context context, int nw, int nh) {
+        int fg = ThemeUtils.dp2px(context, 108);
+        int fp = ThemeUtils.dp2px(context, 72);
+        int ap = (fg - fp) / 2; // adaptive icon padding = 18dp
+        float nrw = nw / (float) fg; // layout icon ratio width
+        float nrh = nh / (float) fg; // layout icon ratio height
+        int wp = -(int) (ap * nrw);
+        int hp = -(int) (ap * nrh);
+        return new Rect(wp, hp, wp, hp);
+    }
+
+    @TargetApi(16)
+    public static void setAdaptiveIcon(Context context, RemoteViews view, int id) {
+        Rect r = getAdaptivePaddings(context, view, R.id.icon);
+        view.setViewPadding(R.id.icon, r.left, r.top, r.right, r.bottom);
+        view.setImageViewResource(R.id.icon, id);
+    }
+
+    @TargetApi(16)
+    public static void setAdaptiveIcon(Context context, RemoteViews view, int nw, int nh, int id) {
+        Rect r = getAdaptivePaddings(context, nw, nh);
+        view.setViewPadding(R.id.icon, r.left, r.top, r.right, r.bottom);
+        view.setImageViewResource(R.id.icon, id);
+    }
+
+    public static void setAdaptiveIcon(ImageView view, int id) {
+        Rect r = getAdaptivePaddings(view);
+        view.setPadding(r.left, r.top, r.right, r.bottom);
+        view.setImageResource(id);
+    }
+
+    public static class DimensionFactory implements LayoutInflater.Factory {
+        public Context context;
+        public ViewGroup view;
+        public int id;
+
+        public DimensionFactory(Context context, int id) {
+            this.context = context;
+            this.id = id;
+        }
+
+        public int getDimension(Context context, TypedValue out) {
+            if (out.type == TypedValue.TYPE_STRING || out.type == TypedValue.TYPE_REFERENCE)
+                out.data = context.getResources().getDimensionPixelOffset(out.resourceId); // xml color selector
+            if (out.type == TypedValue.TYPE_DIMENSION) {
+                int type = out.data & 0xff;
+                int value = out.data >> 8;
+                switch (type) {
+                    case 1: // dp
+                        out.data = ThemeUtils.dp2px(context, value); // xml color selector
+                        break;
+                    case 2: // sp
+                        out.data = ThemeUtils.sp2px(context, value); // xml color selector
+                        break;
+                }
+            }
+            return out.data;
+        }
+
+        @Override
+        public View onCreateView(String name, Context context, AttributeSet attrs) {
+            if (Build.VERSION.SDK_INT >= 21 && this.context != context) // API21+ and 'android:theme' applied = ignore
+                return null;
+
+            int[] attrsArray = new int[]{
+                    android.R.attr.id,
+                    android.R.attr.layout_width,
+                    android.R.attr.layout_height,
+            };
+
+            Arrays.sort(attrsArray); // know bug https://stackoverflow.com/questions/19034597
+
+            final int ID = Arrays.binarySearch(attrsArray, android.R.attr.id);
+            final int WIDTH = Arrays.binarySearch(attrsArray, android.R.attr.layout_width);
+            final int HEIGHT = Arrays.binarySearch(attrsArray, android.R.attr.layout_height);
+
+            FrameLayout v = new FrameLayout(context);
+
+            Resources.Theme theme = context.getTheme();
+            TypedArray ta = theme.obtainStyledAttributes(attrs, attrsArray, 0, 0);
+            TypedValue out = new TypedValue();
+            if (ta.getValue(ID, out)) {
+                int id = out.resourceId;
+                if (id == this.id)
+                    view = v;
+                int width = ViewGroup.LayoutParams.WRAP_CONTENT;
+                int height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                if (ta.getValue(WIDTH, out))
+                    width = getDimension(context, out);
+                if (ta.getValue(HEIGHT, out))
+                    height = getDimension(context, out);
+                v.setLayoutParams(new ViewGroup.LayoutParams(width, height));
+            }
+            ta.recycle();
+
+            return v;
+        }
     }
 
     public static class Builder extends NotificationCompat.Builder {
@@ -158,6 +308,18 @@ public class RemoteNotificationCompat extends NotificationCompat {
             return this;
         }
 
+        @TargetApi(16)
+        @SuppressLint("RestrictedApi")
+        public Builder setAdaptiveIcon(int id) { // android adaptive foreground icon has 72dp out of 108dp
+            Context context = theme;
+            if (context == null)
+                context = mContext;
+            RemoteNotificationCompat.setAdaptiveIcon(context, compact, id);
+            if (big != null)
+                RemoteNotificationCompat.setAdaptiveIcon(context, big, id);
+            return this;
+        }
+
         public Builder setViewVisibility(int id, int v) {
             compact.setViewVisibility(id, v);
             if (big != null)
@@ -256,8 +418,8 @@ public class RemoteNotificationCompat extends NotificationCompat {
                 create(bigId);
         }
 
-        @Override
         @SuppressLint("RestrictedApi")
+        @Override
         public void create(int layoutId) {
             super.create(layoutId);
             if (compact.getLayoutId() == LOW)
@@ -274,9 +436,25 @@ public class RemoteNotificationCompat extends NotificationCompat {
             return super.setText(text);
         }
 
+        @SuppressLint("RestrictedApi")
+        @Override
+        public Builder setAdaptiveIcon(int id) {
+            Context context = theme;
+            if (context == null)
+                context = mContext;
+            if (compact.getLayoutId() == LOW) {
+                RemoteNotificationCompat.setAdaptiveIcon(context, compact, id);
+                if (big != null) {
+                    RemoteNotificationCompat.setAdaptiveIcon(context, big, id);
+                }
+                return this;
+            } else {
+                return super.setAdaptiveIcon(id);
+            }
+        }
+
         @Override
         public NotificationCompat.Builder setSmallIcon(int icon) {
-            compact.setImageViewResource(R.id.icon, icon);
             if (theme != null)
                 setImageViewTint(R.id.icon_circle, getThemeColor(R.attr.colorButtonNormal));
             else if (Build.VERSION.SDK_INT >= 21)

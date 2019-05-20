@@ -782,9 +782,8 @@ public class HttpClient {
     public CloseableHttpResponse execute(String base, HttpRequestBase request) {
         this.request = request;
 
-        if (proxy != null) {
+        if (proxy != null)
             request.setConfig(build(request.getConfig()));
-        }
 
         if (base != null) {
             if (!base.equals(request.getURI().toString()))
@@ -875,9 +874,8 @@ public class HttpClient {
 
     public String post(String base, String url, String[][] map) {
         Map<String, String> m = new HashMap<>();
-        for (int i = 0; i < map.length; i++) {
+        for (int i = 0; i < map.length; i++)
             m.put(map[i][0], map[i][1]);
-        }
         return post(base, url, m);
     }
 
