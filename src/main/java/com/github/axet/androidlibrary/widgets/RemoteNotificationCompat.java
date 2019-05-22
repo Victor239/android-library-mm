@@ -14,8 +14,10 @@ import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
+import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v7.view.ContextThemeWrapper;
+import android.support.v7.widget.AppCompatImageView;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
@@ -64,23 +66,6 @@ public class RemoteNotificationCompat extends NotificationCompat {
         return getBitmap(d);
     }
 
-    public static Rect getAdaptivePaddings(View view) {
-        ViewGroup.LayoutParams lp = view.getLayoutParams();
-        int nw = lp.width;
-        int nh = lp.height;
-        if (nw <= 0)
-            nw = view.getWidth();
-        if (nh <= 0)
-            nh = view.getHeight();
-        if (nw <= 0)
-            nw = view.getMeasuredWidth();
-        if (nh <= 0)
-            nh = view.getMeasuredHeight();
-        if (nw <= 0 || nh <= 0)
-            throw new RuntimeException("Adaptive Icon view must be fixed");
-        return getAdaptivePaddings(view.getContext(), nw, nh);
-    }
-
     public static Rect getAdaptivePaddings(Context context, RemoteViews view, int id) {
         DimensionFactory size = new DimensionFactory(context, id);
         RemoteViewsCompat.applyTheme(context, view, size);
@@ -125,12 +110,6 @@ public class RemoteNotificationCompat extends NotificationCompat {
         Rect r = getAdaptivePaddings(context, nw, nh);
         view.setViewPadding(R.id.icon, r.left, r.top, r.right, r.bottom);
         view.setImageViewResource(R.id.icon, id);
-    }
-
-    public static void setAdaptiveIcon(ImageView view, int id) {
-        Rect r = getAdaptivePaddings(view);
-        view.setPadding(r.left, r.top, r.right, r.bottom);
-        view.setImageResource(id);
     }
 
     public static class DimensionFactory implements LayoutInflater.Factory {

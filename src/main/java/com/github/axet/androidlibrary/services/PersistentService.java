@@ -34,7 +34,7 @@ import com.github.axet.androidlibrary.widgets.RemoteNotificationCompat;
 //    - Persistent Icon option (OptimizationPreferenceCompat.setIcon() mandatory call)
 // 4) Long Operation Service (Audio Recorder)
 //    - No Battery Optimization settings
-//    - No Persistent Icon option (override PersistentService.updateIcon() to keep intent != null)
+//    - No Persistent Icon option (override PersistentService.updateIcon() to keep intent != null, do not call super.register() - not using optimization settings)
 public class PersistentService extends Service {
     public static final String TAG = PersistentService.class.getSimpleName();
 
