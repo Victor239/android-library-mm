@@ -64,12 +64,12 @@
         <item>30 分鐘後關閉</item>
     </string-array>
     <string name="pref_screenlock_title">保持螢幕開啟</string>
-    <string name="optimization_alive">Keep Alive Service</string>
-    <string name="optimization_alive_summary">Background service keep application running</string>
-    <string name="optimization_icon">Persistent Icon</string>
-    <string name="optimization_icon_summary">Requires on some devices when application constantly get removed</string>
-    <string name="optimization_system">Battery Optimization</string>
-    <string name="optimization_system_summary">Open system battery optimization dialog</string>
+    <string name="optimization_alive">保持活躍服務</string>
+    <string name="optimization_alive_summary">背景服務使應用程式持續執行</string>
+    <string name="optimization_icon">持久性圖示</string>
+    <string name="optimization_icon_summary">在一些應用程式一直被移除的裝置上需要</string>
+    <string name="optimization_system">電池最佳化</string>
+    <string name="optimization_system_summary">開啟系統電池最佳化對話方塊</string>
 
-    <string name="migrating_data">Migrating data</string>
+    <string name="migrating_data">遷移資料</string>
 </resources>
