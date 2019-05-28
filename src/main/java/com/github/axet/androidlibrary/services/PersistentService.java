@@ -71,10 +71,10 @@ public class PersistentService extends Service {
     public class ServiceReceiver extends OptimizationPreferenceCompat.ServiceReceiver {
         String keyNext;
 
-        public ServiceReceiver(Context context, Class<? extends Service> service, String key, String next) {
-            super(context, service, key);
-            keyNext = next;
-            filters.addAction(OptimizationPreferenceCompat.ICON_UPDATE);
+        public ServiceReceiver(String key, String next) {
+            super(PersistentService.this, PersistentService.this.getClass(), key);
+            this.keyNext = next;
+            this.filters.addAction(OptimizationPreferenceCompat.ICON_UPDATE);
         }
 
         @Override
@@ -97,13 +97,13 @@ public class PersistentService extends Service {
         @Override
         public void register() {
             super.register();
-            OptimizationPreferenceCompat.setKillCheck(PersistentService.this, next, keyNext);
+            OptimizationPreferenceCompat.setKillCheck(context, next, keyNext);
         }
 
         @Override
         public void unregister() {
             super.unregister();
-            OptimizationPreferenceCompat.setKillCheck(PersistentService.this, 0, keyNext);
+            OptimizationPreferenceCompat.setKillCheck(context, 0, keyNext);
         }
     }
 
