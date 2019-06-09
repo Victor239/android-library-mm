@@ -10,11 +10,13 @@ import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.view.ContextThemeWrapper;
 import android.util.AttributeSet;
 import android.util.TypedValue;
@@ -31,25 +33,41 @@ import java.util.Arrays;
 // Check android notification_template_base.xml for constants
 public class RemoteNotificationCompat extends NotificationCompat {
 
-    public static Bitmap getBitmap(Drawable drawable) {
-        Bitmap bitmap;
+    public static Bitmap getBitmap(Drawable d) {
+        Bitmap bm;
 
-        if (drawable instanceof BitmapDrawable) {
-            BitmapDrawable bitmapDrawable = (BitmapDrawable) drawable;
-            bitmap = bitmapDrawable.getBitmap();
-            if (bitmap != null)
-                return bitmap;
+        if (d instanceof BitmapDrawable) {
+            BitmapDrawable bitmapDrawable = (BitmapDrawable) d;
+            bm = bitmapDrawable.getBitmap();
+            if (bm != null)
+                return bm;
         }
 
-        if (drawable.getIntrinsicWidth() <= 0 || drawable.getIntrinsicHeight() <= 0)
-            bitmap = Bitmap.createBitmap(128, 128, Bitmap.Config.ARGB_8888);
+        if (d.getIntrinsicWidth() <= 0 || d.getIntrinsicHeight() <= 0)
+            bm = Bitmap.createBitmap(128, 128, Bitmap.Config.ARGB_8888);
         else
-            bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+            bm = Bitmap.createBitmap(d.getIntrinsicWidth(), d.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
 
-        Canvas canvas = new Canvas(bitmap);
-        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
-        drawable.draw(canvas);
-        return bitmap;
+        Canvas c = new Canvas(bm);
+        d.setBounds(0, 0, c.getWidth(), c.getHeight());
+        d.draw(c);
+        return bm;
+    }
+
+    public static Bitmap getAdaptiveBitmap(Context context, Drawable d) {
+        int fg = ThemeUtils.dp2px(context, 108);
+        int fp = ThemeUtils.dp2px(context, 72);
+        float r = fg / (float) fp;
+        int ap = (fg - fp) / 2; // adaptive icon padding = 18dp
+        Bitmap bm = Bitmap.createBitmap(fg, fg, Bitmap.Config.ARGB_8888);
+        Matrix m = new Matrix();
+        m.postScale(r, r);
+        m.preTranslate(-ap, -ap);
+        Canvas c = new Canvas(bm);
+        c.setMatrix(m);
+        d.setBounds(0, 0, c.getWidth(), c.getHeight());
+        d.draw(c);
+        return bm;
     }
 
     public static Drawable getApplicationIcon(Context context) {
@@ -94,18 +112,29 @@ public class RemoteNotificationCompat extends NotificationCompat {
         return new Rect(wp, hp, wp, hp);
     }
 
-    @TargetApi(16)
     public static void setAdaptiveIcon(Context context, RemoteViews view, int id) {
         Rect r = getAdaptivePaddings(context, view, R.id.icon);
-        view.setViewPadding(R.id.icon, r.left, r.top, r.right, r.bottom);
-        view.setImageViewResource(R.id.icon, id);
+        if (Build.VERSION.SDK_INT >= 16) {
+            view.setViewPadding(R.id.icon, r.left, r.top, r.right, r.bottom);
+            view.setImageViewResource(R.id.icon, id);
+        } else {
+            Drawable d = ContextCompat.getDrawable(context, id);
+            Bitmap bm = getAdaptiveBitmap(context, d);
+            view.setImageViewBitmap(R.id.icon, bm);
+        }
     }
 
     @TargetApi(16)
     public static void setAdaptiveIcon(Context context, RemoteViews view, int nw, int nh, int id) {
         Rect r = getAdaptivePaddings(context, nw, nh);
-        view.setViewPadding(R.id.icon, r.left, r.top, r.right, r.bottom);
-        view.setImageViewResource(R.id.icon, id);
+        if (Build.VERSION.SDK_INT >= 16) {
+            view.setViewPadding(R.id.icon, r.left, r.top, r.right, r.bottom);
+            view.setImageViewResource(R.id.icon, id);
+        } else {
+            Drawable d = ContextCompat.getDrawable(context, id);
+            Bitmap bm = getAdaptiveBitmap(context, d);
+            view.setImageViewBitmap(R.id.icon, bm);
+        }
     }
 
     public static class DimensionFactory implements LayoutInflater.Factory {
@@ -288,13 +317,9 @@ public class RemoteNotificationCompat extends NotificationCompat {
             Context context = theme;
             if (context == null)
                 context = mContext;
-            if (Build.VERSION.SDK_INT >= 16) {
-                RemoteNotificationCompat.setAdaptiveIcon(context, compact, id);
-                if (big != null)
-                    RemoteNotificationCompat.setAdaptiveIcon(context, big, id);
-            } else {
-                setIcon(id);
-            }
+            RemoteNotificationCompat.setAdaptiveIcon(context, compact, id);
+            if (big != null)
+                RemoteNotificationCompat.setAdaptiveIcon(context, big, id);
             return this;
         }
 
@@ -421,13 +446,9 @@ public class RemoteNotificationCompat extends NotificationCompat {
             if (context == null)
                 context = mContext;
             if (compact.getLayoutId() == LOW) {
-                if (Build.VERSION.SDK_INT >= 16) {
-                    RemoteNotificationCompat.setAdaptiveIcon(context, compact, id);
-                    if (big != null)
-                        RemoteNotificationCompat.setAdaptiveIcon(context, big, id);
-                } else {
-                    setIcon(id);
-                }
+                RemoteNotificationCompat.setAdaptiveIcon(context, compact, id);
+                if (big != null)
+                    RemoteNotificationCompat.setAdaptiveIcon(context, big, id);
                 return this;
             } else {
                 return super.setAdaptiveIcon(id);
