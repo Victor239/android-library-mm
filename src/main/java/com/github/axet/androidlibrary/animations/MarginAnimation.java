@@ -2,6 +2,7 @@ package com.github.axet.androidlibrary.animations;
 
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
 import android.view.animation.Transformation;
 
 /**
@@ -40,8 +41,8 @@ public class MarginAnimation extends StepAnimation {
     public ViewGroup.MarginLayoutParams viewLpOrig;
     public int marginSlide;
 
-    public static void apply(final View v, final boolean expand, boolean animate) {
-        apply(new LateCreator() {
+    public static Animation apply(final View v, final boolean expand, boolean animate) {
+        return apply(new LateCreator() {
             @Override
             public MarginAnimation create() {
                 return new MarginAnimation(v, expand);

@@ -3,15 +3,15 @@ package com.github.axet.androidlibrary.animations;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.animation.Animation;
 
 import java.util.ArrayList;
-import java.util.TreeSet;
 
 public class ExpandItemAnimator extends DefaultItemAnimator {
     public static String TAG = ExpandItemAnimator.class.getSimpleName();
 
-    public TreeSet<Integer> pending = new TreeSet<>();
+    public ArrayList<RecyclerView.ViewHolder> pending = new ArrayList<>();
     public ArrayList<RecyclerView.ViewHolder> animations = new ArrayList<>();
     public RecyclerView.OnScrollListener onScrollListener = new RecyclerView.OnScrollListener() {
         @Override
@@ -22,15 +22,15 @@ public class ExpandItemAnimator extends DefaultItemAnimator {
 
     @Override
     public boolean canReuseUpdatedViewHolder(@NonNull RecyclerView.ViewHolder viewHolder) {
+        pending.add(viewHolder);
         return true;
     }
 
     @Override
-    public boolean animateChange(@NonNull RecyclerView.ViewHolder oldHolder, @NonNull final RecyclerView.ViewHolder newHolder, @NonNull RecyclerView.ItemAnimator.ItemHolderInfo preInfo, @NonNull RecyclerView.ItemAnimator.ItemHolderInfo postInfo) {
-        if (oldHolder != newHolder)
-            return super.animateChange(oldHolder, newHolder, preInfo, postInfo);
+    public boolean animateChange(@NonNull final RecyclerView.ViewHolder oldHolder, @NonNull final RecyclerView.ViewHolder newHolder, @NonNull RecyclerView.ItemAnimator.ItemHolderInfo preInfo, @NonNull RecyclerView.ItemAnimator.ItemHolderInfo postInfo) {
+        while (pending.remove(newHolder))
+            ;
         Animation a = apply(newHolder, true);
-        pending.remove(newHolder.getAdapterPosition());
         if (a == null) {
             dispatchAnimationFinished(newHolder); // reduce mIsRecyclableCount
             return false;
@@ -58,9 +58,12 @@ public class ExpandItemAnimator extends DefaultItemAnimator {
     @Override
     public void endAnimation(RecyclerView.ViewHolder item) {
         super.endAnimation(item);
-        if (animations.remove(item))
+        while (animations.remove(item)) {
+            apply(item, false); // reset animation
             dispatchChangeFinished(item, false);
-        pending.remove(item.getAdapterPosition());
+        }
+        while (pending.remove(item))
+            ;
     }
 
     @Override
@@ -75,12 +78,8 @@ public class ExpandItemAnimator extends DefaultItemAnimator {
         pending.clear();
     }
 
-    public void notifyItemChanged(int pos) {
-        pending.add(pos);
-    }
-
     public void onBindViewHolder(final RecyclerView.ViewHolder h, int position) {
-        if (pending.contains(position) || animations.contains(h))
+        if (pending.contains(h) || animations.contains(h))
             return;
         apply(h, false);
     }

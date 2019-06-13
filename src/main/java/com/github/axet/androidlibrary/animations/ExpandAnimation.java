@@ -3,11 +3,11 @@ package com.github.axet.androidlibrary.animations;
 import android.annotation.TargetApi;
 import android.os.Build;
 import android.os.Handler;
+import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
 
-import com.github.axet.androidlibrary.widgets.HeaderRecyclerView;
 import com.github.axet.androidlibrary.widgets.PopupWindowCompat;
 
 public class ExpandAnimation extends MarginAnimation {
@@ -16,13 +16,13 @@ public class ExpandAnimation extends MarginAnimation {
     public static ExpandAnimation atomicExpander;
 
     public Handler handler = new Handler();
-    public HeaderRecyclerView list;
+    public RecyclerView list;
     public View convertView; // item view
     public View expandView; // rotating arrow view
     public boolean partial;
     public boolean adjust = true; // adjust list position
 
-    public static Animation apply(final HeaderRecyclerView list, final View itemView, final View toolbarView, final View expandView, final boolean expand, boolean animate) {
+    public static Animation apply(final RecyclerView list, final View itemView, final View toolbarView, final View expandView, final boolean expand, boolean animate) {
         return apply(new LateCreator() {
             @Override
             public MarginAnimation create() {
@@ -34,12 +34,10 @@ public class ExpandAnimation extends MarginAnimation {
         }, toolbarView, expand, animate);
     }
 
-    public ExpandAnimation(HeaderRecyclerView list, View itemView, View toolbarView, View expandView, boolean expand) {
+    public ExpandAnimation(RecyclerView list, View itemView, View toolbarView, View expandView, boolean expand) {
         super(toolbarView, expand);
-
         this.convertView = itemView;
         this.list = list;
-
         this.expandView = expandView;
     }
 
@@ -49,11 +47,12 @@ public class ExpandAnimation extends MarginAnimation {
 
         final int paddedTop = list.getPaddingTop();
         final int paddedBottom = list.getHeight() - list.getPaddingTop() - list.getPaddingBottom();
-
-        partial = false;
-
-        partial |= convertView.getTop() < paddedTop;
+        partial = convertView.getTop() < paddedTop;
         partial |= convertView.getBottom() > paddedBottom;
+    }
+
+    public void expandRotate(float e) {
+        PopupWindowCompat.setRotationCompat(expandView, e);
     }
 
     @Override
@@ -61,19 +60,19 @@ public class ExpandAnimation extends MarginAnimation {
         super.calc(i, t);
 
         float e = expand ? -(1 - i) : (1 - i);
-        PopupWindowCompat.setRotationCompat(expandView, 180 * e);
+        expandRotate(180 * e);
 
         // ViewGroup will crash on null pointer without this post pone.
         // seems like some views are removed by RecyvingView when they
         // gone off screen.
         if (Build.VERSION.SDK_INT >= 19) {
             if (!expand && atomicExpander != null && !atomicExpander.hasEnded()) {
-                // do not showChild;
+                // do not adjustChild;
             } else {
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
-                        showChild(i);
+                        adjustChild(i);
                     }
                 });
             }
@@ -81,7 +80,7 @@ public class ExpandAnimation extends MarginAnimation {
     }
 
     @TargetApi(19)
-    void showChild(float i) {
+    public void adjustChild(float i) {
         if (!adjust)
             return;
 
@@ -93,9 +92,7 @@ public class ExpandAnimation extends MarginAnimation {
             if (partial)
                 off = (int) (off * i);
             list.scrollBy(0, off);
-        }
-
-        if (convertView.getBottom() > paddedBottom) {
+        } else if (convertView.getBottom() > paddedBottom) {
             int off = convertView.getBottom() - paddedBottom;
             if (partial)
                 off = (int) (off * i);
@@ -106,7 +103,7 @@ public class ExpandAnimation extends MarginAnimation {
     @Override
     public void restore() {
         super.restore();
-        PopupWindowCompat.setRotationCompat(expandView, 0);
+        expandRotate(0);
     }
 
     @Override
