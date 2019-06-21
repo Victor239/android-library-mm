@@ -246,6 +246,8 @@ public class MediaPlayerCompat {
 
             @Override
             public long getCurrentPosition() {
+                if (!prepared)
+                    return -1;
                 return player.getCurrentPosition();
             }
 
@@ -269,7 +271,7 @@ public class MediaPlayerCompat {
             @Override
             public void setPlayWhenReady(boolean b) {
                 if (!prepared) {
-                    preparedPlay = true;
+                    preparedPlay = b;
                     return;
                 }
                 if (b) {
