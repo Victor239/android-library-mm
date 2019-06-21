@@ -629,11 +629,9 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         }
 
         public void updateOptimization() {
-            if (optimization != null) { // call show() not from settings activity
-                boolean b = isIgnoringBatteryOptimizations(builder.getContext());
-                optimization.setChecked(b);
-                optimization.onBindViewHolder(optimizationHolder);
-            }
+            boolean b = isIgnoringBatteryOptimizations(builder.getContext());
+            optimization.setChecked(b);
+            optimization.onBindViewHolder(optimizationHolder);
         }
 
         public void show() {
@@ -662,7 +660,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
 
         public void onWindowFocusChanged(boolean hasFocus) {
             if (ICON) {
-                if (Build.VERSION.SDK_INT >= 23)
+                if (Build.VERSION.SDK_INT >= 23 && optimization != null) // call show() not from settings activity
                     updateOptimization();
             }
             if (restricted != null) {
