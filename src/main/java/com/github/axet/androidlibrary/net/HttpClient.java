@@ -823,13 +823,12 @@ public class HttpClient {
         }
     }
 
-    // deal with java.lang.IllegalArgumentException: Illegal character in path at index
-    public static String safe(String url) {
+    public static String safe(String url) { // deal with java.lang.IllegalArgumentException: Illegal character in path at index, also https://trac.nginx.org/nginx/ticket/196
         try {
             URL u = new URL(url);
             return safe(u);
         } catch (MalformedURLException e) {
-            throw new RuntimeException(e);
+            return url;
         }
     }
 
@@ -838,7 +837,7 @@ public class HttpClient {
             String p = u.getPath();
             if (p != null) {
                 try {
-                    p = URLDecoder.decode(p, Charset.defaultCharset().name());
+                    p = URLDecoder.decode(p, Charset.defaultCharset().name()); // URI need decoded string
                 } catch (UnsupportedEncodingException e) {
                     throw new RuntimeException(e);
                 }
@@ -846,7 +845,7 @@ public class HttpClient {
             String q = u.getQuery();
             if (q != null) {
                 try {
-                    q = URLDecoder.decode(q, Charset.defaultCharset().name());
+                    q = URLDecoder.decode(q, Charset.defaultCharset().name()); // URI need decoded string
                 } catch (UnsupportedEncodingException e) {
                     throw new RuntimeException(e);
                 }

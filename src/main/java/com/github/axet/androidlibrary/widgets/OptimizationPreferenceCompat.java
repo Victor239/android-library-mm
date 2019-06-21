@@ -98,7 +98,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
     // all service related code, for old phones, where AlarmManager will be used to keep app running
     protected Class<? extends Service> service;
 
-    public static boolean findPermission(Context context, String p) { // pm.checkPermission() - runtime method
+    public static boolean findPermission(Context context, String p) { // pm.checkPermission() - current package method
         try {
             PackageManager pm = context.getPackageManager();
             PackageInfo info = pm.getPackageInfo(context.getPackageName(), PackageManager.GET_PERMISSIONS);
@@ -191,11 +191,10 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
             Object myUserHandle = myUserHandleMethod.invoke(android.os.Process.class, (Object[]) null);
             Method getSerialNumberForUser = userManager.getClass().getMethod("getSerialNumberForUser", myUserHandle.getClass());
             Long userSerial = (Long) getSerialNumberForUser.invoke(userManager, myUserHandle);
-            if (userSerial != null) {
+            if (userSerial != null)
                 return String.valueOf(userSerial);
-            } else {
+            else
                 return "";
-            }
         } catch (NoSuchMethodException | IllegalArgumentException | InvocationTargetException | IllegalAccessException ignored) {
         }
         return "";
@@ -204,9 +203,8 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
     public static void huaweiProtectedApps(Context context) {
         try {
             String cmd = "am start -n " + huawei.getComponent().flattenToShortString();
-            if (Build.VERSION.SDK_INT >= 17) {
+            if (Build.VERSION.SDK_INT >= 17)
                 cmd += " --user " + getUserSerial(context);
-            }
             Runtime.getRuntime().exec(cmd);
         } catch (IOException ignored) {
         }
@@ -261,11 +259,10 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         View pref = inflater.inflate(p.getLayoutResource(), root);
         ViewGroup widgetFrame = (ViewGroup) pref.findViewById(android.R.id.widget_frame);
         if (widgetFrame != null) {
-            if (p.getWidgetLayoutResource() != 0) {
+            if (p.getWidgetLayoutResource() != 0)
                 inflater.inflate(p.getWidgetLayoutResource(), widgetFrame);
-            } else {
+            else
                 widgetFrame.setVisibility(View.GONE);
-            }
         }
         PreferenceViewHolder h = new PreferenceViewHolder(pref);
         p.onBindViewHolder(h);
@@ -383,9 +380,8 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
                     @Override
                     public boolean onPreferenceChange(Preference preference, Object newValue) {
                         boolean b = (boolean) newValue;
-                        if (!b) {
+                        if (!b)
                             Storage.showPermissions(context);
-                        }
                         return false;
                     }
                 });
@@ -633,9 +629,11 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         }
 
         public void updateOptimization() {
-            boolean b = isIgnoringBatteryOptimizations(builder.getContext());
-            optimization.setChecked(b);
-            optimization.onBindViewHolder(optimizationHolder);
+            if (optimization != null) { // call show() not from settings activity
+                boolean b = isIgnoringBatteryOptimizations(builder.getContext());
+                optimization.setChecked(b);
+                optimization.onBindViewHolder(optimizationHolder);
+            }
         }
 
         public void show() {
@@ -664,9 +662,8 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
 
         public void onWindowFocusChanged(boolean hasFocus) {
             if (ICON) {
-                if (Build.VERSION.SDK_INT >= 23) {
+                if (Build.VERSION.SDK_INT >= 23)
                     updateOptimization();
-                }
             }
             if (restricted != null) {
                 restricted.setChecked(isBackgroundRestricted(context));
@@ -676,15 +673,22 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
     }
 
     public static class ApplicationReceiver extends BroadcastReceiver {
-        protected Context context;
-        protected Class<? extends Service> service;
+        public Context context;
+        public Class<? extends Service> service;
+        public IntentFilter filters = new IntentFilter();
 
         public ApplicationReceiver(Context context, Class<? extends Service> klass) {
             this.context = context;
             this.service = klass;
-            IntentFilter ff = new IntentFilter();
-            ff.addAction(service.getCanonicalName() + PING);
-            context.registerReceiver(this, ff);
+            filters.addAction(service.getCanonicalName() + PING);
+        }
+
+        public void register() {
+            context.registerReceiver(this, filters);
+        }
+
+        public void unregister() {
+            context.unregisterReceiver(this);
         }
 
         public void close() {
@@ -804,12 +808,10 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         @Override
         public void onReceive(Context context, Intent intent) {
             String a = intent.getAction();
-            if (a.equals(service.getCanonicalName() + PONG)) {
+            if (a.equals(service.getCanonicalName() + PONG))
                 handler.removeCallbacks(check);
-            }
-            if (a.equals(SERVICE_UPDATE)) {
+            if (a.equals(SERVICE_UPDATE))
                 register();
-            }
         }
     }
 
