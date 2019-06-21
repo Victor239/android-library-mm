@@ -98,7 +98,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
     // all service related code, for old phones, where AlarmManager will be used to keep app running
     protected Class<? extends Service> service;
 
-    public static boolean findPermission(Context context, String p) { // pm.checkPermission() - runtime method
+    public static boolean findPermission(Context context, String p) { // pm.checkPermission() - current package method
         try {
             PackageManager pm = context.getPackageManager();
             PackageInfo info = pm.getPackageInfo(context.getPackageName(), PackageManager.GET_PERMISSIONS);
