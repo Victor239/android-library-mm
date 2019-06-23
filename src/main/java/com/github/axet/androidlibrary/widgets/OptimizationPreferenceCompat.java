@@ -352,15 +352,9 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
                     @Override
                     public boolean onPreferenceChange(Preference preference, Object newValue) {
                         boolean b = (boolean) newValue;
-                        if (b) {
-                            builder.serviceEnable.run();
-                            alive.setChecked(true);
-                            alive.onBindViewHolder(h);
-                        } else {
-                            builder.serviceDisable.run();
-                            alive.setChecked(false);
-                            alive.onBindViewHolder(h);
-                        }
+                        builder.setService(b);
+                        alive.setChecked(b);
+                        alive.onBindViewHolder(h);
                         return false;
                     }
                 });
@@ -432,9 +426,8 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
             build(builder, "Consider disabling Samsung SmartManager to keep application running in background.", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
-                    if (!startActivity(context, samsung)) {
+                    if (!startActivity(context, samsung))
                         Toast.makeText(context, "Unable to show settings", Toast.LENGTH_SHORT).show();
-                    }
                 }
             });
             return builder;
@@ -445,9 +438,8 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
                     build(builder, context.getString(R.string.optimization_message), new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            if (!startActivity(context, i)) {
+                            if (!startActivity(context, i))
                                 Toast.makeText(context, "Unable to show settings", Toast.LENGTH_SHORT).show();
-                            }
                         }
                     });
                     return builder;
@@ -632,6 +624,24 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
             boolean b = isIgnoringBatteryOptimizations(builder.getContext());
             optimization.setChecked(b);
             optimization.onBindViewHolder(optimizationHolder);
+        }
+
+        public void setService(boolean b) {
+            if (b) {
+                State23 state = getState23(getContext(), key);
+                state.service = true;
+                saveState(getContext(), state, key);
+                getContext().sendBroadcast(new Intent(SERVICE_UPDATE));
+                if (serviceEnable != null)
+                    serviceEnable.run();
+            } else {
+                State23 state = getState23(getContext(), key);
+                state.service = false;
+                saveState(getContext(), state, key);
+                getContext().sendBroadcast(new Intent(SERVICE_UPDATE));
+                if (serviceDisable != null)
+                    serviceDisable.run();
+            }
         }
 
         public void show() {
@@ -1008,41 +1018,32 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
                         final Runnable enable = new Runnable() {
                             @Override
                             public void run() {
-                                State23 state = getState23(getContext(), getKey());
-                                state.service = true;
-                                saveState(getContext(), state, getKey());
                                 setChecked(true);
-                                getContext().sendBroadcast(new Intent(SERVICE_UPDATE));
                             }
                         };
                         Runnable disable = new Runnable() {
                             @Override
                             public void run() {
-                                State23 state = getState23(getContext(), getKey());
-                                state.service = false;
-                                saveState(getContext(), state, getKey());
                                 setChecked(false);
-                                getContext().sendBroadcast(new Intent(SERVICE_UPDATE));
                             }
                         };
+                        final WarningBuilder builder = buildWarning(getContext(), true, getKey());
+                        builder.serviceEnable = enable;
+                        builder.serviceDisable = disable;
                         if (ICON) {
-                            WarningBuilder builder = buildWarning(getContext(), true, getKey());
-                            builder.serviceEnable = enable;
-                            builder.serviceDisable = disable;
                             showWarning(getContext(), builder); // show commons
                             return false;
                         }
                         if (b) {
-                            WarningBuilder builder = buildWarning(getContext(), true, getKey());
                             builder.builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    enable.run();
+                                    builder.setService(true);
                                 }
                             });
                             showWarning(getContext(), builder); // show commons
                         } else {
-                            disable.run();
+                            builder.setService(false);
                         }
                         return false;
                     }
