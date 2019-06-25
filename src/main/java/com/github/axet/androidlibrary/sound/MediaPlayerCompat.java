@@ -151,6 +151,7 @@ public class MediaPlayerCompat {
 
                 @Override
                 public void onEnd() {
+                    w.setPlayWhenReady(false); // stop autoplay
                     if (w.listener != null)
                         w.listener.onEnd();
                 }
