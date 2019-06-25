@@ -48,11 +48,7 @@ public class Toast {
             cancel();
         }
     };
-    OnDismissListener dismissListener;
-
-    public interface OnDismissListener {
-        void onDismiss(Toast t);
-    }
+    PopupWindow.OnDismissListener dismissListener;
 
     public static void Post(final Activity a, final Throwable e) {
         Log.e(TAG, "Post", e);
@@ -135,7 +131,7 @@ public class Toast {
             protected void onDetachedFromWindow() {
                 super.onDetachedFromWindow();
                 if (t.dismissListener != null)
-                    t.dismissListener.onDismiss(t);
+                    t.dismissListener.onDismiss();
             }
         };
         f.addView(v);
@@ -158,7 +154,7 @@ public class Toast {
         this.m = m;
     }
 
-    public void setOnDismissListener(OnDismissListener l) {
+    public void setOnDismissListener(PopupWindow.OnDismissListener l) {
         dismissListener = l;
     }
 
@@ -178,7 +174,7 @@ public class Toast {
         }
         handler.removeCallbacksAndMessages(null);
         if (dismissListener != null)
-            dismissListener.onDismiss(this);
+            dismissListener.onDismiss();
     }
 
     public void setDuration(int d) {
@@ -193,7 +189,7 @@ public class Toast {
     }
 
     public void show() {
-        Runnable show = new Runnable() {
+        Runnable show = new Runnable() { // show system toast
             @Override
             public void run() {
                 context = context.getApplicationContext(); // toast can crash internally if activity context used
@@ -203,15 +199,10 @@ public class Toast {
                     ((ViewGroup) p).removeView(v);
                 FrameLayout f = new FrameLayout(context) {
                     @Override
-                    protected void onAttachedToWindow() {
-                        super.onAttachedToWindow();
-                    }
-
-                    @Override
                     protected void onDetachedFromWindow() {
                         super.onDetachedFromWindow();
                         if (dismissListener != null)
-                            dismissListener.onDismiss(Toast.this);
+                            dismissListener.onDismiss();
                     }
                 };
                 f.addView(v);
@@ -219,8 +210,8 @@ public class Toast {
                 toast.show();
             }
         };
-        KeyguardManager myKM = (KeyguardManager) context.getSystemService(Context.KEYGUARD_SERVICE);
-        if (myKM.inKeyguardRestrictedInputMode()) {
+        KeyguardManager km = (KeyguardManager) context.getSystemService(Context.KEYGUARD_SERVICE);
+        if (km.inKeyguardRestrictedInputMode()) { // locked, system toast not appearing on locked screen use Activity
             if (w != null) {
                 w.dismiss();
                 w = null;
@@ -228,15 +219,17 @@ public class Toast {
             if (context instanceof Activity) {
                 View v = toast.getView();
                 try {
+                    Activity a = (Activity) context;
+                    if (a.isFinishing())
+                        throw new WindowManager.BadTokenException("window finishing");
                     int ww = context.getResources().getDisplayMetrics().widthPixels;
                     int hh = context.getResources().getDisplayMetrics().heightPixels;
                     v.measure(View.MeasureSpec.makeMeasureSpec(ww, View.MeasureSpec.AT_MOST), View.MeasureSpec.makeMeasureSpec(hh, View.MeasureSpec.AT_MOST));
                     w = new PopupWindow(v, v.getMeasuredWidth(), v.getMeasuredHeight(), false);
                     w.setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
-                    w.setContentView(v);
                     w.setAnimationStyle(android.R.style.Animation_Toast);
-                    View p = ((Activity) context).getWindow().getDecorView();
-                    w.showAtLocation(p, Gravity.BOTTOM, 0, hh / 6);
+                    View d = a.getWindow().getDecorView(); // for window token only
+                    w.showAtLocation(d, Gravity.BOTTOM, 0, hh / 6);
                     handler.removeCallbacks(hide);
                     handler.postDelayed(hide, getDuration());
                 } catch (WindowManager.BadTokenException e) { // happens in onCreate when screen is locked (and about to be unlocked)
@@ -247,7 +240,7 @@ public class Toast {
             } else { // from Application / Service
                 show.run();
             }
-        } else {
+        } else { // not locked, show no problems
             show.run();
         }
     }
