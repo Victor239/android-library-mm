@@ -79,6 +79,22 @@ public class NotificationChannelCompat {
         }
     }
 
+    public static String getChannelId(Notification n) {
+        if (Build.VERSION.SDK_INT >= 26) {
+            try {
+                Class Notification = n.getClass();
+                Field f = Notification.getDeclaredField("mChannelId");
+                f.setAccessible(true);
+                return (String) f.get(n);
+            } catch (NoSuchFieldException e) {
+                throw new RuntimeException(e);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return null;
+    }
+
     public static void showSettings(Context context, String channelId) {
         Intent intent = new Intent(ACTION_CHANNEL_NOTIFICATION_SETTINGS).putExtra(EXTRA_APP_PACKAGE, context.getPackageName());
         intent.putExtra(EXTRA_CHANNEL_ID, channelId);

@@ -247,10 +247,15 @@ public class PersistentService extends Service {
         NotificationManagerCompat nm = NotificationManagerCompat.from(this);
         if (intent != null || OptimizationPreferenceCompat.getState(this, optimization.key).icon || Build.VERSION.SDK_INT >= 26 && getApplicationInfo().targetSdkVersion >= 26) {
             Notification n = build(intent);
-            if (notification == null)
+            if (notification == null) {
                 startForeground(id, n);
-            else
+            } else {
+                String co = NotificationChannelCompat.getChannelId(notification);
+                String cn = NotificationChannelCompat.getChannelId(n);
+                if (co == null && cn != null || co != null && cn == null || co != null && cn != null && !co.equals(cn))
+                    nm.cancel(id);
                 nm.notify(id, n);
+            }
             notification = n;
         } else {
             hideIcon();
