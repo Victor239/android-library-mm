@@ -43,31 +43,31 @@
 
     <string name="optimization_dialog">Configurações de Otimização</string>
     <string name="optimization_message">Por favor, considere adicionar este aplicativo na lista-branca do seu gerenciador de bateria (se você tiver um) para impedir que ele seja removido da memória.</string>
-    <string name="optimization_killed">Application were killed by OS. Consider adding application to whitelist.</string>
+    <string name="optimization_killed">O Aplicativo foi morto pelo SO. Considere adicionar o aplicativo a lista branca.</string>
 
     <string name="menu_settings">Configurações</string>
-    <string name="menu_about">About</string>
-    <string name="open_browser">Open Browser</string>
+    <string name="menu_about">Sobre</string>
+    <string name="open_browser">Abrir Navegador</string>
     <string name="are_you_sure">Tem certeza ?</string>
     <string name="default_button">Default</string>
     <string name="not_permitted">Não permitido</string>
-    <string name="close">Close</string>
+    <string name="close">Fechar</string>
 
     <string-array name="screen_lock_text">
-        <item>System Default</item>
-        <item>Keep On</item>
-        <item>Off after 30 sec</item>
-        <item>Off after 1 min</item>
-        <item>Off after 5 min</item>
-        <item>Off after 30 min</item>
+        <item>Padrão do Sistema</item>
+        <item>Manter Ligado</item>
+        <item>Desligar após 30 seg</item>
+        <item>Desligar após  1 min</item>
+        <item>Desligar após  5 min</item>
+        <item>Desligar após  30 min</item>
     </string-array>
-    <string name="pref_screenlock_title">Keep Screen On</string>
-    <string name="optimization_alive">Keep Alive Service</string>
-    <string name="optimization_alive_summary">Background service keep application running</string>
-    <string name="optimization_icon">Persistent Icon</string>
-    <string name="optimization_icon_summary">Requires on some devices when application constantly get removed</string>
-    <string name="optimization_system">Battery Optimization</string>
-    <string name="optimization_system_summary">Open system battery optimization dialog</string>
+    <string name="pref_screenlock_title">Manter Tela Ligada</string>
+    <string name="optimization_alive">Manter serviço protegido</string>
+    <string name="optimization_alive_summary">Serviço de fundo mantém o aplicativo rodando</string>
+    <string name="optimization_icon">Ícone Persistente</string>
+    <string name="optimization_icon_summary">Requirido em alguns aparelhos quando o aplicativo e constantemente removido</string>
+    <string name="optimization_system">Otimização da Bateria</string>
+    <string name="optimization_system_summary">Abrir Diálogo da Otimização da Bateria</string>
 
-    <string name="migrating_data">Migrating data</string>
+    <string name="migrating_data">Migrando data</string>
 </resources>
