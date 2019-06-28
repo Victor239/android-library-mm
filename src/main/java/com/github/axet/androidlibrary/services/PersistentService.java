@@ -69,7 +69,7 @@ public class PersistentService extends Service {
     }
 
     public class ServiceReceiver extends OptimizationPreferenceCompat.ServiceReceiver {
-        String keyNext;
+        public String keyNext;
 
         public ServiceReceiver(String key, String next) {
             super(PersistentService.this, PersistentService.this.getClass(), key);
