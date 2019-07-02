@@ -40,7 +40,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
 // To load different exoplayer versions '2.7.3' API 14+ or 'r2.5.4' API9+
-// dynamically requires reflection to load clasees.
+// dynamically loading requires reflection to load clasees.
 public class MediaPlayerCompat {
     public static String TAG = MediaPlayerCompat.class.getSimpleName();
 
@@ -372,16 +372,21 @@ public class MediaPlayerCompat {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    public static Object createExoPlayer(Context context) throws ClassNotFoundException, IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
+    public static Object createExoTrackSelector() throws ClassNotFoundException, IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
         Class BandwidthMeter = forName("com.google.android.exoplayer2.upstream.BandwidthMeter");
         Class DefaultBandwidthMeter = forName("com.google.android.exoplayer2.upstream.DefaultBandwidthMeter");
         Object defaultBandwidthMeter = DefaultBandwidthMeter.newInstance();
         Object videoTrackSelectionFactory = forName("com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection$Factory").getConstructor(BandwidthMeter).newInstance(defaultBandwidthMeter);
         Class TrackSelection$Factory = forName("com.google.android.exoplayer2.trackselection.TrackSelection$Factory");
         Class DefaultTrackSelector = forName("com.google.android.exoplayer2.trackselection.DefaultTrackSelector");
-        Class TrackSelector = forName("com.google.android.exoplayer2.trackselection.TrackSelector");
         final Object trackSelector = DefaultTrackSelector.getConstructor(TrackSelection$Factory).newInstance(videoTrackSelectionFactory);
+        return trackSelector;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static Object createExoPlayer(Context context) throws ClassNotFoundException, IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
+        Class TrackSelector = forName("com.google.android.exoplayer2.trackselection.TrackSelector");
+        Object trackSelector = createExoTrackSelector();
         return forName("com.google.android.exoplayer2.ExoPlayerFactory").getMethod("newSimpleInstance", Context.class, TrackSelector).invoke(null, context, trackSelector);
     }
 
@@ -653,17 +658,21 @@ public class MediaPlayerCompat {
     }
 
     @SuppressWarnings("unchecked")
+    public static Object createExoSource(Context context, Uri uri) throws ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
+        Class Util = forName("com.google.android.exoplayer2.util.Util");
+        Object dataSourceFactory = forName("com.google.android.exoplayer2.upstream.DefaultDataSourceFactory").getConstructor(Context.class, String.class).newInstance(context, Util.getMethod("getUserAgent", Context.class, String.class).invoke(null, context, AboutPreferenceCompat.getApplicationName(context)));
+        Class DataSource$Factory = forName("com.google.android.exoplayer2.upstream.DataSource$Factory");
+        Class ExtractorMediaSource = forName("com.google.android.exoplayer2.source.ExtractorMediaSource");
+        Class DefaultExtractorsFactory = forName("com.google.android.exoplayer2.extractor.DefaultExtractorsFactory");
+        Class EventListener = forName("com.google.android.exoplayer2.source.ExtractorMediaSource$EventListener");
+        Class ExtractorsFactory = forName("com.google.android.exoplayer2.extractor.ExtractorsFactory");
+        return ExtractorMediaSource.getConstructor(Uri.class, DataSource$Factory, ExtractorsFactory, Handler.class, EventListener).newInstance(uri, dataSourceFactory, DefaultExtractorsFactory.newInstance(), null, null);
+    }
+
     public static MediaPlayerCompat createExoPlayer25(Context context, Uri uri) { // 2.7 compatible
         try {
             Object player = createExoPlayer(context);
-            Class Util = forName("com.google.android.exoplayer2.util.Util");
-            Object dataSourceFactory = forName("com.google.android.exoplayer2.upstream.DefaultDataSourceFactory").getConstructor(Context.class, String.class).newInstance(context, Util.getMethod("getUserAgent", Context.class, String.class).invoke(null, context, AboutPreferenceCompat.getApplicationName(context)));
-            Class DataSource$Factory = forName("com.google.android.exoplayer2.upstream.DataSource$Factory");
-            Class ExtractorMediaSource = forName("com.google.android.exoplayer2.source.ExtractorMediaSource");
-            Class DefaultExtractorsFactory = forName("com.google.android.exoplayer2.extractor.DefaultExtractorsFactory");
-            Class EventListener = forName("com.google.android.exoplayer2.source.ExtractorMediaSource$EventListener");
-            Class ExtractorsFactory = forName("com.google.android.exoplayer2.extractor.ExtractorsFactory");
-            Object source = ExtractorMediaSource.getConstructor(Uri.class, DataSource$Factory, ExtractorsFactory, Handler.class, EventListener).newInstance(uri, dataSourceFactory, DefaultExtractorsFactory.newInstance(), null, null);
+            Object source = createExoSource(context, uri);
             return createExoPlayer(context, player, source);
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
