@@ -12,6 +12,7 @@ public class ExpandItemAnimator extends DefaultItemAnimator {
 
     public ArrayList<RecyclerView.ViewHolder> pending = new ArrayList<>();
     public ArrayList<RecyclerView.ViewHolder> animations = new ArrayList<>();
+    public ArrayList<RecyclerView.ViewHolder> binding = new ArrayList<>();
     public RecyclerView.OnScrollListener onScrollListener = new RecyclerView.OnScrollListener() {
         @Override
         public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
@@ -27,28 +28,28 @@ public class ExpandItemAnimator extends DefaultItemAnimator {
 
     @Override
     public boolean animateChange(@NonNull final RecyclerView.ViewHolder oldHolder, @NonNull final RecyclerView.ViewHolder newHolder, @NonNull RecyclerView.ItemAnimator.ItemHolderInfo preInfo, @NonNull RecyclerView.ItemAnimator.ItemHolderInfo postInfo) {
-        return animateChange(newHolder);
-    }
-
-    public boolean animateChange(final RecyclerView.ViewHolder h) {
-        while (pending.remove(h))
+        while (pending.remove(newHolder))
             ;
-        if (animations.contains(h))
-            return true;
-        Animation a = apply(h, true);
-        if (a == null)
+        if(binding.contains(newHolder)) {
+            dispatchAnimationFinished(newHolder); // reduce mIsRecyclableCount
             return false;
-        animations.add(h);
+        }
+        Animation a = apply(newHolder, true);
+        if (a == null) {
+            dispatchAnimationFinished(newHolder); // reduce mIsRecyclableCount
+            return false;
+        }
+        animations.add(newHolder);
         a.setAnimationListener(new Animation.AnimationListener() {
             @Override
             public void onAnimationStart(Animation animation) {
-                dispatchChangeStarting(h, false);
+                dispatchChangeStarting(newHolder, false);
             }
 
             @Override
             public void onAnimationEnd(Animation animation) {
-                while (animations.remove(h))
-                    dispatchChangeFinished(h, false); // reduce mIsRecyclableCount
+                while (animations.remove(newHolder))
+                    dispatchChangeFinished(newHolder, false); // reduce mIsRecyclableCount
             }
 
             @Override
@@ -67,6 +68,9 @@ public class ExpandItemAnimator extends DefaultItemAnimator {
         }
         while (pending.remove(item))
             ;
+        while (binding.remove(item)) {
+            apply(item, false); // reset animation
+        }
     }
 
     @Override
@@ -79,15 +83,34 @@ public class ExpandItemAnimator extends DefaultItemAnimator {
         super.endAnimations();
         animations.clear();
         pending.clear();
+        binding.clear();
     }
 
     public void onBindViewHolder(final RecyclerView.ViewHolder h, int position) {
-        if (pending.contains(h)) {
-            animateChange(h); // API19< we need to start animation within onBindViewHolder()
-            return;
-        }
         if (animations.contains(h))
             return;
+        if (pending.contains(h) || binding.contains(h)) { // API19< we need to start animation within onBindViewHolder()
+            Animation a = apply(h, true);
+            if (a == null)
+                return;
+            binding.add(h);
+            a.setAnimationListener(new Animation.AnimationListener() {
+                @Override
+                public void onAnimationStart(Animation animation) {
+                }
+
+                @Override
+                public void onAnimationEnd(Animation animation) {
+                    while (binding.remove(h))
+                        ;
+                }
+
+                @Override
+                public void onAnimationRepeat(Animation animation) {
+                }
+            });
+            return;
+        }
         apply(h, false);
     }
 
