@@ -100,7 +100,7 @@ public class AssetsDexLoader {
     }
 
     public static Object newInstance(final Class clazz) throws SecurityException, NoSuchMethodException, IllegalArgumentException, IllegalAccessException, InvocationTargetException, ClassNotFoundException {
-        if (Build.VERSION.SDK_INT <= 10) {
+        if (Build.VERSION.SDK_INT < 11) { // API10
             return getPrivateMethod(ObjectInputStream.class, "newInstance", Class.class, Class.class).invoke(null, clazz, Object.class);
         } else if (Build.VERSION.SDK_INT < 18) {
             throw new NoSuchMethodException();
