@@ -1,4 +1,4 @@
-package com.github.axet.androidlibrary.widgets;
+package com.github.axet.androidlibrary.app;
 
 import android.app.Activity;
 import android.app.Dialog;

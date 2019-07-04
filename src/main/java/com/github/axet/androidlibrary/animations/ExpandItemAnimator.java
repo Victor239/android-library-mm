@@ -1,9 +1,9 @@
 package com.github.axet.androidlibrary.animations;
 
+import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.animation.Animation;
 
 import java.util.ArrayList;
@@ -79,9 +79,8 @@ public class ExpandItemAnimator extends DefaultItemAnimator {
     }
 
     public void onBindViewHolder(final RecyclerView.ViewHolder h, int position) {
-        if (pending.contains(h) || animations.contains(h))
-            return;
-        apply(h, false);
+        if (Build.VERSION.SDK_INT < 19 || (!pending.contains(h) && !animations.contains(h))) // TODO API<19 do not animate view
+            apply(h, false);
     }
 
     public void onScrollStateChanged(int state) {

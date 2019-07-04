@@ -38,7 +38,7 @@ import android.view.animation.Transformation;
  */
 public class MarginAnimation extends StepAnimation {
     public ViewGroup.MarginLayoutParams viewLp;
-    public ViewGroup.MarginLayoutParams viewLpOrig;
+    public ViewGroup.MarginLayoutParams viewLpOld;
     public int marginSlide;
 
     public static Animation apply(final View v, final boolean expand, boolean animate) {
@@ -56,7 +56,7 @@ public class MarginAnimation extends StepAnimation {
         setDuration(500);
 
         viewLp = (ViewGroup.MarginLayoutParams) view.getLayoutParams();
-        viewLpOrig = new ViewGroup.MarginLayoutParams(viewLp);
+        viewLpOld = new ViewGroup.MarginLayoutParams(viewLp);
     }
 
     @Override
@@ -81,7 +81,7 @@ public class MarginAnimation extends StepAnimation {
         w = View.MeasureSpec.makeMeasureSpec(Math.max(width, parentWidth), View.MeasureSpec.AT_MOST);
 
         view.measure(w, h);
-        marginSlide = view.getMeasuredHeight() + viewLpOrig.bottomMargin;
+        marginSlide = view.getMeasuredHeight() + viewLpOld.bottomMargin;
     }
 
     @Override
@@ -90,23 +90,20 @@ public class MarginAnimation extends StepAnimation {
 
         i = expand ? i : 1 - i;
 
-        viewLp.topMargin = (int) (viewLpOrig.topMargin * i - marginSlide * (1 - i));
-        view.requestLayout();
+        viewLp.topMargin = (int) (viewLpOld.topMargin * i - marginSlide * (1 - i));
+        view.setLayoutParams(viewLp);
     }
 
     @Override
     public void restore() {
         super.restore();
-
-        viewLp.topMargin = viewLpOrig.topMargin;
+        viewLp.topMargin = viewLpOld.topMargin;
+        view.setLayoutParams(viewLp);
     }
 
     @Override
     public void end() {
         super.end();
-
         view.setVisibility(expand ? View.VISIBLE : View.GONE);
-        view.requestLayout();
     }
-
 }

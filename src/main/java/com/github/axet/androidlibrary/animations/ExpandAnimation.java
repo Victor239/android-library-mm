@@ -44,7 +44,6 @@ public class ExpandAnimation extends MarginAnimation {
     @Override
     public void init() {
         super.init();
-
         final int paddedTop = list.getPaddingTop();
         final int paddedBottom = list.getHeight() - list.getPaddingTop() - list.getPaddingBottom();
         partial = convertView.getTop() < paddedTop;

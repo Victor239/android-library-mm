@@ -7,7 +7,7 @@ import android.media.AudioTrack;
 import android.media.MediaPlayer;
 import android.support.v7.media.MediaRouter;
 
-import com.github.axet.androidlibrary.widgets.ProximityShader;
+import com.github.axet.androidlibrary.app.ProximityShader;
 
 import java.lang.reflect.Method;
 
