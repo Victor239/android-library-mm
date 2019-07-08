@@ -183,6 +183,28 @@ public class WifiKeepService extends Service {
         }
     }
 
+    public static class NotificationIcon extends OptimizationPreferenceCompat.NotificationIcon {
+        public NotificationIcon(Service context, int id) {
+            super(context, id);
+        }
+
+        @Override
+        public void updateIcon() {
+            updateIcon(null);
+        }
+
+        @Override
+        public Notification build(Intent intent) {
+            return new OptimizationPreferenceCompat.PersistentIconBuilder(context) {
+                @SuppressLint("RestrictedApi")
+                @Override
+                public NotificationChannelCompat getChannelStatus() {
+                    return new NotificationChannelCompat(mContext, "wifi", "Wifi", NotificationManagerCompat.IMPORTANCE_LOW);
+                }
+            }.setWhen(notification).create().setIcon(ICON).setText(DESCRIPTION == null ? context.getString(R.string.optimization_alive) : DESCRIPTION).build();
+        }
+    }
+
     public Thread wifi(boolean keep) {
         return wifi(this, getClass(), keep);
     }
@@ -190,18 +212,7 @@ public class WifiKeepService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        icon = new OptimizationPreferenceCompat.NotificationIcon(this, NOTIFICATION_ICON) {
-            @Override
-            public Notification build(Intent intent) {
-                return new OptimizationPreferenceCompat.PersistentIconBuilder(context) {
-                    @SuppressLint("RestrictedApi")
-                    @Override
-                    public NotificationChannelCompat getChannelStatus() {
-                        return new NotificationChannelCompat(mContext, "wifi", "Wifi", NotificationManagerCompat.IMPORTANCE_LOW);
-                    }
-                }.setWhen(notification).create().setIcon(ICON).setText(DESCRIPTION == null ? context.getString(R.string.optimization_alive) : DESCRIPTION).build();
-            }
-        };
+        icon = new NotificationIcon(this, NOTIFICATION_ICON);
         icon.create();
     }
 

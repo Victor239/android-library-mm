@@ -80,7 +80,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
 
     public static int REFRESH = 15 * AlarmManager.MIN1;
     public static int CHECK_DELAY = 5 * AlarmManager.MIN1;
-    public static boolean ICON = false; // default no persistent icon option, use setIcon if default true and service persisted
+    public static boolean ICON = false; // for(api23+ true means){ show persistent icon option } else {persistent service, icon}; use setIcon if default true and service persisted
 
     public static int BOOT_DELAY = 2 * 60 * 1000;
 
@@ -138,9 +138,13 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         }
     }
 
-    public static void setIcon(Context context, boolean b) {
+    public static void setPersistentServiceIcon(Context context, boolean b) { // Persistent service icon false for API26+
         if (Build.VERSION.SDK_INT >= 26 && context.getApplicationInfo().targetSdkVersion >= 26)
             b = false; // api 26 requires mandatory persistent icon, hide option
+        ICON = b;
+    }
+
+    public static void setEventServiceIcon(boolean b) { // Event Service Icon (AlarmManager depend service) always TRUE
         ICON = b;
     }
 
@@ -305,25 +309,14 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
             builder.icon.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
                 @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    State state;
-                    if (Build.VERSION.SDK_INT < 23) {
-                        state = getState23(context, builder.key);
-                        state.icon = (boolean) newValue;
-                        saveState(context, state, builder.key);
-                    } else {
-                        state = getState(context, builder.key);
-                        state.icon = (boolean) newValue;
-                        saveState(context, state, builder.key);
-                    }
-                    builder.updateIcon(); // update icon switch
-                    Intent intent = new Intent(ICON_UPDATE);
-                    context.sendBroadcast(intent);
+                    boolean b = (boolean) newValue;
+                    builder.setIcon(b);
                     return false;
                 }
             });
             builder.updateIcon();
-            ll.addView(builder.iconHolder.itemView);
             if (Build.VERSION.SDK_INT >= 23) {
+                ll.addView(builder.iconHolder.itemView); // Persistnet Icon Option
                 builder.optimization = new SwitchPreferenceCompat(themedContext(context));
                 builder.optimization.setTitle(context.getString(R.string.optimization_system));
                 builder.optimization.setSummary(context.getString(R.string.optimization_system_summary));
@@ -345,9 +338,19 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
                 final SwitchPreferenceCompat alive = new SwitchPreferenceCompat(themedContext(context));
                 alive.setTitle(context.getString(R.string.optimization_alive));
                 alive.setSummary(context.getString(R.string.optimization_alive_summary));
-                State23 state = getState23(builder.context, builder.key);
-                alive.setChecked(state.service);
+                alive.setChecked(getState23(builder.context, builder.key).service);
                 final PreferenceViewHolder h = inflate(alive, null);
+                final Runnable update = new Runnable() {
+                    @Override
+                    public void run() {
+                        if (alive.isChecked()) {
+                            builder.iconHolder.itemView.setVisibility(View.VISIBLE);
+                        } else {
+                            builder.iconHolder.itemView.setVisibility(View.GONE);
+                            builder.setIcon(false);
+                        }
+                    }
+                };
                 alive.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
                     @Override
                     public boolean onPreferenceChange(Preference preference, Object newValue) {
@@ -355,10 +358,13 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
                         builder.setService(b);
                         alive.setChecked(b);
                         alive.onBindViewHolder(h);
+                        update.run();
                         return false;
                     }
                 });
+                update.run();
                 ll.addView(h.itemView);
+                ll.addView(builder.iconHolder.itemView); // Persistent Icon below, depends on Keep Alive Service API23<
             }
             if (Build.VERSION.SDK_INT >= 28 && isBackgroundRestricted(context)) {
                 builder.restricted = new SwitchPreferenceCompat(themedContext(context));
@@ -407,8 +413,27 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
     }
 
     public static WarningBuilder buildKilledWarning(final Context context, boolean showCommons, String key) {
+        if (ICON)
+            throw new RuntimeException("service not set");
+        return buildKilledWarning(context, showCommons, key, null);
+    }
+
+    public static WarningBuilder buildKilledWarning(final Context context, boolean showCommons, String key, Class service) {
+        final SettingsReceiver settings = new SettingsReceiver(new Intent(context, service), key);
         WarningBuilder b = buildWarning(context, showCommons, key);
         b.builder.setMessage(R.string.optimization_killed);
+        b.serviceEnable = new Runnable() {
+            @Override
+            public void run() {
+                settings.start(context);
+            }
+        };
+        b.serviceDisable = new Runnable() {
+            @Override
+            public void run() {
+                settings.stop(context);
+            }
+        };
         return b;
     }
 
@@ -510,6 +535,30 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         if (set < boot)
             return false; // we did reboot device between set alarm and boot time, skip warning
         return true;
+    }
+
+    public static boolean isPersistentStart(Context context, String key) { // do we need to start persistent service even if we have no job to do?
+        if (Build.VERSION.SDK_INT >= 23) {
+            return OptimizationPreferenceCompat.getState(context, key).icon;
+        } else {
+            OptimizationPreferenceCompat.State23 state = OptimizationPreferenceCompat.getState23(context, key);
+            return state.service || state.icon;
+        }
+    }
+
+    public static boolean isPersistentKeep(Context context, String key, boolean b) { // keep event service running?
+        OptimizationPreferenceCompat.State state = OptimizationPreferenceCompat.getState(context, key);
+        return (Build.VERSION.SDK_INT < 26 && b) || state.icon;
+    }
+
+    public static boolean startIfPersistent(Context context, String key, boolean b, Intent intent) { // if service is optional keep running service for <API26
+        if (b || isPersistentStart(context, key)) {
+            OptimizationPreferenceCompat.startService(context, intent);
+            return true;
+        } else {
+            context.stopService(intent);
+            return false;
+        }
     }
 
     public static State23 getState23(Context context, String key) {
@@ -624,6 +673,21 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
             boolean b = isIgnoringBatteryOptimizations(builder.getContext());
             optimization.setChecked(b);
             optimization.onBindViewHolder(optimizationHolder);
+        }
+
+        public void setIcon(boolean b) {
+            State state;
+            if (Build.VERSION.SDK_INT < 23) {
+                state = getState23(context, key);
+                state.icon = b;
+                saveState(context, state, key);
+            } else {
+                state = getState(context, key);
+                state.icon = b;
+                saveState(context, state, key);
+            }
+            updateIcon(); // update icon switch
+            context.sendBroadcast(new Intent(ICON_UPDATE));
         }
 
         public void setService(boolean b) {
@@ -827,7 +891,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         public String keyNext;
         public OptimizationIcon icon;
 
-        public ServiceReceiver(Service service, String key, String next, int id) {
+        public ServiceReceiver(Service service, int id, String key, String next) {
             super(service, service.getClass(), key);
             this.keyNext = next;
             this.filters.addAction(OptimizationPreferenceCompat.ICON_UPDATE);
@@ -898,6 +962,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
             this.key = key;
             this.intent = intent;
             filters.addAction(OptimizationPreferenceCompat.ICON_UPDATE);
+            filters.addAction(OptimizationPreferenceCompat.SERVICE_UPDATE); // <API23
         }
 
         public void register(Context context) {
@@ -908,16 +973,21 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
             context.unregisterReceiver(this);
         }
 
+        public void start(Context context) {
+            OptimizationPreferenceCompat.startService(context, intent);
+        }
+
+        public void stop(Context context) {
+            context.stopService(intent);
+        }
+
         @Override
         public void onReceive(Context context, Intent intent) {
-            String a = intent.getAction();
-            if (a.equals(OptimizationPreferenceCompat.ICON_UPDATE)) {
-                OptimizationPreferenceCompat.State state = OptimizationPreferenceCompat.getState(context, key);
-                if (state.icon)
-                    OptimizationPreferenceCompat.startService(context, this.intent);
-                else
-                    context.stopService(this.intent);
-            }
+            State23 state = OptimizationPreferenceCompat.getState23(context, key);
+            if (state.icon || state.service)
+                start(context);
+            else
+                stop(context);
         }
     }
 
@@ -1018,7 +1088,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
     public static class NotificationIcon {
         public Service context;
         public Notification notification;
-        public int id; // NOTIFICAION_ICON_ID
+        public int id;
 
         public NotificationIcon(Service context, int id) {
             this.context = context;
@@ -1041,7 +1111,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
             updateIcon(new Intent()); // null == hide
         }
 
-        public boolean isOptimization() {
+        public boolean isOptimization() { // not showing icon by default, unless config is on or api>26
             return false;
         }
 
@@ -1066,7 +1136,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
 
         public void hideIcon() {
             NotificationManagerCompat nm = NotificationManagerCompat.from(context);
-            context.stopForeground(false);
+            context.stopForeground(true);
             nm.cancel(id);
             notification = null;
         }
@@ -1086,7 +1156,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
 
         @Override
         public void updateIcon() { // Override with updateIcon(new Intent())
-            updateIcon(null); // default: null = hide
+            updateIcon(null); // default: null = hide (service behaviour)
         }
     }
 
