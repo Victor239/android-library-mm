@@ -537,7 +537,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         return true;
     }
 
-    public static boolean isPersistentStart(Context context, String key) { // do we need to start persistent service even if we have no job to do?
+    public static boolean isPersistent(Context context, String key) { // do we need to start EventService even if we have no job to do?
         if (Build.VERSION.SDK_INT >= 23) {
             return OptimizationPreferenceCompat.getState(context, key).icon;
         } else {
@@ -546,22 +546,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         }
     }
 
-    public static boolean isPersistentKeep(Context context, String key, boolean b) { // keep event service running?
-        OptimizationPreferenceCompat.State state = OptimizationPreferenceCompat.getState(context, key);
-        return (Build.VERSION.SDK_INT < 26 && b) || state.icon;
-    }
-
-    public static boolean startIfPersistent(Context context, String key, boolean b, Intent intent) { // if service is optional keep running service for <API26
-        if (b || isPersistentStart(context, key)) {
-            OptimizationPreferenceCompat.startService(context, intent);
-            return true;
-        } else {
-            context.stopService(intent);
-            return false;
-        }
-    }
-
-    public static State23 getState23(Context context, String key) {
+    public static State23 getState23(Context context, String key) { // <API23
         final SharedPreferences shared = PreferenceManager.getDefaultSharedPreferences(context);
         try {
             String json = shared.getString(key, "");
@@ -572,7 +557,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         }
     }
 
-    public static State getState(Context context, String key) {
+    public static State getState(Context context, String key) { // API23+
         final SharedPreferences shared = PreferenceManager.getDefaultSharedPreferences(context);
         try {
             String json = shared.getString(key, "");
@@ -619,6 +604,15 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
     public static void setBootInstallTime(Context context, String pref, long time) {
         SharedPreferences shared = PreferenceManager.getDefaultSharedPreferences(context);
         shared.edit().putLong(pref, time).commit();
+    }
+
+    public static <T> Class<T> forceInit(Class<T> klass) {
+        try {
+            Class.forName(klass.getName(), true, klass.getClassLoader());
+        } catch (ClassNotFoundException e) {
+            throw new AssertionError(e);
+        }
+        return klass;
     }
 
     public static class WarningBuilder {
