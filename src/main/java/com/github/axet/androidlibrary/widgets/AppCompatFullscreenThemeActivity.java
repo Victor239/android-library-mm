@@ -35,6 +35,7 @@ public abstract class AppCompatFullscreenThemeActivity extends AppCompatThemeAct
         }
     };
 
+    @SuppressLint("RestrictedApi")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -57,8 +58,11 @@ public abstract class AppCompatFullscreenThemeActivity extends AppCompatThemeAct
     }
 
     public void setFullscreen(boolean b) {
-        if (fullscreen == b)
+        if (fullscreen == b) {
+            if (b)// fix bug when system UI reappear after screen went off
+                hideSystemUI();
             return;
+        }
         fullscreen = b;
         if (b) {
             w.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
