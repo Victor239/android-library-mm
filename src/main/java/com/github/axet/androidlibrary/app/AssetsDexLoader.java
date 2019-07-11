@@ -15,6 +15,7 @@ import java.io.ObjectInputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.zip.ZipEntry;
@@ -103,7 +104,7 @@ public class AssetsDexLoader {
         if (Build.VERSION.SDK_INT < 11) { // API10
             return getPrivateMethod(ObjectInputStream.class, "newInstance", Class.class, Class.class).invoke(null, clazz, Object.class);
         } else if (Build.VERSION.SDK_INT < 18) {
-            throw new NoSuchMethodException();
+            throw new NoSuchMethodException();  // API11-17
         } else { // API18+
             Class Unsafe = Class.forName("sun.misc.Unsafe");
             return Unsafe.getDeclaredMethod("allocateInstance", Class.class).invoke(Unsafe.getDeclaredMethod("getUnsafe").invoke(null), clazz);
@@ -144,6 +145,29 @@ public class AssetsDexLoader {
         if (ext == null)
             ext = getCodeCacheDir(context);
         return new DexClassLoader(tmp.getPath(), ext.getPath(), null, parent);
+    }
+
+    public static boolean setBootClassLoader(ClassLoader l) {
+        try {
+            ClassLoader system = ClassLoader.getSystemClassLoader();
+            Field parent = getPrivateField(ClassLoader.class, "parent");
+            ClassLoader old = (ClassLoader) parent.get(system);
+            ArrayList<ClassLoader> ss = new ArrayList<>();
+            ClassLoader cl = system;
+            while (ss.add(cl) && (cl = (ClassLoader) parent.get(cl)) != null) {
+                if (cl == l)
+                    return true; // already installed
+            }
+            ClassLoader cc = null;
+            cl = l;
+            while ((cl = (ClassLoader) parent.get(cl)) != null && !ss.contains(cl))
+                cc = cl;
+            parent.set(cc, old);
+            parent.set(system, l);
+            return true;
+        } catch (Exception ignore) {
+            return false;
+        }
     }
 
     public static class ThreadLoader {
