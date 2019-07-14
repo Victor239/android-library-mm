@@ -1,4 +1,4 @@
-package com.github.axet.androidlibrary.widgets;
+package com.github.axet.androidlibrary.preferences;
 
 import android.Manifest;
 import android.annotation.TargetApi;
@@ -24,6 +24,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.github.axet.androidlibrary.services.DeviceAdmin;
+import com.github.axet.androidlibrary.widgets.ThemeUtils;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;

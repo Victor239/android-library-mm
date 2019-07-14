@@ -1,4 +1,4 @@
-package com.github.axet.androidlibrary.widgets;
+package com.github.axet.androidlibrary.activities;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;

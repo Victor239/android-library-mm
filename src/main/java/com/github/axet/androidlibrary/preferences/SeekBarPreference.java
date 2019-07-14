@@ -1,8 +1,7 @@
-package com.github.axet.androidlibrary.widgets;
+package com.github.axet.androidlibrary.preferences;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Color;
@@ -13,10 +12,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.content.SharedPreferencesCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.preference.DialogPreference;
-import android.support.v7.preference.ListPreference;
-import android.support.v7.preference.Preference;
 import android.support.v7.preference.PreferenceDialogFragmentCompat;
-import android.support.v7.preference.PreferenceManager;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.Gravity;

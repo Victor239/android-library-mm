@@ -19,6 +19,7 @@ import android.widget.Button;
 
 import com.github.axet.androidlibrary.R;
 import com.github.axet.androidlibrary.app.Storage;
+import com.github.axet.androidlibrary.preferences.OptimizationPreferenceCompat;
 
 import java.io.File;
 import java.io.FileFilter;

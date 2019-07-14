@@ -1,4 +1,4 @@
-package com.github.axet.androidlibrary.widgets;
+package com.github.axet.androidlibrary.preferences;
 
 import android.app.Activity;
 import android.content.Context;
@@ -8,6 +8,8 @@ import android.os.Environment;
 import android.os.Parcelable;
 import android.support.v7.preference.EditTextPreference;
 import android.util.AttributeSet;
+
+import com.github.axet.androidlibrary.widgets.OpenFileDialog;
 
 import java.io.File;
 

@@ -1,4 +1,4 @@
-package com.github.axet.androidlibrary.widgets;
+package com.github.axet.androidlibrary.preferences;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -48,6 +48,10 @@ import com.github.axet.androidlibrary.R;
 import com.github.axet.androidlibrary.app.AlarmManager;
 import com.github.axet.androidlibrary.app.NotificationManagerCompat;
 import com.github.axet.androidlibrary.app.Storage;
+import com.github.axet.androidlibrary.widgets.NotificationChannelCompat;
+import com.github.axet.androidlibrary.widgets.RemoteNotificationCompat;
+import com.github.axet.androidlibrary.widgets.ThemeUtils;
+import com.github.axet.androidlibrary.widgets.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;

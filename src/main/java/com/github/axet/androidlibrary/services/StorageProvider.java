@@ -24,9 +24,9 @@ import android.webkit.MimeTypeMap;
 
 import com.github.axet.androidlibrary.R;
 import com.github.axet.androidlibrary.app.Storage;
-import com.github.axet.androidlibrary.widgets.AboutPreferenceCompat;
+import com.github.axet.androidlibrary.preferences.AboutPreferenceCompat;
 import com.github.axet.androidlibrary.widgets.OpenFileDialog;
-import com.github.axet.androidlibrary.widgets.OptimizationPreferenceCompat;
+import com.github.axet.androidlibrary.preferences.OptimizationPreferenceCompat;
 
 import org.apache.commons.io.IOUtils;
 
