@@ -24,10 +24,12 @@ public abstract class WifiReceiver extends BroadcastReceiver {
 
     public static boolean isConnectedWifi(Context context) {
         ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
-        if (activeNetwork != null) { // connected to the internet
-            if (activeNetwork.getType() == ConnectivityManager.TYPE_WIFI) {
-                return true;
+        NetworkInfo n = cm.getActiveNetworkInfo();
+        if (n != null) { // connected to the internet
+            switch (n.getType()) {
+                case ConnectivityManager.TYPE_WIFI:
+                case ConnectivityManager.TYPE_ETHERNET:
+                    return true;
             }
         }
         return false;
@@ -42,11 +44,10 @@ public abstract class WifiReceiver extends BroadcastReceiver {
     public void create() {
         context.registerReceiver(this, filter);
         if (getWifi()) {
-            if (isConnectedWifi(context)) {
+            if (isConnectedWifi(context))
                 resume();
-            } else {
+            else
                 pause();
-            }
         } else {
             resume();
         }
@@ -65,12 +66,8 @@ public abstract class WifiReceiver extends BroadcastReceiver {
         boolean wifi = getWifi();
         if (action.equals(WifiManager.SUPPLICANT_STATE_CHANGED_ACTION)) {
             SupplicantState state = intent.getParcelableExtra(WifiManager.EXTRA_NEW_STATE);
-            Log.d(TAG, state.toString());
+            Log.d(TAG, state.toString() + " " + intent.getBooleanExtra(WifiManager.EXTRA_SUPPLICANT_CONNECTED, false));
             if (wifi) { // suplicant only correspond to 'wifi only'
-                if (intent.getBooleanExtra(WifiManager.EXTRA_SUPPLICANT_CONNECTED, false)) {
-                    resume();
-                    return;
-                }
                 if (isConnectedWifi(context)) { // maybe 'state' have incorrect state. check system service additionaly.
                     resume();
                     return;
@@ -80,11 +77,11 @@ public abstract class WifiReceiver extends BroadcastReceiver {
             }
         }
         if (action.equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)) {
-            NetworkInfo state = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
-            Log.d(TAG, state.toString());
-            if (state.isConnected()) {
+            NetworkInfo n = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
+            Log.d(TAG, n.toString());
+            if (n.isConnected()) {
                 if (wifi) { // wifi only?
-                    switch (state.getType()) {
+                    switch (n.getType()) {
                         case ConnectivityManager.TYPE_WIFI:
                         case ConnectivityManager.TYPE_ETHERNET:
                             resume();

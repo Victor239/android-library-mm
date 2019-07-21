@@ -1,4 +1,4 @@
-package com.github.axet.androidlibrary.widgets;
+package com.github.axet.androidlibrary.activities;
 
 import android.annotation.SuppressLint;
 import android.os.Build;
@@ -48,8 +48,7 @@ public abstract class AppCompatFullscreenThemeActivity extends AppCompatThemeAct
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         w = getWindow();
-        Window.Callback callback = w.getCallback();
-        w.setCallback(new WindowCallbackWrapper(callback) {
+        w.setCallback(new WindowCallbackWrapper(w.getCallback()) {
             @SuppressLint("RestrictedApi")
             @Override
             public void onWindowFocusChanged(boolean hasFocus) {
@@ -75,16 +74,17 @@ public abstract class AppCompatFullscreenThemeActivity extends AppCompatThemeAct
 
     public void onSystemUiVisibilityChange(int visibility) {
         if (Build.VERSION.SDK_INT >= 11) {
-            if ((visibility & View.SYSTEM_UI_FLAG_FULLSCREEN) == 0 && fullscreen && (decorView.getSystemUiVisibility() & HIDE_FLAGS) != HIDE_FLAGS) {
+            if (fullscreen) {
                 handler.removeCallbacks(mHidePart2Runnable);
-                handler.postDelayed(mHidePart2Runnable, AUTOHIDE_DELAY);
+                if ((visibility & View.SYSTEM_UI_FLAG_FULLSCREEN) == 0) // visible
+                    handler.postDelayed(mHidePart2Runnable, AUTOHIDE_DELAY);
             }
         }
     }
 
     public void setFullscreen(boolean b) {
         if (fullscreen == b) {
-            if (b)// fix bug when system UI reappear after screen went off
+            if (b) // fix bug when system UI reappear after screen went off
                 hideSystemUI();
             return;
         }

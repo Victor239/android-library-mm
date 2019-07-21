@@ -1,4 +1,4 @@
-package com.github.axet.androidlibrary.widgets;
+package com.github.axet.androidlibrary.preferences;
 
 import android.app.Dialog;
 import android.content.Context;
@@ -19,6 +19,7 @@ import android.webkit.WebView;
 import android.widget.TextView;
 
 import com.github.axet.androidlibrary.R;
+import com.github.axet.androidlibrary.widgets.WebViewCustom;
 
 import org.apache.commons.io.IOUtils;
 
@@ -26,7 +27,7 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 
 //
-// <com.github.axet.androidlibrary.widgets.AboutPreferenceCompat
+// <com.github.axet.androidlibrary.preferences.AboutPreferenceCompat
 //   app:html="@raw/about"
 //   android:persistent="false" />
 //

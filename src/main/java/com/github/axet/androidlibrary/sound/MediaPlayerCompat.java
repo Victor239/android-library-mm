@@ -27,7 +27,7 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
 import com.github.axet.androidlibrary.app.Storage;
-import com.github.axet.androidlibrary.widgets.AboutPreferenceCompat;
+import com.github.axet.androidlibrary.preferences.AboutPreferenceCompat;
 
 import java.io.FileDescriptor;
 import java.io.FileInputStream;

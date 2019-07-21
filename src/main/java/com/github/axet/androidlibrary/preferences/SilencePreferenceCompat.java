@@ -1,4 +1,4 @@
-package com.github.axet.androidlibrary.widgets;
+package com.github.axet.androidlibrary.preferences;
 
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -8,6 +8,7 @@ import android.support.v7.preference.SwitchPreferenceCompat;
 import android.util.AttributeSet;
 
 import com.github.axet.androidlibrary.app.NotificationManagerCompat;
+import com.github.axet.androidlibrary.preferences.OptimizationPreferenceCompat;
 
 // Add users permission to app manifest:
 //

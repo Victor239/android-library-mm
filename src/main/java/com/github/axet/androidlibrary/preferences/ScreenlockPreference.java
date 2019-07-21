@@ -1,4 +1,4 @@
-package com.github.axet.androidlibrary.widgets;
+package com.github.axet.androidlibrary.preferences;
 
 import android.app.Activity;
 import android.app.KeyguardManager;
@@ -11,6 +11,8 @@ import android.support.v7.preference.PreferenceManager;
 import android.util.AttributeSet;
 import android.view.Window;
 import android.view.WindowManager;
+
+import com.github.axet.androidlibrary.activities.AppCompatThemeActivity;
 
 public class ScreenlockPreference extends ListPreference {
     public static Handler handler = new Handler(Looper.getMainLooper());

@@ -27,6 +27,7 @@ import android.widget.FrameLayout;
 import android.widget.RemoteViews;
 
 import com.github.axet.androidlibrary.R;
+import com.github.axet.androidlibrary.preferences.AboutPreferenceCompat;
 
 import java.util.Arrays;
 

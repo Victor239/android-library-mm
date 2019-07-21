@@ -1,4 +1,4 @@
-package com.github.axet.androidlibrary.widgets;
+package com.github.axet.androidlibrary.preferences;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -14,6 +14,8 @@ import android.support.v7.preference.EditTextPreference;
 import android.util.AttributeSet;
 
 import com.github.axet.androidlibrary.app.Storage;
+import com.github.axet.androidlibrary.widgets.OpenFileDialog;
+import com.github.axet.androidlibrary.widgets.OpenStorageChoicer;
 
 import java.io.File;
 

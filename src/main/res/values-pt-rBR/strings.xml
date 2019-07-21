@@ -48,8 +48,8 @@
     <string name="menu_settings">Configurações</string>
     <string name="menu_about">Sobre</string>
     <string name="open_browser">Abrir Navegador</string>
-    <string name="are_you_sure">Tem certeza ?</string>
-    <string name="default_button">Default</string>
+    <string name="are_you_sure">Tem certeza?</string>
+    <string name="default_button">Padrão</string>
     <string name="not_permitted">Não permitido</string>
     <string name="close">Fechar</string>
 
@@ -69,5 +69,5 @@
     <string name="optimization_system">Otimização da Bateria</string>
     <string name="optimization_system_summary">Abrir Diálogo da Otimização da Bateria</string>
 
-    <string name="migrating_data">Migrando data</string>
+    <string name="migrating_data">Migrando dados</string>
 </resources>

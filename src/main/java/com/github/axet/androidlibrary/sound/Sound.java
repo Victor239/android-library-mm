@@ -3,7 +3,6 @@ package com.github.axet.androidlibrary.sound;
 import android.annotation.TargetApi;
 import android.content.ContentResolver;
 import android.content.Context;
-import android.media.AudioDeviceInfo;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
@@ -11,11 +10,9 @@ import android.media.AudioTrack;
 import android.os.Build;
 import android.os.Handler;
 import android.provider.Settings;
-import android.support.v7.media.MediaRouter;
 
-import com.github.axet.androidlibrary.widgets.SilencePreferenceCompat;
+import com.github.axet.androidlibrary.preferences.SilencePreferenceCompat;
 
-import java.lang.reflect.Method;
 import java.util.Arrays;
 
 public class Sound {
