@@ -2,7 +2,6 @@ package com.github.axet.androidlibrary.animations;
 
 import android.annotation.TargetApi;
 import android.os.Build;
-import android.os.Handler;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.view.animation.Animation;
@@ -11,11 +10,9 @@ import android.view.animation.Transformation;
 import com.github.axet.androidlibrary.widgets.PopupWindowCompat;
 
 public class ExpandAnimation extends MarginAnimation {
-    // if we have two concurrent animations on the same listview
-    // the only one 'expand' should have control of showChild function.
-    public static ExpandAnimation atomicExpander;
+    // if we have only two concurrent animations in one app. only one 'expand' should have control of showChild function.
+    public static ExpandAnimation lastExpander;
 
-    public Handler handler = new Handler();
     public RecyclerView list;
     public View convertView; // item view
     public View expandView; // rotating arrow view
@@ -26,10 +23,7 @@ public class ExpandAnimation extends MarginAnimation {
         return apply(new LateCreator() {
             @Override
             public MarginAnimation create() {
-                ExpandAnimation a = new ExpandAnimation(list, itemView, toolbarView, expandView, expand);
-                if (expand)
-                    atomicExpander = a;
-                return a;
+                return new ExpandAnimation(list, itemView, toolbarView, expandView, expand);
             }
         }, toolbarView, expand, animate);
     }
@@ -39,6 +33,10 @@ public class ExpandAnimation extends MarginAnimation {
         this.convertView = itemView;
         this.list = list;
         this.expandView = expandView;
+        if (expand)
+            lastExpander = this;
+        if (lastExpander != null && lastExpander.hasEnded())
+            lastExpander = null;
     }
 
     @Override
@@ -61,14 +59,14 @@ public class ExpandAnimation extends MarginAnimation {
         float e = expand ? -(1 - i) : (1 - i);
         expandRotate(180 * e);
 
-        // ViewGroup will crash on null pointer without this post pone.
-        // seems like some views are removed by RecyvingView when they
-        // gone off screen.
         if (Build.VERSION.SDK_INT >= 19) {
-            if (!expand && atomicExpander != null && !atomicExpander.hasEnded()) {
-                // do not adjustChild;
+            if (!expand && lastExpander != null) { // collapse and double animation (collapse&&expand)
+                // do not adjustChild
             } else {
-                handler.post(new Runnable() {
+                // ViewGroup will crash on null pointer without this post pone.
+                // seems like some views are removed by RecyclingView when they
+                // gone off screen.
+                list.post(new Runnable() {
                     @Override
                     public void run() {
                         adjustChild(i);

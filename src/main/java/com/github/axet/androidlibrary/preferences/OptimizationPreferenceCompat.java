@@ -600,12 +600,19 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         return boot > auto; // boot > auto = boot event never received
     }
 
-    public static AlertDialog buildBootWarning(Context context) {
-        return new AlertDialog.Builder(context).setMessage("Application never received BOOT event, check if it has been removed from autostart").setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-            }
-        }).create();
+    public static AlertDialog buildBootWarning(final Context context, final String boot) {
+        return new AlertDialog.Builder(context)
+                .setMessage("Application never received BOOT event, check if it has been removed from autostart")
+                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                    }
+                }).setOnDismissListener(new DialogInterface.OnDismissListener() {
+                    @Override
+                    public void onDismiss(DialogInterface dialog) {
+                        setBootInstallTime(context, boot, System.currentTimeMillis());
+                    }
+                }).create();
     }
 
     public static void setBootInstallTime(Context context, String pref, long time) {
@@ -617,7 +624,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         try {
             Class.forName(klass.getName(), true, klass.getClassLoader());
         } catch (ClassNotFoundException e) {
-            throw new AssertionError(e);
+            throw new RuntimeException(e);
         }
         return klass;
     }
