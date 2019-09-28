@@ -24,6 +24,7 @@ import android.webkit.MimeTypeMap;
 
 import com.github.axet.androidlibrary.R;
 import com.github.axet.androidlibrary.app.Storage;
+import com.github.axet.androidlibrary.crypto.MD5;
 import com.github.axet.androidlibrary.preferences.AboutPreferenceCompat;
 import com.github.axet.androidlibrary.widgets.OpenFileDialog;
 import com.github.axet.androidlibrary.preferences.OptimizationPreferenceCompat;
@@ -426,7 +427,7 @@ public class StorageProvider extends ContentProvider {
     public Uri share(Uri u, String name) { // original uri -> hased uri
         long now = System.currentTimeMillis();
         uris.put(u, now);
-        String hash = Storage.md5(u.toString());
+        String hash = MD5.digest(u.toString());
         hashs.put(hash, u);
 
         if (name == null) {
@@ -467,7 +468,7 @@ public class StorageProvider extends ContentProvider {
             long l = uris.get(p);
             if (l + TIMEOUT < now) {
                 uris.remove(p);
-                String hash = Storage.md5(p.toString());
+                String hash = MD5.digest(p.toString());
                 hashs.remove(hash);
             }
         }

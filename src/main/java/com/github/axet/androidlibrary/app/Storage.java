@@ -78,27 +78,7 @@ public class Storage {
     protected Context context;
     protected ContentResolver resolver;
 
-    // byte functions
-
-    public static String toHex(byte[] in) {
-        final StringBuilder builder = new StringBuilder();
-        for (byte b : in)
-            builder.append(String.format("%02x", b));
-        return builder.toString();
-    }
-
-    // string functions
-
-    public static String md5(String str) {
-        try {
-            byte[] bytesOfMessage = str.getBytes(Charset.defaultCharset());
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            byte[] digest = md.digest(bytesOfMessage);
-            return toHex(digest);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
+    // String functions
 
     public static String relative(String base, String file) {
         return relative(base, file, File.separatorChar);

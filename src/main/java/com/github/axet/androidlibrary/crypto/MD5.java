@@ -1,26 +1,26 @@
 package com.github.axet.androidlibrary.crypto;
 
+import java.nio.charset.Charset;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 
 public class MD5 {
-    public static final String digest(final String s) {
-        try {
-            // Create MD5 Hash
-            MessageDigest digest = java.security.MessageDigest.getInstance("MD5");
-            digest.update(s.getBytes());
-            byte messageDigest[] = digest.digest();
+    public static String hex(byte[] in) {
+        final StringBuilder builder = new StringBuilder();
+        for (byte b : in)
+            builder.append(String.format("%02x", b));
+        return builder.toString();
+    }
 
-            // Create Hex String
-            StringBuilder hexString = new StringBuilder();
-            for (byte aMessageDigest : messageDigest) {
-                String h = Integer.toHexString(0xFF & aMessageDigest);
-                while (h.length() < 2)
-                    h = "0" + h;
-                hexString.append(h);
-            }
-            return hexString.toString();
-        } catch (NoSuchAlgorithmException e) {
+    public static String digest(String str) {
+        byte[] buf = str.getBytes(Charset.defaultCharset());
+        return hex(digest(buf));
+    }
+
+    public static byte[] digest(byte[] buf) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            return md.digest(buf);
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }

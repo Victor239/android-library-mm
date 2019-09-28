@@ -6,6 +6,8 @@ import android.net.Uri;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
 
+import com.github.axet.androidlibrary.crypto.MD5;
+
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -66,7 +68,7 @@ public class FileTypeDetector { // take a look at tika from 'apache commons'
         if (s.equals(ContentResolver.SCHEME_CONTENT) || s.equals(ContentResolver.SCHEME_FILE)) // ext detection works for local files only
             ext.detect(context, u);
 
-        return Storage.toHex(digest.digest());
+        return MD5.hex(digest.digest());
     }
 
     public static class DownloadInterrupted extends RuntimeException {
@@ -228,7 +230,7 @@ public class FileTypeDetector { // take a look at tika from 'apache commons'
                     }
 
                     os.close();
-                    return Storage.toHex(digest.digest());
+                    return MD5.hex(digest.digest());
                 } catch (RuntimeException r) {
                     throw r;
                 } catch (Exception r) {
@@ -252,7 +254,7 @@ public class FileTypeDetector { // take a look at tika from 'apache commons'
 
                     os.close();
                     is.close();
-                    return Storage.toHex(digest.digest());
+                    return MD5.hex(digest.digest());
                 } catch (RuntimeException r) {
                     throw r;
                 } catch (Exception r) {
