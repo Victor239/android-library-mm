@@ -41,6 +41,9 @@ import java.util.Map;
 public class FileProvider extends ContentProvider {
     public static final String[] COLUMNS = {OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE};
 
+    public static final int RO = Intent.FLAG_GRANT_READ_URI_PERMISSION;
+    public static final int RW = Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
+
     public ProviderInfo info;
     public Map<Uri, String> types = new HashMap<>();
     public Map<Uri, String> names = new HashMap<>();
@@ -53,7 +56,7 @@ public class FileProvider extends ContentProvider {
     }
 
     public static void grantPermissions(Context context, Intent intent) {
-        grantPermissions(context, intent, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        grantPermissions(context, intent, RO);
     }
 
     public static void grantPermissions(Context context, Intent intent, int flags) {
@@ -75,7 +78,7 @@ public class FileProvider extends ContentProvider {
     }
 
     public static void grantPermissions(Context context, Intent intent, Uri u) {
-        grantPermissions(context, intent, u, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        grantPermissions(context, intent, u, RO);
     }
 
     public static void grantPermissions(Context context, Intent intent, Uri u, int flags) {
