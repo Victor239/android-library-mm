@@ -97,7 +97,7 @@ public class CacheImagesAdapter {
         Rect size = getImageSize(dris);
         if (size == null)
             return null;
-        dris.reread();
+        dris.reload();
         BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
         if (size.width() < size.height())
             bitmapOptions.inSampleSize = (int) Math.ceil(size.width() / (double) max);
@@ -258,9 +258,8 @@ public class CacheImagesAdapter {
         });
         if (ff == null)
             return;
-        for (File f : ff) {
+        for (File f : ff)
             f.delete();
-        }
     }
 
     public static class SortDate implements Comparator<File> {
@@ -330,7 +329,7 @@ public class CacheImagesAdapter {
         @Override
         public int read() throws IOException {
             int b = super.read();
-            if (reset && pos >= cache.getSize())
+            if (cache != null && reset && pos >= cache.getSize())
                 cache = null;
             return b;
         }
@@ -338,12 +337,12 @@ public class CacheImagesAdapter {
         @Override
         public int read(@NonNull byte[] b, int off, int len) throws IOException {
             int l = super.read(b, off, len);
-            if (reset && pos >= cache.getSize())
+            if (cache != null && reset && pos >= cache.getSize())
                 cache = null;
             return l;
         }
 
-        public void reread() { // reset position to zero, free buffer after second read
+        public void reload() { // reset position to zero, free buffer after second read
             seek(0);
             reset = true;
         }
