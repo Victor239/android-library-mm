@@ -122,13 +122,11 @@ public class Toast {
         return new Toast(context, android.widget.Toast.makeText(context, t, d), d, t);
     }
 
-    public static void setContext(@NonNull View view, @NonNull Context context) {
-        if (Build.VERSION.SDK_INT == 25) { // only happens API25, Android 7.1
-            try {
-                AssetsDexLoader.getPrivateField(View.class, "mContext").set(view, context);
-            } catch (Throwable e) {
-                Log.e(TAG, "setContext", e);
-            }
+    public static void setContext(@NonNull View view, @NonNull Context context) { // only happens API25, Android 7.1
+        try {
+            AssetsDexLoader.getPrivateField(View.class, "mContext").set(view, context);
+        } catch (Throwable e) {
+            Log.e(TAG, "setContext", e);
         }
     }
 
@@ -173,61 +171,59 @@ public class Toast {
         public Context getApplicationContext() {
             return new ApplicationContextWrapper(getBaseContext().getApplicationContext());
         }
+    }
 
-        public static final class ApplicationContextWrapper extends ContextWrapper {
-            public ApplicationContextWrapper(@NonNull Context base) {
-                super(base);
+    public static final class ApplicationContextWrapper extends ContextWrapper {
+        public ApplicationContextWrapper(@NonNull Context base) {
+            super(base);
+        }
+
+        @Override
+        public Object getSystemService(@NonNull String name) {
+            if (Context.WINDOW_SERVICE.equals(name)) {
+                // noinspection ConstantConditions
+                return new WindowManagerWrapper((WindowManager) getBaseContext().getSystemService(name));
             }
+            return super.getSystemService(name);
+        }
+    }
 
-            @Override
-            public Object getSystemService(@NonNull String name) {
-                if (Context.WINDOW_SERVICE.equals(name)) {
-                    // noinspection ConstantConditions
-                    return new WindowManagerWrapper((WindowManager) getBaseContext().getSystemService(name));
-                }
-                return super.getSystemService(name);
+    public static final class WindowManagerWrapper implements WindowManager {
+        private final WindowManager base;
+
+        public WindowManagerWrapper(@NonNull WindowManager base) {
+            this.base = base;
+        }
+
+        @Override
+        public Display getDefaultDisplay() {
+            return base.getDefaultDisplay();
+        }
+
+        @Override
+        public void removeViewImmediate(View view) {
+            base.removeViewImmediate(view);
+        }
+
+        @Override
+        public void addView(View view, ViewGroup.LayoutParams params) {
+            try {
+                base.addView(view, params);
+            } catch (BadTokenException e) {
+                Log.i(TAG, "addView", e);
+            } catch (Throwable throwable) {
+                Log.e(TAG, "addView", throwable);
             }
         }
 
-        public static final class WindowManagerWrapper implements WindowManager {
-            private final @NonNull
-            WindowManager base;
+        @Override
+        public void updateViewLayout(View view, ViewGroup.LayoutParams params) {
+            base.updateViewLayout(view, params);
+        }
 
-            public WindowManagerWrapper(@NonNull WindowManager base) {
-                this.base = base;
-            }
-
-            @Override
-            public Display getDefaultDisplay() {
-                return base.getDefaultDisplay();
-            }
-
-            @Override
-            public void removeViewImmediate(View view) {
-                base.removeViewImmediate(view);
-            }
-
-            @Override
-            public void addView(View view, ViewGroup.LayoutParams params) {
-                try {
-                    Log.d(TAG, "WindowManager's addView(view, params) has been hooked.");
-                    base.addView(view, params);
-                } catch (BadTokenException e) {
-                    Log.i(TAG, e.getMessage());
-                } catch (Throwable throwable) {
-                    Log.e(TAG, "[addView]", throwable);
-                }
-            }
-
-            @Override
-            public void updateViewLayout(View view, ViewGroup.LayoutParams params) {
-                base.updateViewLayout(view, params);
-            }
-
-            @Override
-            public void removeView(View view) {
-                base.removeView(view);
-            }
+        @Override
+        public void removeView(View view) {
+            base.removeView(view);
         }
     }
 
@@ -236,7 +232,8 @@ public class Toast {
         this.toast = t;
         this.d = d;
         this.m = m;
-        setContext(toast.getView(), new SafeToastContext(context));
+        if (Build.VERSION.SDK_INT == 25)
+            setContext(toast.getView(), new SafeToastContext(context));
     }
 
     public void setOnDismissListener(PopupWindow.OnDismissListener l) {
@@ -273,12 +270,22 @@ public class Toast {
         return this.d == LENGTH_SHORT ? SHORT_DURATION_TIMEOUT : LONG_DURATION_TIMEOUT;
     }
 
+    public View getView() {
+        return toast.getView();
+    }
+
+    public void setView(View v) {
+        toast.setView(v);
+        if (Build.VERSION.SDK_INT == 25)
+            setContext(v, new SafeToastContext(context));
+    }
+
     public void show() {
         Runnable show = new Runnable() { // show system toast
             @Override
             public void run() {
                 context = context.getApplicationContext(); // toast can crash internally if activity context used
-                View v = toast.getView();
+                View v = getView();
                 ViewParent p = v.getParent();
                 if (p != null) // second show same view (after exception)
                     ((ViewGroup) p).removeView(v);
@@ -291,8 +298,7 @@ public class Toast {
                     }
                 };
                 f.addView(v);
-                toast.setView(f);
-                setContext(f, new SafeToastContext(context));
+                setView(f);
                 toast.show();
             }
         };

@@ -8,6 +8,7 @@ import android.util.Log;
 import org.apache.commons.io.IOUtils;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,6 +20,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -30,6 +32,7 @@ public class AssetsDexLoader {
 
     public static final String JAR = "jar";
     public static final String DEX = "dex";
+    public static final String FLOCK = "flock";
     public static final String CLASSES = "classes.dex";
     public static final String CODE_CAHCE = "code_cache";
 
@@ -64,6 +67,34 @@ public class AssetsDexLoader {
         return ext;
     }
 
+    public static void clearCodeCacheDir(Context context) {
+        File ext = getExternalCodeCacheDir(context);
+        clearCodeCacheDir(ext);
+        ext = getCodeCacheDir(context);
+        clearCodeCacheDir(ext);
+    }
+
+    public static void clearCodeCacheDir(File dir) { // looks like android spam code_cache folder with multiply name-x.x.x-timestamp.dex files
+        if (dir == null)
+            return;
+        final String[] ee = new String[]{DEX, FLOCK};
+        File[] ff = dir.listFiles(new FileFilter() {
+            @Override
+            public boolean accept(File pathname) {
+                String n = pathname.getName().toLowerCase(Locale.US);
+                for (String e : ee) {
+                    if (n.endsWith("." + e))
+                        return true;
+                }
+                return false;
+            }
+        });
+        if (ff == null)
+            return;
+        for (File f : ff)
+            Storage.delete(f);
+    }
+
     public static File extract(Context context, String asset) throws IOException { // extract asset into .jar
         AssetManager am = context.getAssets();
         InputStream is = am.open(asset);
@@ -87,7 +118,6 @@ public class AssetsDexLoader {
         is.close();
         return tmp;
     }
-
 
     public static Field getPrivateField(Class cls, String name) throws NoSuchFieldException {
         Field f = cls.getDeclaredField(name);
