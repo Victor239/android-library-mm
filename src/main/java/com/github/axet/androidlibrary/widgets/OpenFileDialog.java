@@ -594,14 +594,14 @@ public class OpenFileDialog extends AlertDialog.Builder {
     }
 
     public static class EditTextDialog extends AlertDialog.Builder {
-        EditText input;
+        public EditText input;
 
         public EditTextDialog(Context context) {
             super(context);
 
             input = new EditText(getContext());
-
             input.setSingleLine(true);
+            input.requestFocus();
 
             setPositiveButton(new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int whichButton) {

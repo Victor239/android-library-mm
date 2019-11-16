@@ -30,7 +30,6 @@ public class AssetsDexLoader {
 
     public static final String JAR = "jar";
     public static final String DEX = "dex";
-    public static final String FLOCK = "flock";
     public static final String CLASSES = "classes.dex";
     public static final String CODE_CAHCE = "code_cache";
 
