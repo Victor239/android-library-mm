@@ -239,9 +239,13 @@ public class SuperUser {
     }
 
     public static Result su(Commands cmd) {
+        return exec(BIN_SU, cmd);
+    }
+
+    public static Result exec(String sh, Commands cmd) {
         Process su = null;
         try {
-            su = Runtime.getRuntime().exec(BIN_SU);
+            su = Runtime.getRuntime().exec(sh);
             if (cmd.stderr != null && !cmd.stderr)
                 su.getErrorStream().close();
             OutputStream os = su.getOutputStream();
@@ -733,7 +737,7 @@ public class SuperUser {
 
         public static void must(Process p) throws IOException {
             if (p.exitValue() != 0)
-                throw new IOException("!0");
+                throw new IOException("bad exit code");
         }
 
         public Result(int res) {

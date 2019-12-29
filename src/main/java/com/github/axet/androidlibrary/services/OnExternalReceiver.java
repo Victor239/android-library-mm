@@ -1,5 +1,6 @@
 package com.github.axet.androidlibrary.services;
 
+import android.Manifest;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -7,6 +8,10 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.util.Log;
+
+import com.github.axet.androidlibrary.preferences.OptimizationPreferenceCompat;
+
+import java.io.File;
 
 public class OnExternalReceiver extends BroadcastReceiver {
     public static final String TAG = OnExternalReceiver.class.getSimpleName();
@@ -20,6 +25,17 @@ public class OnExternalReceiver extends BroadcastReceiver {
         } catch (PackageManager.NameNotFoundException ignore) {
         }
         return false;
+    }
+
+    public static boolean mountTest(Context context) { // test sdcard and internet access on sdcard (failed mount)
+        if (!OnExternalReceiver.isExternal(context))
+            return true; // bug happened only when app installed on external sdcard
+        File file = context.getExternalCacheDir();
+        if (file != null && file.exists() && file.canRead() && !file.canWrite())
+            return false;
+        if (OptimizationPreferenceCompat.findPermission(context, Manifest.permission.INTERNET) && !WifiKeepService.pingLocal())
+            return false;
+        return true;
     }
 
     @Override

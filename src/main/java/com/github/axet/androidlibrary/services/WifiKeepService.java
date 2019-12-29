@@ -20,8 +20,8 @@ import com.github.axet.androidlibrary.R;
 import com.github.axet.androidlibrary.app.AlarmManager;
 import com.github.axet.androidlibrary.app.NotificationManagerCompat;
 import com.github.axet.androidlibrary.app.SuperUser;
-import com.github.axet.androidlibrary.widgets.NotificationChannelCompat;
 import com.github.axet.androidlibrary.preferences.OptimizationPreferenceCompat;
+import com.github.axet.androidlibrary.widgets.NotificationChannelCompat;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -32,6 +32,7 @@ import java.net.UnknownHostException;
 // <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 // <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
 // <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+// <uses-permission android:name="android.permission.INTERNET" />
 //
 public class WifiKeepService extends Service {
     public static final String TAG = WifiKeepService.class.getSimpleName();
@@ -40,6 +41,7 @@ public class WifiKeepService extends Service {
     public static int NOTIFICATION_ICON = 200; // notificaion icon id
     public static int ICON = R.drawable.ic_circle;
     public static String DESCRIPTION = null;
+    public static String LOCAL = "127.0.0.1";
 
     public static final String WIFI = WifiKeepService.class.getCanonicalName() + ".WIFI";
 
@@ -76,7 +78,7 @@ public class WifiKeepService extends Service {
     }
 
     @SuppressLint("MissingPermission")
-    public static void wifi(final Context context) {
+    public static void wifi(final Context context) { // network on main thread
         ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
 
@@ -103,7 +105,7 @@ public class WifiKeepService extends Service {
         } else if (!isConnected) {
             Log.d(TAG, "!isConnected");
             restart.run();
-        } else if (!ping(d.gateway)) {
+        } else if (pingLocal() && !ping(d.gateway)) {
             Log.d(TAG, "!ping");
             restart.run();
         } else if (!dns()) {
@@ -153,6 +155,10 @@ public class WifiKeepService extends Service {
             Log.d(TAG, "ping failed", e);
         }
         return false;
+    }
+
+    public static boolean pingLocal() {
+        return ping(LOCAL);
     }
 
     public static boolean ping(int ip) {
