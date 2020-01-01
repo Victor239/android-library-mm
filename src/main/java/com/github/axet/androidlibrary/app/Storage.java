@@ -27,6 +27,7 @@ import android.webkit.MimeTypeMap;
 import android.widget.ProgressBar;
 
 import com.github.axet.androidlibrary.R;
+import com.github.axet.androidlibrary.services.FileProvider;
 import com.github.axet.androidlibrary.widgets.OpenFileDialog;
 import com.github.axet.androidlibrary.widgets.ThemeUtils;
 import com.github.axet.androidlibrary.widgets.Toast;
@@ -1493,7 +1494,7 @@ public class Storage {
         File f;
         if (Build.VERSION.SDK_INT >= 21 && path.startsWith(ContentResolver.SCHEME_CONTENT)) {
             Uri u = Uri.parse(path);
-            if (!isEjected(context, u, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION))
+            if (!isEjected(context, u, FileProvider.RW))
                 return u;
             f = fallbackStorage(); // we need to fallback to local storage internal or exernal
         } else if (path.startsWith(ContentResolver.SCHEME_FILE)) {

@@ -26,8 +26,8 @@ import com.github.axet.androidlibrary.R;
 import com.github.axet.androidlibrary.app.Storage;
 import com.github.axet.androidlibrary.crypto.MD5;
 import com.github.axet.androidlibrary.preferences.AboutPreferenceCompat;
-import com.github.axet.androidlibrary.widgets.OpenFileDialog;
 import com.github.axet.androidlibrary.preferences.OptimizationPreferenceCompat;
+import com.github.axet.androidlibrary.widgets.OpenFileDialog;
 
 import org.apache.commons.io.IOUtils;
 
@@ -161,7 +161,7 @@ public class StorageProvider extends ContentProvider {
             uri = b.build();
             Intent intent = new Intent(Intent.ACTION_VIEW);
             intent.setDataAndType(uri, CONTENTTYPE_FOLDER);
-            FileProvider.grantPermissions(context, intent, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
+            FileProvider.grantPermissions(context, intent, FileProvider.RO | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
             return intent;
         } else { // 23 can open file://
             return openFolderIntent23(context, uri);
@@ -180,7 +180,7 @@ public class StorageProvider extends ContentProvider {
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setDataAndType(uri, CONTENTTYPE_FOLDER);
         if (perms)
-            FileProvider.grantPermissions(context, intent, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
+            FileProvider.grantPermissions(context, intent, FileProvider.RO | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
         return intent;
     }
 
@@ -202,7 +202,7 @@ public class StorageProvider extends ContentProvider {
         intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         intent.setDataAndType(uri, type);
         if (perms)
-            FileProvider.grantPermissions(context, intent, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
+            FileProvider.grantPermissions(context, intent, FileProvider.RW | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
         return intent;
     }
 
@@ -213,7 +213,7 @@ public class StorageProvider extends ContentProvider {
         intent.putExtra(Intent.EXTRA_EMAIL, "");
         intent.putExtra(Intent.EXTRA_SUBJECT, subject);
         intent.putExtra(Intent.EXTRA_TEXT, context.getString(R.string.shared_via, AboutPreferenceCompat.getApplicationName(context)));
-        FileProvider.grantPermissions(context, intent, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        FileProvider.grantPermissions(context, intent, FileProvider.RW);
         return intent;
     }
 
@@ -224,7 +224,7 @@ public class StorageProvider extends ContentProvider {
         intent.putExtra(Intent.EXTRA_EMAIL, "");
         intent.putExtra(Intent.EXTRA_SUBJECT, subject);
         intent.putExtra(Intent.EXTRA_TEXT, context.getString(R.string.shared_via, AboutPreferenceCompat.getApplicationName(context)));
-        FileProvider.grantPermissions(context, intent, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        FileProvider.grantPermissions(context, intent, FileProvider.RW);
         return intent;
     }
 
