@@ -192,6 +192,61 @@ public class CacheImagesAdapter {
         return null;
     }
 
+
+    public static boolean isAudio(String name) {
+        String mime = Storage.getTypeByName(name);
+        return mime.startsWith("audio/");
+    }
+
+    @TargetApi(10)
+    public static Bitmap createAudioThumbnail(Context context, Uri uri) throws IOException {
+        ParcelFileDescriptor pfd = MediaPlayerCompat.getFD(context, uri);
+        FileDescriptor fd = pfd.getFileDescriptor();
+        return createAudioThumbnail(fd);
+    }
+
+    @TargetApi(10)
+    public static Bitmap createAudioThumbnail(FileDescriptor fd) {
+        MediaMetadataRetriever retriever = new MediaMetadataRetriever(); // API10
+        try {
+            retriever.setDataSource(fd);
+            byte[] buf = retriever.getEmbeddedPicture();
+            if (buf == null)
+                return null;
+            Bitmap bm = BitmapFactory.decodeByteArray(buf, 0, buf.length);
+            if (bm == null)
+                return null;
+            return CacheImagesAdapter.createThumbnail(bm);
+        } catch (Exception ignore) {
+        } finally {
+            try {
+                retriever.release();
+            } catch (Exception ignore) {
+            }
+        }
+        return null;
+    }
+
+    @TargetApi(23)
+    public static Bitmap createAudioThumbnail(MediaDataSource source) {
+        MediaMetadataRetriever retriever = new MediaMetadataRetriever(); // API10
+        try {
+            retriever.setDataSource(source);
+            byte[] buf = retriever.getEmbeddedPicture();
+            Bitmap bm = BitmapFactory.decodeByteArray(buf, 0, buf.length);
+            if (bm == null)
+                return null;
+            return CacheImagesAdapter.createThumbnail(bm);
+        } catch (Exception ignore) {
+        } finally {
+            try {
+                retriever.release();
+            } catch (Exception ignore) {
+            }
+        }
+        return null;
+    }
+
     public static boolean isImage(String name) { // supported images by BitmapFactory
         name = name.toLowerCase();
         for (String s : IMAGES) {
