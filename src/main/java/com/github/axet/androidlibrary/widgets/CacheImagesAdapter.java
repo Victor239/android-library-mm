@@ -70,14 +70,6 @@ public class CacheImagesAdapter {
     protected DownloadImageTask current;
 
     public UriImagesExecutor executor = new UriImagesExecutor();
-    public static final BlockingQueue<Runnable> sPoolWorkQueue = new LinkedBlockingQueue<Runnable>(128);
-    public static final ThreadFactory sThreadFactory = new ThreadFactory() {
-        AtomicInteger mCount = new AtomicInteger(1);
-
-        public Thread newThread(Runnable r) {
-            return new Thread(r, "CacheImagesAdapter #" + mCount.getAndIncrement());
-        }
-    };
 
     public static Rect getImageSize(InputStream is) {
         BitmapFactory.Options options = new BitmapFactory.Options();
@@ -456,9 +448,25 @@ public class CacheImagesAdapter {
     }
 
     public class UriImagesExecutor extends ThreadPoolExecutor {
-        public UriImagesExecutor() {
-            super(CORE_POOL_SIZE, MAXIMUM_POOL_SIZE, KEEP_ALIVE_SECONDS, TimeUnit.SECONDS, sPoolWorkQueue, sThreadFactory);
+        public final BlockingQueue<Runnable> queue;
+        public final ThreadFactory factory;
+
+        public UriImagesExecutor(BlockingQueue<Runnable> q, ThreadFactory f) {
+            super(CORE_POOL_SIZE, MAXIMUM_POOL_SIZE, KEEP_ALIVE_SECONDS, TimeUnit.SECONDS, q, f);
+            this.queue = q;
+            this.factory = f;
             allowCoreThreadTimeOut(true);
+        }
+
+        public UriImagesExecutor() {
+            this(new LinkedBlockingQueue<Runnable>(128), new ThreadFactory() {
+                AtomicInteger mCount = new AtomicInteger(1);
+
+                @Override
+                public Thread newThread(Runnable r) {
+                    return new Thread(r, "CacheImagesAdapter #" + mCount.getAndIncrement());
+                }
+            });
         }
 
         @Override
@@ -500,7 +508,7 @@ public class CacheImagesAdapter {
             task.cancel(true);
             Runnable r = tasks.remove(task);
             if (r != null) {
-                sPoolWorkQueue.remove(r);
+                queue.remove(r);
                 runs.remove(r);
             }
         }
