@@ -5,15 +5,15 @@
     <string name="filedialog_newfolder">新建文件夹</string>
     <string name="filedialog_foldername">文件夹名称</string>
     <string name="filedialog_unablecreatefolder">无法创建文件夹: \'%1$s\'</string>
-    <string name="filedialog_foldercreated">文件夹 \'%1$s\' 已创建</string>
-    <string name="filedialog_folderdeleted">已删除: \'%1$s\'</string>
-    <string name="filedialog_renameto">重命名为: \'%1$s\'</string>
+    <string name="filedialog_foldercreated">已创建文件夹“%1$s”</string>
+    <string name="filedialog_folderdeleted">已删除：“%1$s”</string>
+    <string name="filedialog_renameto">已更名为：“%1$s”</string>
     <string name="filedialog_empty">空列表</string>
     <string name="filedialog_readonly">只读目录</string>
     <string name="filedialog_selectfolder">请选择文件夹</string>
 
     <string name="ShareAction">分享</string>
-    <string name="shared_via">分享至%1$s</string>
+    <string name="shared_via">分享至 %1$s</string>
 
     <plurals name="days">
         <item quantity="one">%d天</item>
@@ -35,27 +35,27 @@
         <item quantity="other">%d秒</item>
     </plurals>
 
-    <string name="days_symbol">"d"</string>
+    <string name="days_symbol">d</string>
 
     <string name="size_gb">%1$.1f GB</string>
     <string name="size_mb">%1$.1f MB</string>
     <string name="size_kb">%1$.1f kb</string>
 
     <string name="optimization_dialog">优化设置</string>
-    <string name="optimization_message">添加应用程序到电源管理白名单，以防止应用程序从内存中清除</string>
-    <string name="optimization_killed">应用程序已停止。请添加应用程序到白名单。</string>
-    <string name="optimization_alive">保持服务</string>
-    <string name="optimization_alive_summary">使应用程序后台运行</string>
+    <string name="optimization_message">考虑将应用程序添加到电池管理白名单，以防应用程序被清除。</string>
+    <string name="optimization_killed">应用程序被系统终止。请考虑添加应用到白名单。</string>
+    <string name="optimization_alive">保活服务</string>
+    <string name="optimization_alive_summary">使应用程序保持运行的后台服务</string>
     <string name="optimization_icon">保持图标</string>
-    <string name="optimization_icon_summary">当应用程序不断地被清理，需要设备支持</string>
-    <string name="optimization_system">电源优化</string>
-    <string name="optimization_system_summary">打开系统电源优化对话框</string>
+    <string name="optimization_icon_summary">某些设备上应用程序经常被清理，故需要</string>
+    <string name="optimization_system">电池优化</string>
+    <string name="optimization_system_summary">打开系统的“电池优化”对话框</string>
 
     <string name="menu_settings">设置</string>
     <string name="menu_about">关于</string>
 
     <string name="open_browser">打开浏览器</string>
-    <string name="are_you_sure">确定?</string>
+    <string name="are_you_sure">你确定吗？</string>
     <string name="default_button">默认</string>
 
     <string name="not_permitted">不允许</string>
