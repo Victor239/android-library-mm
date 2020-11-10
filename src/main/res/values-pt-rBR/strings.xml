@@ -1,19 +1,19 @@
 <resources>
     <!--OpenFileDialog-->
-    <string name="filedialog_rename">Renomear</string>
-    <string name="filedialog_delete">Deletar</string>
-    <string name="filedialog_newfolder">Nova pasta</string>
-    <string name="filedialog_foldername">Nome da pasta</string>
-    <string name="filedialog_unablecreatefolder">Impossível criar pasta: \'%1$s\'</string>
-    <string name="filedialog_foldercreated">Pasta \'%1$s\' foi criada</string>
-    <string name="filedialog_folderdeleted">\'%1$s\' foi deletado</string>
-    <string name="filedialog_renameto">Renomeado para: \'%1$s\'</string>
-    <string name="filedialog_empty">Lista Vazia</string>
-    <string name="filedialog_readonly">O diretório é para leitura apenas (read-only)</string>
-    <string name="filedialog_selectfolder">Por favor, selecione uma pasta</string>
+    <string name="filedialog_rename">Alterar nome</string>
+    <string name="filedialog_delete">Excluir</string>
+    <string name="filedialog_newfolder">Nova Pasta</string>
+    <string name="filedialog_foldername">Nome da Pasta</string>
+    <string name="filedialog_unablecreatefolder">Não foi possível criar a Pasta: \'%1$s\'</string>
+    <string name="filedialog_foldercreated">Pasta \'%1$s\' criada</string>
+    <string name="filedialog_folderdeleted">Excluido: \'%1$s\'</string>
+    <string name="filedialog_renameto">Nome alterado para: \'%1$s\'</string>
+    <string name="filedialog_empty">Lista vazia</string>
+    <string name="filedialog_readonly">Acesso apenas de leitura</string>
+    <string name="filedialog_selectfolder">Selecione pasta</string>
 
-    <string name="ShareAction">Compartilhar</string>
-    <string name="shared_via">"Compartilhado pelo %1$s"</string>
+    <string name="ShareAction">Compartilhe</string>
+    <string name="shared_via">Compartilhar via %1$s</string>
 
     <plurals name="days">
         <item quantity="one">%d dia</item>
@@ -35,39 +35,42 @@
         <item quantity="other">%d segundos</item>
     </plurals>
 
-    <string name="days_symbol">"d"</string>
+    <string name="days_symbol">d</string>
 
     <string name="size_gb">%1$.1f GB</string>
     <string name="size_mb">%1$.1f MB</string>
-    <string name="size_kb">%1$.1f KB</string>
+    <string name="size_kb">%1$.1f kb</string>
 
     <string name="optimization_dialog">Configurações de Otimização</string>
-    <string name="optimization_message">Por favor, considere adicionar este aplicativo na lista-branca do seu gerenciador de bateria (se você tiver um) para impedir que ele seja removido da memória.</string>
-    <string name="optimization_killed">O Aplicativo foi morto pelo SO. Considere adicionar o aplicativo a lista branca.</string>
+    <string name="optimization_message">Considere adicionar aplicativo à lista autorizada de permissões do gerenciador da bateria para evitar que o aplicativo seja removido da memória</string>
+    <string name="optimization_killed">O aplicativo parou. Considere adicionar aplicativo à lista autorizada nas permissões</string>
+    <string name="optimization_alive">Manter Ativo</string>
+    <string name="optimization_alive_summary">O serviço mantém o aplicativo funcionando no fundo</string>
+    <string name="optimization_icon">Ícone persistente</string>
+    <string name="optimization_icon_summary">Requerido em alguns dispositivos quando o aplicativo é constantemente removido</string>
+    <string name="optimization_system">Otimização da bateria</string>
+    <string name="optimization_system_summary">Mostrar janela de otimização da bateria do sistema</string>
 
     <string name="menu_settings">Configurações</string>
     <string name="menu_about">Sobre</string>
-    <string name="open_browser">Abrir Navegador</string>
+
+    <string name="open_browser">Abra navegador</string>
     <string name="are_you_sure">Tem certeza?</string>
-    <string name="default_button">Padrão</string>
+    <string name="default_button">Predefinido</string>
+
     <string name="not_permitted">Não permitido</string>
     <string name="close">Fechar</string>
 
     <string-array name="screen_lock_text">
-        <item>Padrão do Sistema</item>
-        <item>Manter Ligado</item>
-        <item>Desligar após 30 seg</item>
-        <item>Desligar após  1 min</item>
-        <item>Desligar após  5 min</item>
-        <item>Desligar após  30 min</item>
+        <item>Padrão do sistema</item>
+        <item>Manter tela ligada</item>
+        <item>Desligar após 30 sec</item>
+        <item>Desligar após 1 min</item>
+        <item>Desligar após 5 min</item>
+        <item>Desligar após 30 min</item>
     </string-array>
-    <string name="pref_screenlock_title">Manter Tela Ligada</string>
-    <string name="optimization_alive">Manter serviço protegido</string>
-    <string name="optimization_alive_summary">Serviço de fundo mantém o aplicativo rodando</string>
-    <string name="optimization_icon">Ícone Persistente</string>
-    <string name="optimization_icon_summary">Requirido em alguns aparelhos quando o aplicativo e constantemente removido</string>
-    <string name="optimization_system">Otimização da Bateria</string>
-    <string name="optimization_system_summary">Abrir Diálogo da Otimização da Bateria</string>
 
-    <string name="migrating_data">Migrando dados</string>
+    <string name="pref_screenlock_title">Manter tela ligada</string>
+
+    <string name="migrating_data">Migrar dados</string>
 </resources>
