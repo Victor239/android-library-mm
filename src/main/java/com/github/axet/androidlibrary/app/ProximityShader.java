@@ -24,6 +24,7 @@ import java.lang.reflect.Method;
 
 public class ProximityShader implements SensorEventListener {
     public static int PROXIMITY_READY = 1000;
+    public static int PROXIMITY_DELAY = 700; // onNear delay
 
     public Dialog d;
     public Sensor proximity;
@@ -32,6 +33,13 @@ public class ProximityShader implements SensorEventListener {
     public boolean ready = false; // delayed proximity detection, user can not click on screen when proximity == 0 (broken proximity sensor?)
     public boolean readyNear = false;
     public boolean readyFar = false;
+
+    public Runnable near = new Runnable() {
+        @Override
+        public void run() {
+            onNear();
+        }
+    };
 
     public static void closeSystemDialogs(Context context) {
         Intent it = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
@@ -155,6 +163,8 @@ public class ProximityShader implements SensorEventListener {
     public void close() {
         turnScreenOn();
 
+        handler.removeCallbacksAndMessages(null);
+
         SensorManager sm = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
         if (sm != null) {
             sm.unregisterListener(this);
@@ -173,8 +183,9 @@ public class ProximityShader implements SensorEventListener {
             if (!readyFar) // onFar never been called - broken proximity sensor
                 return;
             readyNear = true;
-            onNear();
+            handler.postDelayed(near, PROXIMITY_DELAY);
         } else {
+            handler.removeCallbacks(near);
             readyFar = true;
             onFar();
         }

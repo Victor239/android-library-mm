@@ -318,7 +318,7 @@ public class StorageProvider extends ContentProvider {
                     OutputStream os = new ParcelFileDescriptor.AutoCloseOutputStream(w);
                     try {
                         copy(os);
-                    } catch (IOException e) {
+                    } catch (Exception e) {
                         Log.d(TAG, "Copy error", e);
                     } finally {
                         try {
