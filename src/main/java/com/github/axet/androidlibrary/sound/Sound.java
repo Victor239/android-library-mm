@@ -3,6 +3,7 @@ package com.github.axet.androidlibrary.sound;
 import android.annotation.TargetApi;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.media.AudioAttributes;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
@@ -14,9 +15,10 @@ import android.provider.Settings;
 import com.github.axet.androidlibrary.preferences.SilencePreferenceCompat;
 
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 public class Sound {
-
     public static final int DEFAULT_AUDIOFORMAT = AudioFormat.ENCODING_PCM_16BIT;
     public static final int DEFAULT_RATE = 16000;
 
@@ -35,6 +37,8 @@ public class Sound {
     public int soundMode = -1;
     public long last; // last change, prevent spam
     public Runnable delayed;
+    public Set<Runnable> dones = new HashSet<>(); // valid done list, in case sound was canceled during play done will not be present
+    public Set<Runnable> exits = new HashSet<>(); // run when all done
 
     public static int getValidRecordRate(int in, int rate) {
         int i = Arrays.binarySearch(RATES, rate);
@@ -64,6 +68,40 @@ public class Sound {
             }
         }
         return -1;
+    }
+
+    public static int getChannelCount(int channelConfig) {
+        switch (channelConfig) {
+            case AudioFormat.CHANNEL_OUT_DEFAULT: //AudioFormat.CHANNEL_CONFIGURATION_DEFAULT
+            case AudioFormat.CHANNEL_OUT_MONO:
+            case AudioFormat.CHANNEL_CONFIGURATION_MONO:
+                return 1;
+            case AudioFormat.CHANNEL_OUT_STEREO:
+            case AudioFormat.CHANNEL_CONFIGURATION_STEREO:
+                return 2;
+            default:
+                if (channelConfig == AudioFormat.CHANNEL_INVALID)
+                    return 0;
+                return Integer.bitCount(channelConfig);
+        }
+    }
+
+    public static class Channel {
+        public static Channel NORMAL = new Channel(AudioManager.STREAM_NOTIFICATION, AudioAttributes.USAGE_NOTIFICATION, AudioAttributes.CONTENT_TYPE_SONIFICATION);
+        public static Channel ALARM = new Channel(AudioManager.STREAM_ALARM, AudioAttributes.USAGE_ALARM, AudioAttributes.CONTENT_TYPE_SONIFICATION);
+
+        public int streamType; // AudioManager.STREAM_* == AudioSystem.STREAM_*
+        public int usage; // AudioAttributes.USAGE_*
+        public int ct; // AudioAttributes.CONTENT_TYPE_*
+
+        public Channel() {
+        }
+
+        public Channel(int t, int u, int c) {
+            streamType = t;
+            usage = u;
+            ct = c;
+        }
     }
 
     public Sound(Context context) {
@@ -160,19 +198,40 @@ public class Sound {
         }
     }
 
-    public static int getChannelCount(int channelConfig) {
-        switch (channelConfig) {
-            case AudioFormat.CHANNEL_OUT_DEFAULT: //AudioFormat.CHANNEL_CONFIGURATION_DEFAULT
-            case AudioFormat.CHANNEL_OUT_MONO:
-            case AudioFormat.CHANNEL_CONFIGURATION_MONO:
-                return 1;
-            case AudioFormat.CHANNEL_OUT_STEREO:
-            case AudioFormat.CHANNEL_CONFIGURATION_STEREO:
-                return 2;
-            default:
-                if (channelConfig == AudioFormat.CHANNEL_INVALID)
-                    return 0;
-                return Integer.bitCount(channelConfig);
+    public Channel getSoundChannel() {
+        return Channel.NORMAL;
+    }
+
+    public float getVolume() {
+        return 1f;
+    }
+
+    public float reduce(float vol) {
+        return (float) Math.pow(vol, 3);
+    }
+
+    public float unreduce(float vol) {
+        return (float) Math.exp(Math.log(vol) / 3);
+    }
+
+    public void done(Runnable done) {
+        if (done != null && dones.contains(done)) {
+            dones.remove(done);
+            done.run();
+        } else {
+            dones.remove(done);
         }
+        if (dones.isEmpty()) {
+            for (Runnable r : exits)
+                r.run();
+            exits.clear();
+        }
+    }
+
+    public void after(Runnable done) {
+        if (dones.isEmpty())
+            done.run();
+        else
+            exits.add(done);
     }
 }

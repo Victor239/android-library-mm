@@ -24,6 +24,9 @@ import com.github.axet.androidlibrary.widgets.WebViewCustom;
 import org.apache.commons.io.IOUtils;
 
 import java.io.InputStream;
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.charset.Charset;
 
 //
@@ -101,7 +104,9 @@ public class AboutPreferenceCompat extends DialogPreference {
             String html = IOUtils.toString(is, Charset.defaultCharset());
             web.loadHtmlWithBaseURL("", html, "");
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            StringWriter w = new StringWriter();
+            e.printStackTrace(new PrintWriter(w));
+            web.loadHtmlWithBaseURL("", w.toString(), "");
         }
 
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
