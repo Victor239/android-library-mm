@@ -53,7 +53,7 @@ public class CacheImagesAdapter {
 
     public static int CACHE_MB = 30;
     public static int CACHE_DAYS = 30;
-    public static String CACHE_NAME = "cacheimages_";
+    public static String CACHE_NAME = "cacheadapter_";
 
     public static String[] IMAGES = new String[]{"webp", "png", "jpg", "jpeg", "gif", "bmp"};
 

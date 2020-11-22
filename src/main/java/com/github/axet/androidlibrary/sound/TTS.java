@@ -39,6 +39,16 @@ public class TTS extends Sound {
             context.startActivity(intent);
     }
 
+    public static class Speak {
+        public Locale locale;
+        public String text;
+
+        public Speak(Locale l, String t) {
+            locale = l;
+            text = t;
+        }
+    }
+
     public TTS(Context context) {
         super(context);
         ttsCreate();
@@ -97,7 +107,7 @@ public class TTS extends Sound {
         delayed = null;
     }
 
-    public void playSpeech(final String speak, final Runnable done) {
+    public void playSpeech(final Speak speak, final Runnable done) {
         dones.add(done);
 
         dones.remove(delayed);
@@ -263,16 +273,10 @@ public class TTS extends Sound {
         return locale;
     }
 
-    public boolean playSpeech(String speak) {
+    public boolean playSpeech(Speak speak) {
         if (onInit != null)
             return false;
-
-        Locale locale = getTTSLocale();
-
-        if (locale == null)
-            return false;
-
-        return playSpeech(locale, speak);
+        return playSpeech(speak.locale, speak.text);
     }
 
     public boolean playSpeech(Locale locale, String speak) {
