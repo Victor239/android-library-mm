@@ -63,7 +63,7 @@ public class TTSPreferenceCompat extends ListPreference {
         defSummary = getSummary();
         text = new ArrayList<>();
         value = new ArrayList<>();
-        text.add(getContext().getResources().getStringArray(R.array.screen_lock_text)[0]);
+        text.add(getContext().getString(R.string.system_default));
         value.add("");
         Set<Locale> ll = null;
         if (ll == null)
