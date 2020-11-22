@@ -71,15 +71,14 @@ public class MainApplication extends Application {
         int diffHours = (int) (diff / (60 * 60 * 1000) % 24);
         int diffDays = (int) (diff / (24 * 60 * 60 * 1000));
 
-        if (diffDays > 0) {
+        if (diffDays > 0)
             str = context.getResources().getQuantityString(R.plurals.days, diffDays, diffDays);
-        } else if (diffHours > 0) {
+        else if (diffHours > 0)
             str = context.getResources().getQuantityString(R.plurals.hours, diffHours, diffHours);
-        } else if (diffMinutes > 0) {
+        else if (diffMinutes > 0)
             str = context.getResources().getQuantityString(R.plurals.minutes, diffMinutes, diffMinutes);
-        } else if (diffSeconds > 0) {
+        else if (diffSeconds > 0)
             str = context.getResources().getQuantityString(R.plurals.seconds, diffSeconds, diffSeconds);
-        }
 
         return str;
     }

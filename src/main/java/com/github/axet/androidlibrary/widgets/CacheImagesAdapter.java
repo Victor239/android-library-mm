@@ -280,11 +280,10 @@ public class CacheImagesAdapter {
         long total = 0;
         for (File f : ff) {
             long last = f.lastModified();
-            if (last < c.getTimeInMillis()) {
+            if (last < c.getTimeInMillis())
                 f.delete();
-            } else {
+            else
                 total += f.length();
-            }
         }
         Arrays.sort(ff, new SortDate());
         for (int i = 0; i < ff.length && total > CACHE_MB * 1024 * 1024; i++) {
