@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.Application;
 import android.app.Service;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.SharedPreferences;
 import android.support.v7.preference.PreferenceManager;
 
@@ -18,13 +19,47 @@ public class MainApplication extends Application {
     public static final SimpleDateFormat SIMPLE = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
 
     public static MainApplication from(Context context) {
-        if (context instanceof Application)
+        if (context instanceof MainApplication)
             return (MainApplication) context;
-        if (context instanceof Service)
-            return (MainApplication) ((Service) context).getApplication();
-        if (context instanceof Activity)
-            return (MainApplication) ((Activity) context).getApplication();
-        return (MainApplication) context.getApplicationContext();
+        if (context instanceof Service) {
+            Application app = ((Service) context).getApplication();
+            if (app instanceof MainApplication)
+                return (MainApplication) app;
+        }
+        if (context instanceof Activity) {
+            Application app = ((Activity) context).getApplication();
+            if (app instanceof MainApplication)
+                return (MainApplication) app;
+        }
+        Context app = context.getApplicationContext();
+        if (app instanceof MainApplication)
+            return (MainApplication) app;
+        try {
+            Class ContextImpl = Class.forName("android.app.ContextImpl");
+            if (ContextImpl.isInstance(context)) {
+                Object apk = AssetsDexLoader.getPrivateField(ContextImpl, "mPackageInfo").get(context);
+                Class LoadedApk = Class.forName("android.app.LoadedApk");
+                if (apk != null) {
+                    Application a = (Application) AssetsDexLoader.getPrivateMethod(LoadedApk, "getApplication").invoke(apk);
+                    if (a instanceof MainApplication)
+                        return (MainApplication) a;
+                }
+                Class ActivityThread = Class.forName("android.app.ActivityThread");
+                Object thread = AssetsDexLoader.getPrivateField(ContextImpl, "mMainThread").get(context);
+                if (thread != null) {
+                    Application a = (Application) AssetsDexLoader.getPrivateMethod(ActivityThread, "getApplication").invoke(thread);
+                    if (a instanceof MainApplication)
+                        return (MainApplication) a;
+                }
+            }
+        } catch (Exception ignore) {
+        }
+        if (context instanceof ContextWrapper) {
+            Context base = ((ContextWrapper) context).getBaseContext();
+            if (base != null)
+                return from(base);
+        }
+        throw new RuntimeException("no application context");
     }
 
     public static String formatTime(int tt) {
