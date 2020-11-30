@@ -59,6 +59,18 @@ public class MainApplication extends Application {
             if (base != null)
                 return from(base);
         }
+        if (context.getApplicationInfo().className != null) {
+            try {
+                Class App = Class.forName(context.getApplicationInfo().className);
+                if (MainApplication.class.isAssignableFrom(App))
+                    throw new RuntimeException("broken application context runtime"); // manifest is ok, but instanse has no class
+                else
+                    throw new RuntimeException("manifest has no propper application value");
+            } catch (Exception ignore) {
+            }
+        } else {
+            throw new RuntimeException("manifest has no propper application value");
+        }
         throw new RuntimeException("no application context");
     }
 
