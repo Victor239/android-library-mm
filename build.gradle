@@ -57,10 +57,6 @@ task sourcesJar(type: Jar) {
     from android.sourceSets.main.java.srcDirs
 }
 
-def prop(String name) {
-    project.hasProperty(name) ? project.getProperty(name) : null
-}
-
 publishing {
     publications {
         mavenJava(MavenPublication) {
