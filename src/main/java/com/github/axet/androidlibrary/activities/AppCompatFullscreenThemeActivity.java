@@ -10,6 +10,7 @@ import android.support.v7.view.WindowCallbackWrapper;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.WindowInsets;
 import android.view.WindowManager;
 
 import java.lang.reflect.InvocationTargetException;
@@ -33,6 +34,36 @@ public abstract class AppCompatFullscreenThemeActivity extends AppCompatThemeAct
             try {
                 w.getClass().getMethod("setDecorFitsSystemWindows", boolean.class).invoke(w, b);
             } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    public static void hideStatusBars(Window w) {
+        if (Build.VERSION.SDK_INT >= 30) {
+            try {
+                Class WindowInsetsController = Class.forName("android.view.WindowInsetsController");
+                final Object insetsController = Window.class.getMethod("getInsetsController").invoke(w);
+                if (insetsController != null) {
+                    Class Type = Class.forName("android.view.WindowInsets$Type");
+                    WindowInsetsController.getMethod("hide", int.class).invoke(insetsController, Type.getMethod("statusBars").invoke(null));
+                }
+            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    public static void showStatusBars(Window w) {
+        if (Build.VERSION.SDK_INT >= 30) {
+            try {
+                Class WindowInsetsController = Class.forName("android.view.WindowInsetsController");
+                final Object insetsController = Window.class.getMethod("getInsetsController").invoke(w);
+                if (insetsController != null) {
+                    Class Type = Class.forName("android.view.WindowInsets$Type");
+                    WindowInsetsController.getMethod("show", int.class).invoke(insetsController, Type.getMethod("statusBars").invoke(null));
+                }
+            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | ClassNotFoundException e) {
                 throw new RuntimeException(e);
             }
         }
@@ -144,12 +175,14 @@ public abstract class AppCompatFullscreenThemeActivity extends AppCompatThemeAct
 
     public void hideSystemUI() {
         setDecorFitsSystemWindows(w, false);
+        hideStatusBars(w);
         if (Build.VERSION.SDK_INT >= 11)
             decorView.setSystemUiVisibility(HIDE_FLAGS);
     }
 
     public void showSystemUI() {
         setDecorFitsSystemWindows(w, true);
+        showStatusBars(w);
         if (Build.VERSION.SDK_INT >= 11)
             decorView.setSystemUiVisibility(SHOW_FLAGS);
     }
