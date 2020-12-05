@@ -71,10 +71,12 @@ public abstract class AppCompatFullscreenThemeActivity extends AppCompatThemeAct
 
     public void setFitsSystemWindows(Activity a, boolean b) { // set fitsSystemWindows on root view
         View v = a.findViewById(android.R.id.content);
-        ViewGroup g = (ViewGroup) v;
-        for (int i = 0; i < g.getChildCount(); i++) {
-            View c = g.getChildAt(i);
-            setFitsSystemWindows(c, b);
+        if (v instanceof ViewGroup) {
+            ViewGroup g = (ViewGroup) v;
+            for (int i = 0; i < g.getChildCount(); i++) {
+                View c = g.getChildAt(i);
+                setFitsSystemWindows(c, b);
+            }
         }
     }
 
