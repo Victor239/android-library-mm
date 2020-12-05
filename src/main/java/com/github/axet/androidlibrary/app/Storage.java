@@ -513,25 +513,6 @@ public class Storage {
     }
 
     @TargetApi(21)
-    public static String getQueryDocumentId(Context context, Uri uri, String name) { // convert name into id, need for /downloads/document/14 uris
-        String id = DocumentsContract.getTreeDocumentId(uri);
-        Uri doc = DocumentsContract.buildChildDocumentsUriUsingTree(uri, id);
-        ContentResolver resolver = context.getContentResolver();
-        Cursor cursor = resolver.query(doc, new String[]{DocumentsContract.Document.COLUMN_DOCUMENT_ID, DocumentsContract.Document.COLUMN_DISPLAY_NAME}, DocumentsContract.Document.COLUMN_DISPLAY_NAME + "=?", new String[]{name}, null);
-        if (cursor != null) {
-            try {
-                while (cursor.moveToNext()) {
-                    if (cursor.getString(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_DISPLAY_NAME)).equals(name)) // some provaiders fails to filter
-                        return cursor.getString(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_DOCUMENT_ID));
-                }
-            } finally {
-                cursor.close();
-            }
-        }
-        return name;
-    }
-
-    @TargetApi(21)
     public static String getDocumentChildPath(Uri uri) { // tree documents points to id:system/f1/ child points to id:system/f1/bin/1/ == 'bin/1/'
         String id = DocumentsContract.getDocumentId(uri);
         if (id.contains(":")) {
@@ -569,6 +550,15 @@ public class Storage {
     public static boolean isDocumentExists(Context context, Uri uri) {
         DocumentFile k = getDocumentFile(context, uri);
         return k != null && k.exists();
+    }
+
+    public static boolean isDocumentHomeUri(Uri uri) { // downloads/home/document/14
+        if (Build.VERSION.SDK_INT >= 24 && DocumentsContract.isTreeUri(uri)) {
+            String pid = DocumentsContract.getTreeDocumentId(uri);
+            return !pid.contains(COLON);
+        } else {
+            return false;
+        }
     }
 
     @TargetApi(21)
@@ -681,6 +671,25 @@ public class Storage {
     }
 
     @TargetApi(21)
+    public static String getQueryDocumentId(Context context, Uri uri, String name) { // convert name into id, need for /downloads/document/14 uris
+        String id = DocumentsContract.getTreeDocumentId(uri);
+        Uri doc = DocumentsContract.buildChildDocumentsUriUsingTree(uri, id);
+        ContentResolver resolver = context.getContentResolver();
+        Cursor cursor = resolver.query(doc, new String[]{DocumentsContract.Document.COLUMN_DOCUMENT_ID, DocumentsContract.Document.COLUMN_DISPLAY_NAME}, DocumentsContract.Document.COLUMN_DISPLAY_NAME + "=?", new String[]{name}, null);
+        if (cursor != null) {
+            try {
+                while (cursor.moveToNext()) {
+                    if (cursor.getString(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_DISPLAY_NAME)).equals(name)) // some provaiders fails to filter
+                        return cursor.getString(cursor.getColumnIndex(DocumentsContract.Document.COLUMN_DOCUMENT_ID));
+                }
+            } finally {
+                cursor.close();
+            }
+        }
+        return name;
+    }
+
+    @TargetApi(21)
     public static String getDocumentName(Context context, Uri uri) {
         if (DocumentsContract.isDocumentUri(context, uri)) {
             String id = DocumentsContract.getDocumentId(uri);
@@ -688,7 +697,7 @@ public class Storage {
                 String pid = DocumentsContract.getTreeDocumentId(uri);
                 if (pid.equals(id))
                     return OpenFileDialog.ROOT;
-                if (!pid.contains(COLON)) // downloads/home/etc
+                if (!pid.contains(COLON)) // isDocumentHomeUri()
                     return getQueryName(context, uri);
             }
             String[] ss = id.split(COLON, 2);
@@ -921,11 +930,8 @@ public class Storage {
     public static Uri child(Context context, Uri uri, String name) {
         String s = uri.getScheme();
         if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
-            if (Build.VERSION.SDK_INT >= 24 && DocumentsContract.isTreeUri(uri)) {
-                String id = DocumentsContract.getTreeDocumentId(uri);
-                if (!id.contains(COLON)) // downloads/document/14 link
-                    name = getQueryDocumentId(context, uri, name);
-            }
+            if (isDocumentHomeUri(uri))
+                name = getQueryDocumentId(context, uri, name);
             return getDocumentChild(context, uri, name);
         } else if (s.equals(ContentResolver.SCHEME_FILE)) {
             File f1 = new File(getFile(uri), name);
