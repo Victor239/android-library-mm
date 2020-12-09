@@ -7,10 +7,12 @@ import android.content.ActivityNotFoundException;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.os.StatFs;
 import android.provider.DocumentsContract;
@@ -43,6 +45,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -54,6 +57,9 @@ public class Storage {
     private static final String TAG = Storage.class.getSimpleName();
 
     protected static boolean permittedForce = false; // bugged phones has no PackageManager.ACTION_REQUEST_PERMISSIONS activity. allow it all.
+
+    public static final String MANAGE_EXTERNAL_STORAGE = "android.permission.MANAGE_EXTERNAL_STORAGE"; // Manifest.permission.MANAGE_EXTERNAL_STORAGE
+    public static final String ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION = "android.settings.MANAGE_APP_ALL_FILES_ACCESS_PERMISSION";
 
     public static final String PATH_TREE = "tree";
     public static final String PATH_DOCUMENT = "document";
@@ -875,6 +881,44 @@ public class Storage {
         Uri uri = Uri.fromParts(SCHEME_PACKAGE, context.getPackageName(), null);
         intent.setData(uri);
         context.startActivity(intent);
+    }
+
+    public static boolean isExternalStorageManager(Context context) { // API30
+        if (Build.VERSION.SDK_INT >= 30) {
+            try {
+                return (boolean) Environment.class.getMethod("isExternalStorageManager").invoke(null);
+            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return permitted(context, PERMISSIONS_RW);
+    }
+
+    public static void showExternalStorageManager(Context context) {
+        context.startActivity(new Intent(ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION));
+    }
+
+    public static boolean hasRequestedLegacyExternalStorage(Context context) { // API29
+        if (Build.VERSION.SDK_INT >= 29) {
+            try {
+                return (boolean) AssetsDexLoader.getPrivateMethod(ApplicationInfo.class, "hasRequestedLegacyExternalStorage").invoke(context.getApplicationInfo());
+            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                int PRIVATE_FLAG_REQUEST_LEGACY_EXTERNAL_STORAGE = 1 << 29;
+                return (context.getApplicationInfo().flags & PRIVATE_FLAG_REQUEST_LEGACY_EXTERNAL_STORAGE) != 0;
+            }
+        }
+        return false;
+    }
+
+    public static boolean isExternalStorageLegacy(Context context) {
+        if (Build.VERSION.SDK_INT >= 29) {
+            try {
+                return (boolean) Environment.class.getMethod("isExternalStorageLegacy").invoke(null);
+            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                Log.w(TAG, e);
+            }
+        }
+        return false;
     }
 
     // file and content twists
