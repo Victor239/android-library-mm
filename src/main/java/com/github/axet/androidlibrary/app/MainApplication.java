@@ -70,7 +70,7 @@ public class MainApplication extends Application {
                     throw new RuntimeException("broken application context runtime"); // manifest is ok, but instance has no app
                 else
                     throw new RuntimeException("manifest has no propper application value");
-            } catch (Exception ignore) {
+            } catch (ClassNotFoundException ignore) {
             }
             throw new RuntimeException("no application context");
         }
