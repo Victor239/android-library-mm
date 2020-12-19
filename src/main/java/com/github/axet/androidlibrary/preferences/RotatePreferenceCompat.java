@@ -15,8 +15,10 @@ import android.provider.Settings;
 import android.support.v7.preference.SwitchPreferenceCompat;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.util.TypedValue;
 
 import com.github.axet.androidlibrary.R;
+import com.github.axet.androidlibrary.widgets.RemoteViewsCompat;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -35,7 +37,16 @@ public class RotatePreferenceCompat extends SwitchPreferenceCompat {
     }
 
     public static void setRequestedOrientationDefault(Activity a) {
-        a.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+        RemoteViewsCompat.StyledAttrs w = new RemoteViewsCompat.StyledAttrs(a.getTheme(), new int[]{android.R.attr.windowIsTranslucent});
+        boolean b = false;
+        TypedValue out = new TypedValue();
+        if (w.getValue(android.R.attr.windowIsTranslucent, out))
+            b = Boolean.parseBoolean(out.coerceToString().toString());
+        w.close();
+        if (b)
+            a.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER); // translucent windows inherint rotation from parnet
+        else
+            a.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
     }
 
     public static void setRequestedOrientationLock(Activity a) { // SCREEN_ORIENTATION_NOSENSOR, nor SCREEN_ORIENTATION_LOCKED working
