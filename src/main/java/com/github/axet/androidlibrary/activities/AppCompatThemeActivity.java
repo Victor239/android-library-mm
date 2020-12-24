@@ -254,11 +254,16 @@ public abstract class AppCompatThemeActivity extends AppCompatActivity {
     }
 
     public void restartActivity() {
-        Bundle out = new Bundle();
-        onSaveInstanceState(out);
-        restartActivity(new Intent(this, getClass())
-                .putExtra(OVERRIDE_PENDING_TRANSITION, true)
-                .putExtra(SAVE_INSTANCE_STATE, out));
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() { // possible fix FragmentManager ensureExecReady crash
+                Bundle out = new Bundle();
+                onSaveInstanceState(out);
+                restartActivity(new Intent(AppCompatThemeActivity.this, AppCompatThemeActivity.this.getClass())
+                        .putExtra(OVERRIDE_PENDING_TRANSITION, true)
+                        .putExtra(SAVE_INSTANCE_STATE, out));
+            }
+        });
     }
 
     public void restartActivity(Intent intent) {
