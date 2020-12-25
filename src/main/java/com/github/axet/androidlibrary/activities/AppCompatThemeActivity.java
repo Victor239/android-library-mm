@@ -14,6 +14,8 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.PersistableBundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
@@ -254,7 +256,7 @@ public abstract class AppCompatThemeActivity extends AppCompatActivity {
     }
 
     public void restartActivity() {
-        runOnUiThread(new Runnable() {
+        new Handler(Looper.getMainLooper()).post(new Runnable() {
             @Override
             public void run() { // possible fix FragmentManager ensureExecReady crash
                 Bundle out = new Bundle();
