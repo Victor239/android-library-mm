@@ -1,4 +1,5 @@
 <resources>
+    <style name="Translucent" parent="@android:style/Theme.Translucent.NoTitleBar" />
 
     <!-- api 25 vs 27 compatibility https://stackoverflow.com/questions/48241620 @style/TextAppearance.AppCompat.Notification.Info -->
     <style name="NotificationInfo">
@@ -19,6 +20,8 @@
         <item name="progressbar_round">@drawable/progressbar_round_light</item>
         <item name="toolbar_icon_bg">@drawable/toolbar_icon_light</item>
         <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
+        <item name="android:windowIsTranslucent">false</item>
+        <item name="android:windowIsFloating">false</item>
     </style>
 
     <style name="toolbar_icon_text">
@@ -34,6 +37,8 @@
         <item name="progressbar_round">@drawable/progressbar_round_dark</item>
         <item name="toolbar_icon_bg">@drawable/toolbar_icon_dark</item>
         <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
+        <item name="android:windowIsTranslucent">false</item>
+        <item name="android:windowIsFloating">false</item>
     </style>
 
 </resources>

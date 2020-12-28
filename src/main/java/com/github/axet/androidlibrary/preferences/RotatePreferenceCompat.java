@@ -8,6 +8,7 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.database.ContentObserver;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
@@ -44,12 +45,24 @@ public class RotatePreferenceCompat extends SwitchPreferenceCompat {
             b = Boolean.parseBoolean(out.coerceToString().toString());
         w.close();
         if (b)
-            a.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER); // translucent windows inherint rotation from parnet
+            a.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER); // translucent windows inherint rotation from parent
         else
             a.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
     }
 
     public static void setRequestedOrientationLock(Activity a) { // SCREEN_ORIENTATION_NOSENSOR, nor SCREEN_ORIENTATION_LOCKED working
+        if (Build.VERSION.SDK_INT == 26) {
+            RemoteViewsCompat.StyledAttrs w = new RemoteViewsCompat.StyledAttrs(a.getTheme(), new int[]{android.R.attr.windowIsTranslucent, android.R.attr.windowIsFloating});
+            boolean b = false;
+            TypedValue out = new TypedValue();
+            if (w.getValue(android.R.attr.windowIsTranslucent, out))
+                b = Boolean.parseBoolean(out.coerceToString().toString());
+            if (w.getValue(android.R.attr.windowIsFloating, out))
+                b |= Boolean.parseBoolean(out.coerceToString().toString());
+            w.close();
+            if (b)
+                return; // https://issuetracker.google.com/issues/68454482
+        }
         if (a.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE)
             a.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
         else
