@@ -525,7 +525,7 @@ public class Storage {
     @TargetApi(21)
     public static String getDocumentChildPath(Uri uri) { // tree documents points to id:system/f1/ child points to id:system/f1/bin/1/ == 'bin/1/'
         String id = DocumentsContract.getDocumentId(uri);
-        if (id.contains(":")) {
+        if (id.contains(COLON)) {
             String parent = DocumentsContract.getTreeDocumentId(uri);
             String r = relative(parent, id, '/'); // folder can ends with ':' so, we try '/' first
             if (r != null)
