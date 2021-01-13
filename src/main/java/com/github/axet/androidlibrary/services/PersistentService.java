@@ -94,6 +94,7 @@ public class PersistentService extends Service {
     @Override
     public void onTaskRemoved(Intent rootIntent) {
         super.onTaskRemoved(rootIntent);
-        optimization.onTaskRemoved(rootIntent);
+        if (optimization != null)
+            optimization.onTaskRemoved(rootIntent);
     }
 }

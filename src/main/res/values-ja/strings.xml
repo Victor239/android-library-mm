@@ -2,15 +2,15 @@
     <!--OpenFileDialog-->
     <string name="filedialog_rename">名前を変更</string>
     <string name="filedialog_delete">削除</string>
-    <string name="filedialog_newfolder">新しいフォルダー</string>
-    <string name="filedialog_foldername">フォルダー名</string>
-    <string name="filedialog_unablecreatefolder">フォルダーを作成できません: \'%1$s\'</string>
-    <string name="filedialog_foldercreated">フォルダー \'%1$s\' を作成しました</string>
+    <string name="filedialog_newfolder">新しいフォルダ</string>
+    <string name="filedialog_foldername">フォルダ名</string>
+    <string name="filedialog_unablecreatefolder">フォルダを作成できません: \'%1$s\'</string>
+    <string name="filedialog_foldercreated">フォルダ \'%1$s\' を作成しました</string>
     <string name="filedialog_folderdeleted">削除しました: \'%1$s\'</string>
     <string name="filedialog_renameto">名前を変更しました: \'%1$s\'</string>
     <string name="filedialog_empty">空のリスト</string>
-    <string name="filedialog_readonly">読み取り専用ディレクトリー</string>
-    <string name="filedialog_selectfolder">フォルダーを選択してください</string>
+    <string name="filedialog_readonly">読み取り専用フォルダ</string>
+    <string name="filedialog_selectfolder">フォルダを選択してください</string>
 
     <string name="ShareAction">共有</string>
     <string name="shared_via">"%1$s で共有しました"</string>
@@ -42,34 +42,34 @@
     <string name="size_kb">%1$.1f kb</string>
 
     <string name="optimization_dialog">最適化設定</string>
-    <string name="optimization_message">アプリケーションがメモリから削除されないように、電話のバッテリー管理ホワイトリストにアプリケーションを追加することを検討してください。</string>
-    <string name="optimization_killed">Application were killed by OS. Consider adding application to whitelist.</string>
+    <string name="optimization_message">アプリがメモリから削除されないように、電池の最適化の除外リストにアプリを追加することを検討してください。</string>
+    <string name="optimization_killed">アプリはOSから停止されました。除外リストにアプリを追加することを検討してください。</string>
 
     <string name="menu_settings">設定</string>
-    <string name="menu_about">About</string>
-    <string name="open_browser">Open Browser</string>
-    <string name="are_you_sure">よろしいですか ?</string>
-    <string name="default_button">Default</string>
+    <string name="menu_about">このアプリについて</string>
+    <string name="open_browser">ブラウザで開く</string>
+    <string name="are_you_sure">よろしいですか?</string>
+    <string name="default_button">デフォルト</string>
     <string name="not_permitted">許可されていません</string>
-    <string name="close">Close</string>
+    <string name="close">閉じる</string>
 
-    <string name="system_default">System Default</string>
+    <string name="system_default">システムのデフォルト</string>
 
     <string-array name="screen_lock_text">
         <item>@string/system_default</item>
         <item>Keep On</item>
-        <item>Off after 30 sec</item>
-        <item>Off after 1 min</item>
-        <item>Off after 5 min</item>
-        <item>Off after 30 min</item>
+        <item>30秒後にオフ</item>
+        <item>1分後にオフ</item>
+        <item>5分後にオフ</item>
+        <item>30分後にオフ</item>
     </string-array>
-    <string name="pref_screenlock_title">Keep Screen On</string>
-    <string name="optimization_alive">Keep Alive Service</string>
-    <string name="optimization_alive_summary">Background service keep application running</string>
-    <string name="optimization_icon">Persistent Icon</string>
-    <string name="optimization_icon_summary">Requires on some devices when application constantly get removed</string>
-    <string name="optimization_system">Battery Optimization</string>
-    <string name="optimization_system_summary">Open system battery optimization dialog</string>
+    <string name="pref_screenlock_title">画面を消灯しない</string>
+    <string name="optimization_alive">バックグラウンドで動作し続ける</string>
+    <string name="optimization_alive_summary">バックグラウンドサービスは動作し続けます</string>
+    <string name="optimization_icon">アイコンの強制表示</string>
+    <string name="optimization_icon_summary">いくつかのデバイスでアプリが停止する場合に必要です</string>
+    <string name="optimization_system">電池の最適化</string>
+    <string name="optimization_system_summary">電池の最適化の設定を開く</string>
 
-    <string name="migrating_data">Migrating data</string>
+    <string name="migrating_data">データ移行</string>
 </resources>
