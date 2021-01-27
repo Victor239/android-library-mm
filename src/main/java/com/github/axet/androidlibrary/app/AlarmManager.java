@@ -104,6 +104,10 @@ public class AlarmManager {
         public long time;
         public PowerManager.WakeLock wlCpu;
 
+        public WakeLock(long time) {
+            this.time = time;
+        }
+
         public void lock(Context context) {
             if (wlCpu != null)
                 return;
@@ -145,7 +149,7 @@ public class AlarmManager {
         public PendingIntent pe;
 
         public Alarm(long time, Runnable r, Intent intent, PendingIntent pe) {
-            this.time = time;
+            super(time);
             this.r = r;
             this.intent = intent;
             this.pe = pe;
