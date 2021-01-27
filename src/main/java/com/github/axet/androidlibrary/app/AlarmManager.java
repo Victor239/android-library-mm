@@ -24,9 +24,9 @@ public class AlarmManager {
     public static final int HOUR1 = 60 * MIN1;
     public static final int DAY1 = 24 * HOUR1;
 
-    Context context;
-    Handler handler = new Handler();
-    Map<String, Alarm> check = new HashMap<>();
+    public Context context;
+    public Handler handler = new Handler();
+    public Map<String, Alarm> check = new HashMap<>();
 
     public static String formatTime(long time) {
         return MainApplication.SIMPLE.format(new Date(time));
@@ -100,26 +100,11 @@ public class AlarmManager {
         return requestCode + "_" + intent.getClass().getCanonicalName() + "_" + intent.getAction();
     }
 
-    public class Alarm {
+    public static class WakeLock {
         public long time;
-        public Runnable r;
-        public Intent intent;
-        public PendingIntent pe;
         public PowerManager.WakeLock wlCpu;
 
-        public Alarm(long time, Runnable r, Intent intent, PendingIntent pe) {
-            this.time = time;
-            this.r = r;
-            this.intent = intent;
-            this.pe = pe;
-        }
-
-        public void close() {
-            wakeClose();
-            handler.removeCallbacks(r);
-        }
-
-        public void wakeLock() {
+        public void lock(Context context) {
             if (wlCpu != null)
                 return;
             Log.d(TAG, "wakeLock() " + formatTime(time));
@@ -128,7 +113,7 @@ public class AlarmManager {
             wlCpu.acquire();
         }
 
-        public void wakeClose() {
+        public void close() {
             if (wlCpu == null)
                 return;
             Log.d(TAG, "wakeClose() " + formatTime(time));
@@ -137,8 +122,8 @@ public class AlarmManager {
             wlCpu = null;
         }
 
-        public void wakeTake(Alarm c) {
-            wakeClose();
+        public void take(WakeLock c) {
+            close();
             wlCpu = c.wlCpu;
             c.wlCpu = null;
         }
@@ -151,6 +136,36 @@ public class AlarmManager {
 
         public String toString() {
             return AlarmManager.formatTime(time);
+        }
+    }
+
+    public class Alarm extends WakeLock {
+        public Runnable r;
+        public Intent intent;
+        public PendingIntent pe;
+
+        public Alarm(long time, Runnable r, Intent intent, PendingIntent pe) {
+            this.time = time;
+            this.r = r;
+            this.intent = intent;
+            this.pe = pe;
+        }
+
+        public void wakeLock() {
+            super.lock(context);
+        }
+
+        public void wakeClose() {
+            super.close();
+        }
+
+        public void wakeTake(Alarm a) {
+            super.take(a);
+        }
+
+        public void close() {
+            wakeClose();
+            handler.removeCallbacks(r);
         }
     }
 
