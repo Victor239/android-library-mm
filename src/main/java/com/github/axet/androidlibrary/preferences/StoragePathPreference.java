@@ -63,9 +63,8 @@ public class StoragePathPreference extends EditTextPreference {
     }
 
     public static String getDefault(Object o) {
-        if (o instanceof StoragePathPreference) {
+        if (o instanceof StoragePathPreference)
             return ((StoragePathPreference) o).def;
-        }
         throw new RuntimeException("unknown class");
     }
 
