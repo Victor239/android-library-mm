@@ -53,8 +53,7 @@ public abstract class AppCompatThemeActivity extends AppCompatActivity {
     public Handler handler = new Handler();
 
     public static void showLocked(Window w) {
-        w.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
-        // enable popup keyboard when locked
+        w.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED); // enable popup keyboard when locked
         w.addFlags(android.view.WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
         if (Build.VERSION.SDK_INT >= 21)
             w.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);

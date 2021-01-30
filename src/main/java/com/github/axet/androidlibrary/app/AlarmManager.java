@@ -108,6 +108,11 @@ public class AlarmManager {
             this.time = time;
         }
 
+        public WakeLock(Context context, long time) {
+            this(time);
+            lock(context);
+        }
+
         public void lock(Context context) {
             if (wlCpu != null)
                 return;
