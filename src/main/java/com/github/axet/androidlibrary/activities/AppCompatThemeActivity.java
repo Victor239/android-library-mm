@@ -83,14 +83,6 @@ public abstract class AppCompatThemeActivity extends AppCompatActivity {
         a.overridePendingTransition(0, 0);
     }
 
-    public static Bundle onSavedBundle(Bundle savedInstanceState) {
-        try {
-            return savedInstanceState == null ? getIntent().getBundleExtra(SAVE_INSTANCE_STATE) : savedInstanceState;
-        } catch (Exception e) {
-            Log.e(TAG, e); // crashing on restroting bundle (NoSuchMethod exception or BadParcelableException or AssertionError
-        }
-    }
-
     public static class ActivityAnimations {
         public int activityCloseEnterAnimation;
         public int activityCloseExitAnimation;
@@ -230,6 +222,15 @@ public abstract class AppCompatThemeActivity extends AppCompatActivity {
     @Override
     protected void attachBaseContext(Context newBase) {
         super.attachBaseContext(newBase);
+    }
+
+    public Bundle onSavedBundle(Bundle savedInstanceState) {
+        try {
+            return savedInstanceState == null ? getIntent().getBundleExtra(SAVE_INSTANCE_STATE) : savedInstanceState;
+        } catch (Exception e) {
+            Log.w(TAG, e); // crashing on restroting bundle (NoSuchMethod exception or BadParcelableException or AssertionError
+            return null;
+        }
     }
 
     @Override
