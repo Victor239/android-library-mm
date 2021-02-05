@@ -86,9 +86,9 @@ public abstract class AppCompatThemeActivity extends AppCompatActivity {
 
     public static Bundle onSavedBundle(Bundle savedInstanceState, Intent intent) {
         try {
-            return savedInstanceState == null ? (intent == null ? null : intent.getBundleExtra(SAVE_INSTANCE_STATE)) : savedInstanceState;
-        } catch (Exception e) {
-            Log.w(TAG, e); // crashing on restroting bundle (NoSuchMethod exception or BadParcelableException or AssertionError
+            return savedInstanceState == null ? intent.getBundleExtra(SAVE_INSTANCE_STATE) : savedInstanceState;
+        } catch (Throwable e) {
+            Log.w(TAG, e); // crashing on restoring bundle (NoSuchMethod exception or BadParcelableException or AssertionError
             return null;
         }
     }
@@ -237,11 +237,7 @@ public abstract class AppCompatThemeActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         setAppTheme(getAppTheme());
-        try {
-            super.onCreate(onSavedBundle(savedInstanceState, getIntent()));
-        } catch (NoSuchMethodError | BadParcelableException | AssertionError e) {
-            Log.w(TAG, e); // old support libraries causing those crashes on new devices
-        }
+        super.onCreate(onSavedBundle(savedInstanceState, getIntent()));
         if (manifestThemeid != themeId && !getIntent().getBooleanExtra(OVERRIDE_PENDING_TRANSITION, false))
             overridePendingTransition(animations.activityOpenEnterAnimation, animations.activityOpenExitAnimation);
         else
