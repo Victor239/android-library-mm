@@ -12,6 +12,7 @@ import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.os.BadParcelableException;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -236,7 +237,11 @@ public abstract class AppCompatThemeActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         setAppTheme(getAppTheme());
-        super.onCreate(onSavedBundle(savedInstanceState, getIntent()));
+        try {
+            super.onCreate(onSavedBundle(savedInstanceState, getIntent()));
+        } catch (NoSuchMethodError | BadParcelableException | AssertionError e) {
+            Log.w(TAG, e); // old support libraries causing those crashes on new devices
+        }
         if (manifestThemeid != themeId && !getIntent().getBooleanExtra(OVERRIDE_PENDING_TRANSITION, false))
             overridePendingTransition(animations.activityOpenEnterAnimation, animations.activityOpenExitAnimation);
         else
