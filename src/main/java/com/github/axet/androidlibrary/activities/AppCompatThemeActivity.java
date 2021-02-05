@@ -228,7 +228,7 @@ public abstract class AppCompatThemeActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         setAppTheme(getAppTheme());
-        super.onCreate(savedInstanceState == null ? intent.getBundleExtra(SAVE_INSTANCE_STATE) : savedInstanceState);
+        super.onCreate(savedInstanceState == null ? getIntent().getBundleExtra(SAVE_INSTANCE_STATE) : savedInstanceState);
         if (manifestThemeid != themeId && !getIntent().getBooleanExtra(OVERRIDE_PENDING_TRANSITION, false))
             overridePendingTransition(animations.activityOpenEnterAnimation, animations.activityOpenExitAnimation);
         else
