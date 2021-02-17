@@ -8,6 +8,7 @@ import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.AudioTrack;
+import android.media.ToneGenerator;
 import android.os.Build;
 import android.os.Handler;
 import android.provider.Settings;
@@ -39,6 +40,11 @@ public class Sound {
     public Runnable delayed;
     public Set<Runnable> dones = new HashSet<>(); // valid done list, in case sound was canceled during play done will not be present
     public Set<Runnable> exits = new HashSet<>(); // run when all done
+
+    public static void beep() {
+        ToneGenerator toneG = new ToneGenerator(AudioManager.STREAM_ALARM, 100);
+        toneG.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 200);
+    }
 
     public static int getValidRecordRate(int in, int rate) {
         int i = Arrays.binarySearch(RATES, rate);

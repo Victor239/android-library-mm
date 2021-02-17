@@ -158,7 +158,7 @@ public class TTS extends Sound {
         } else {
             tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
                 @Override
-                public void onStart(String utteranceId) { // tts start speaking
+                public void onStart(final String utteranceId) { // tts start speaking
                     handler.post(new Runnable() {
                         @Override
                         public void run() {
@@ -179,13 +179,23 @@ public class TTS extends Sound {
                 }
 
                 @Override
-                public void onDone(String utteranceId) {
-                    handler.post(clear);
+                public void onDone(final String utteranceId) {
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            TTS.this.onDone(utteranceId, clear);
+                        }
+                    });
                 }
 
                 @Override
-                public void onError(String utteranceId) {
-                    handler.post(clear);
+                public void onError(final String utteranceId) {
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            TTS.this.onError(utteranceId, clear);
+                        }
+                    });
                 }
             });
         }
@@ -311,5 +321,13 @@ public class TTS extends Sound {
     }
 
     public void onRangeStart(String utteranceId, int start, int end, int frame) {
+    }
+
+    public void onDone(String utteranceId, Runnable done) {
+        done.run();
+    }
+
+    public void onError(String utteranceId, Runnable done) {
+        done.run();
     }
 }
