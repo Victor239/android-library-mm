@@ -124,6 +124,15 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         return true;
     }
 
+    public static long getBootTime() { // rounded time, to keep it stable
+        long time = System.currentTimeMillis() - SystemClock.elapsedRealtime();
+        int ms = (int) (time % 1000);
+        time = time / 1000 * 1000;
+        if (ms > 500)
+            time += 1000;
+        return time;
+    }
+
     public static ComponentName startService(Context context, Intent intent) {
         if (Build.VERSION.SDK_INT >= 26 && context.getApplicationInfo().targetSdkVersion >= 26) {
             Class k = context.getClass();
@@ -528,11 +537,10 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         }
         if (next == 0)
             return false; // no missed alarm
-        long time = System.currentTimeMillis();
-        if (next > time)
+        long now = System.currentTimeMillis();
+        if (next > now)
             return false; // alarm in the future
-        long uptime = SystemClock.elapsedRealtime(); // milliseconds since boot, including time spent in sleep
-        long boot = time - uptime; // boot time
+        long boot = getBootTime();
         if (next < boot)
             return false; // we lost alarm, while device were offline, skip warning
         if (set < boot)
@@ -599,13 +607,15 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
     }
 
     public static boolean needBootWarning(Context context, String bootpref) {
+        if (!findPermission(context, Manifest.permission.RECEIVE_BOOT_COMPLETED))
+            return false;
         SharedPreferences shared = PreferenceManager.getDefaultSharedPreferences(context);
         long auto = shared.getLong(bootpref, -1);
         long install = getInstallTime(context);
         if (auto == -1 && install == -1)
             return false; // freshly installed app, never ran before
         long now = System.currentTimeMillis();
-        long boot = now - SystemClock.elapsedRealtime(); // boot time
+        long boot = getBootTime();
         if (install > boot)
             return false; // app was installed after boot
         if (boot + BOOT_DELAY > now) // give 2 minutes to receive boot event
