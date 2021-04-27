@@ -10,9 +10,9 @@ import android.provider.DocumentsContract;
 import android.support.annotation.NonNull;
 import android.support.v4.provider.DocumentFile;
 
-import net.lingala.zip4j.core.NativeFile;
-import net.lingala.zip4j.core.NativeStorage;
-import net.lingala.zip4j.io.ZipInputStream;
+import net.lingala.zip4j.NativeFile;
+import net.lingala.zip4j.NativeStorage;
+import net.lingala.zip4j.io.inputstream.ZipInputStream;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -48,7 +48,7 @@ public class ZipSAF extends NativeStorage {
 
         @Override
         public void close() throws IOException {
-            is.close(true);
+            is.close();
         }
     }
 

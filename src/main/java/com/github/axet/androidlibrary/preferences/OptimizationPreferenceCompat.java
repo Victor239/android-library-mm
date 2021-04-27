@@ -87,6 +87,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
     public static boolean ICON = false; // for(api23+ true means){ show persistent icon option } else {persistent service, icon}; use setIcon if default true and service persisted
 
     public static long boot; // boot cache time, stable time
+    public static int BOOT_DELTA_MS = 30; // two calls can return 30 ms delta time
 
     public static int BOOT_DELAY = 2 * 60 * 1000;
 
@@ -132,7 +133,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         long time = System.currentTimeMillis() - SystemClock.elapsedRealtime();
         int ms = (int) (time % 1000);
         time = time / 1000 * 1000;
-        if (ms <= 30) // two calls can return 30 ms delta time
+        if (ms <= BOOT_DELTA_MS)
             time -= 1000;
         boot = time;
         return time;
