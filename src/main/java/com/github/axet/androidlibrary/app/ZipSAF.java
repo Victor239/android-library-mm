@@ -82,6 +82,11 @@ public class ZipSAF extends NativeStorage {
         }
 
         @Override
+        public void readFully(byte[] buf) throws IOException {
+            readFully(buf, 0, buf.length);
+        }
+
+        @Override
         public void readFully(byte[] buf, int off, int len) throws IOException {
             int r;
             while (len > 0 && (r = read(buf, off, len)) > 0) {
