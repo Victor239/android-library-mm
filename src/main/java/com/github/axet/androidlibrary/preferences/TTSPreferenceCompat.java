@@ -22,22 +22,31 @@ public class TTSPreferenceCompat extends ListPreference {
     ArrayList<CharSequence> text;
     ArrayList<CharSequence> value;
 
+    public static void addLocale(HashSet<Locale> list, Locale l) {
+        for(Locale m : list) {
+            if(m.toString().equals(l.toString()))
+                return;
+        }
+        list.add(l);
+    }
+
     public static HashSet<Locale> getInputLanguages(Context context) {
-        HashSet<Locale> list = null;
+        HashSet<Locale> list = new HashSet<>();
         if (android.os.Build.VERSION.SDK_INT >= 24) {
-            list = new HashSet<>();
             LocaleList ll = LocaleList.getDefault();
             for (int i = 0; i < ll.size(); i++)
-                list.add(ll.get(i));
-        } else if (Build.VERSION.SDK_INT >= 11) {
-            list = new HashSet<>();
+                addLocale(list, ll.get(i));
+        }
+        if (Build.VERSION.SDK_INT >= 11) {
             InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
-            List<InputMethodInfo> ims = imm.getEnabledInputMethodList();
-            for (InputMethodInfo m : ims) {
-                List<InputMethodSubtype> ss = imm.getEnabledInputMethodSubtypeList(m, true);
-                for (InputMethodSubtype s : ss) {
-                    if (s.getMode().equals("keyboard"))
-                        list.add(new Locale(s.getLocale()));
+            if (imm != null) {
+                List<InputMethodInfo> ims = imm.getEnabledInputMethodList();
+                for (InputMethodInfo m : ims) {
+                    List<InputMethodSubtype> ss = imm.getEnabledInputMethodSubtypeList(m, true);
+                    for (InputMethodSubtype s : ss) {
+                        if (s.getMode().equals("keyboard"))
+                            addLocale(list, new Locale(s.getLocale()));
+                    }
                 }
             }
         }

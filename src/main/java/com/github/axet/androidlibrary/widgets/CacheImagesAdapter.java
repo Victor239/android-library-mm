@@ -98,12 +98,16 @@ public class CacheImagesAdapter {
         return BitmapFactory.decodeStream(dris, null, bitmapOptions);
     }
 
-    public static Bitmap createScaled(Bitmap bm) { // scaled by min
+    public static Bitmap createScaled(Bitmap bm) {
+        return createScaled(bm, CacheImagesAdapter.COVER_SIZE);
+    }
+
+    public static Bitmap createScaled(Bitmap bm, int max) { // scaled by min
         float ratio;
         if (bm.getWidth() < bm.getHeight())
-            ratio = CacheImagesAdapter.COVER_SIZE / (float) bm.getWidth();
+            ratio = max / (float) bm.getWidth();
         else
-            ratio = CacheImagesAdapter.COVER_SIZE / (float) bm.getHeight();
+            ratio = max / (float) bm.getHeight();
         int w = (int) (bm.getWidth() * ratio);
         int h = (int) (bm.getHeight() * ratio);
         Bitmap sbm = Bitmap.createScaledBitmap(bm, w, h, true);

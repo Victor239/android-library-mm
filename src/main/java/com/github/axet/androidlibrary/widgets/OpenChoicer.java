@@ -31,6 +31,7 @@ public class OpenChoicer {
     public static String TAG = OpenChoicer.class.getSimpleName();
 
     public static final String EXTRA_INITIAL_URI = "android.provider.extra.INITIAL_URI";
+    public static final String MIME_ALL = "*/*";
 
     public Context context;
     public OpenFileDialog.DIALOG_TYPE type;
@@ -195,7 +196,7 @@ public class OpenChoicer {
         if (type == OpenFileDialog.DIALOG_TYPE.FILE_DIALOG) {
             intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
             intent.addCategory(Intent.CATEGORY_OPENABLE);
-            intent.setType("*/*");
+            intent.setType(MIME_ALL);
         } else {
             intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
             intent.addFlags(Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
