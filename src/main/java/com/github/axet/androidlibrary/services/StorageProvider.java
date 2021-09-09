@@ -248,9 +248,8 @@ public class StorageProvider extends ContentProvider {
         });
         if (ff == null)
             return;
-        for (File f : ff) {
+        for (File f : ff)
             f.delete();
-        }
     }
 
     public static class InputStreamWriter {
@@ -298,12 +297,12 @@ public class StorageProvider extends ContentProvider {
                     } finally {
                         try {
                             os.close();
-                        } catch (IOException e) {
+                        } catch (Throwable e) {
                             Log.d(TAG, "Copy close error", e);
                         }
                         try {
                             is.close();
-                        } catch (IOException e) {
+                        } catch (Throwable e) {
                             Log.d(TAG, "Copy close error", e);
                         }
                     }
@@ -325,7 +324,7 @@ public class StorageProvider extends ContentProvider {
                     } finally {
                         try {
                             os.close();
-                        } catch (IOException e) {
+                        } catch (Throwable e) {
                             Log.d(TAG, "Copy close error", e);
                         }
                     }
@@ -647,8 +646,10 @@ public class StorageProvider extends ContentProvider {
 
     public String checkMode(String mode) { // check if caller required File on disk
         if (Build.VERSION.SDK_INT >= 19 && mode.equals("r")) {
-            String[] ss = new String[]{ // know broken packages list which request socket (mode "r") but required file on disk, check ContentResolver#openFileDescriptor
-                    "com.google.android.music"
+            String[] ss = new String[]{ // know broken system packages list which request socket (mode "r") but required file on disk, check ContentResolver#openFileDescriptor
+                    "com.google.android.music",
+                    "com.android.gallery3d", // lineageos picture viewer
+                    "com.cyanogenmod.eleven" // lineageos audio player
             };
             Arrays.sort(ss);
             if (Arrays.binarySearch(ss, getCallingPackage()) >= 0)
@@ -667,7 +668,11 @@ public class StorageProvider extends ContentProvider {
                         try {
                             is.copy(os);
                         } finally {
-                            is.close();
+                            try {
+                                is.close();
+                            } catch (Throwable e) {
+                                Log.e(TAG, "double exception close", e);
+                            }
                         }
                     }
 
@@ -687,12 +692,12 @@ public class StorageProvider extends ContentProvider {
                 } finally {
                     try {
                         os.close();
-                    } catch (IOException e) {
+                    } catch (Throwable e) {
                         Log.d(TAG, "copy close error", e);
                     }
                     try {
                         is.close();
-                    } catch (IOException e) {
+                    } catch (Throwable e) {
                         Log.d(TAG, "copy close error", e);
                     }
                 }

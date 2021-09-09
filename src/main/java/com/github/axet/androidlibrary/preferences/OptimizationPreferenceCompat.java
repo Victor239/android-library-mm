@@ -612,6 +612,13 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         }
     }
 
+    public static boolean needBootWarning(Context context, String bootpref, String startpref) {
+        SharedPreferences shared = PreferenceManager.getDefaultSharedPreferences(context);
+        if (!shared.getBoolean(startpref, false))
+            return false;
+        return needBootWarning(context, bootpref);
+    }
+
     public static boolean needBootWarning(Context context, String bootpref) {
         if (!findPermission(context, Manifest.permission.RECEIVE_BOOT_COMPLETED))
             return false;

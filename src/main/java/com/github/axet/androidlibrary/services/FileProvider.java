@@ -101,7 +101,7 @@ public class FileProvider extends ContentProvider {
         return result;
     }
 
-    public static int modeToMode(String mode) {
+    public static int modeToMode(String mode) { // converts 'rw' into ParcelFileDescriptor.MODE_
         int modeBits;
         if ("r".equals(mode)) {
             modeBits = ParcelFileDescriptor.MODE_READ_ONLY;
