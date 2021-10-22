@@ -28,8 +28,8 @@ android {
     defaultConfig {
         minSdkVersion 9
         targetSdkVersion 23 // 24+ - unable to start intent with 'file://'
-        versionCode    636
-        versionName    "1.34.3"
+        versionCode     637
+        versionName     "1.34.4"
         consumerProguardFiles 'consumer-proguard-rules.pro'
     }
     buildTypes {
@@ -118,7 +118,7 @@ dependencies {
     api 'com.android.support:mediarouter-v7:25.3.1'
     api 'cz.msebera.android:httpclient:4.4.1.2'
     api 'commons-codec:commons-codec:1.10'
-    api 'org.jsoup:jsoup:1.10.2'
+    api 'org.jsoup:jsoup:1.14.3'
     api 'commons-io:commons-io:2.5'
     api('net.i2p.android.ext:floatingactionbutton:1.10.1') { exclude group: 'com.android.support' }
     api('com.github.axet:java-unrar:1.7.0-4') { exclude group: 'commons-logging', module: 'commons-logging' }

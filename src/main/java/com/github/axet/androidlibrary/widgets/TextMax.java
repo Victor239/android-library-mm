@@ -1,10 +1,9 @@
 package com.github.axet.androidlibrary.widgets;
 
 import android.content.Context;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.widget.TextView;
-
-import org.jsoup.helper.StringUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,7 +35,7 @@ public class TextMax extends PathMax {
             sss.set(i, dots(max, ss, "", " ", ""));
         }
 
-        String s = StringUtil.join(sss, "\n");
+        String s = TextUtils.join("\n", sss);
 
         return measureText(s);
     }
