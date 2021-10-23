@@ -114,7 +114,7 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     api 'com.android.support:support-v4:25.3.1'
     api 'com.android.support:appcompat-v7:25.3.1'
-    api 'com.android.support:preference-v7:25.3.1' // 25.4.0+ - min sdk 14 for SwitchCompat
+    api 'com.android.support:preference-v7:25.3.1'
     api 'com.android.support:mediarouter-v7:25.3.1'
     api 'cz.msebera.android:httpclient:4.4.1.2'
     api 'commons-codec:commons-codec:1.10'
