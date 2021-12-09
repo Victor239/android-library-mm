@@ -30,6 +30,16 @@ public class TTSPreferenceCompat extends ListPreference {
         list.add(l);
     }
 
+    public static Locale toLocale(String str) { // use LocaleUtils.toLocale
+        String[] ss = str.split("_");
+        if (ss.length == 3)
+            return new Locale(ss[0], ss[1], ss[2]);
+        else if (ss.length == 2)
+            return new Locale(ss[0], ss[1]);
+        else
+            return new Locale(ss[0]);
+    }
+
     public static HashSet<Locale> getInputLanguages(Context context) {
         HashSet<Locale> list = new HashSet<>();
         if (android.os.Build.VERSION.SDK_INT >= 24) {
@@ -44,8 +54,12 @@ public class TTSPreferenceCompat extends ListPreference {
                 for (InputMethodInfo m : ims) {
                     List<InputMethodSubtype> ss = imm.getEnabledInputMethodSubtypeList(m, true);
                     for (InputMethodSubtype s : ss) {
-                        if (s.getMode().equals("keyboard"))
-                            addLocale(list, new Locale(s.getLocale()));
+                        if (s.getMode().equals("keyboard")) {
+                            if (Build.VERSION.SDK_INT >= 24)
+                                addLocale(list, Locale.forLanguageTag(s.getLanguageTag()));
+                            else
+                                addLocale(list, toLocale(s.getLanguageTag()));
+                        }
                     }
                 }
             }
