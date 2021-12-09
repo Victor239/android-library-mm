@@ -58,7 +58,7 @@ public class TTSPreferenceCompat extends ListPreference {
                             if (Build.VERSION.SDK_INT >= 24 && !s.getLanguageTag().isEmpty())
                                 addLocale(list, Locale.forLanguageTag(s.getLanguageTag()));
                             else
-                                addLocale(list, toLocale(s.getLanguageTag()));
+                                addLocale(list, toLocale(s.getLocale()));
                         }
                     }
                 }
