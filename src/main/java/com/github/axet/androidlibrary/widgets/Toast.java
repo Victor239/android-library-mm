@@ -241,10 +241,14 @@ public class Toast {
     }
 
     public Toast center() {
-        View v = toast.getView();
-        TextView t = (TextView) v.findViewById(android.R.id.message);
-        if (t != null)
-            t.setGravity(Gravity.CENTER);
+        if (Build.VERSION.SDK_INT < 30) { // getView no longer working
+            View v = toast.getView();
+            if (v == null)
+                return this;
+            TextView t = (TextView) v.findViewById(android.R.id.message);
+            if (t != null)
+                t.setGravity(Gravity.CENTER);
+        }
         return this;
     }
 
