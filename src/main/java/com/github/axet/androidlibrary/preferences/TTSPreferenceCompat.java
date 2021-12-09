@@ -55,7 +55,7 @@ public class TTSPreferenceCompat extends ListPreference {
                     List<InputMethodSubtype> ss = imm.getEnabledInputMethodSubtypeList(m, true);
                     for (InputMethodSubtype s : ss) {
                         if (s.getMode().equals("keyboard")) {
-                            if (Build.VERSION.SDK_INT >= 24)
+                            if (Build.VERSION.SDK_INT >= 24 && !s.getLanguageTag().isEmpty())
                                 addLocale(list, Locale.forLanguageTag(s.getLanguageTag()));
                             else
                                 addLocale(list, toLocale(s.getLanguageTag()));
