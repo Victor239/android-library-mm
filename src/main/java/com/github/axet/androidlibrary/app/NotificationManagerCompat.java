@@ -74,6 +74,10 @@ public class NotificationManagerCompat {
         nmc.cancel(id);
     }
 
+    public void cancel(String tag, int id) {
+        nmc.cancel(tag, id);
+    }
+
     public void notify(int id, Notification n) {
         try {
             nmc.notify(id, n);
