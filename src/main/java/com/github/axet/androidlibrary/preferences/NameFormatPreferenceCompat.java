@@ -22,6 +22,7 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class NameFormatPreferenceCompat extends ListPreference {
 
@@ -189,10 +190,7 @@ public class NameFormatPreferenceCompat extends ListPreference {
     }
 
     public void create() {
-        if (getPositiveButtonText() == null)
-            setPositiveButtonText(getContext().getString(android.R.string.ok));
-        if (getNegativeButtonText() == null)
-            setNegativeButtonText(getContext().getString(android.R.string.cancel));
+        onCreate();
     }
 
     public String getPredefined(String str) {
@@ -205,6 +203,26 @@ public class NameFormatPreferenceCompat extends ListPreference {
                 return t;
         }
         return null;
+    }
+
+    public void onCreate() {
+        if (getPositiveButtonText() == null)
+            setPositiveButtonText(getContext().getString(android.R.string.ok));
+        if (getNegativeButtonText() == null)
+            setNegativeButtonText(getContext().getString(android.R.string.cancel));
+        CharSequence[] nn = getEntries();
+        CharSequence[] vv = getEntryValues();
+        if (vv != null) {
+            if (nn == null || nn.length != vv.length)
+                onAutoFill(vv);
+        }
+    }
+
+    public void onAutoFill(CharSequence[] vv) {
+        ArrayList<CharSequence> list = new ArrayList<>();
+        for (CharSequence v : vv)
+            list.add(getFormatted(v.toString()));
+        setEntries(list.toArray(new CharSequence[0]));
     }
 
     public String getFormatted(String str) {
