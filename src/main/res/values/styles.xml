@@ -1,5 +1,11 @@
 <resources>
+
     <style name="Translucent" parent="@android:style/Theme.Translucent.NoTitleBar" />
+
+   <!-- @android:style/TextAppearance.Toast -->
+    <style name="TextAppearance_Toast" parent="@android:style/TextAppearance">
+        <item name="android:fontFamily">sans-serif-condensed</item>
+    </style>
 
     <!-- api 25 vs 27 compatibility https://stackoverflow.com/questions/48241620 @style/TextAppearance.AppCompat.Notification.Info -->
     <style name="NotificationInfo">
