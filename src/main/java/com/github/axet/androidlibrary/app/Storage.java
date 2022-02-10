@@ -895,7 +895,8 @@ public class Storage {
     }
 
     public static void showExternalStorageManager(Context context) {
-        context.startActivity(new Intent(ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION));
+        Uri uri = Uri.parse("package:" + context.getPackageName());
+        context.startActivity(new Intent(ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, uri));
     }
 
     public static boolean hasRequestedLegacyExternalStorage(Context context) { // API29
