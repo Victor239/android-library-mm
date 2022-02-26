@@ -6,6 +6,7 @@ import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.os.Build;
 import android.os.Handler;
+import android.support.annotation.NonNull;
 
 public class AudioTrack extends android.media.AudioTrack {
     public static final int SHORT_SIZE = Short.SIZE / Byte.SIZE;
@@ -50,6 +51,103 @@ public class AudioTrack extends android.media.AudioTrack {
         }
     }
 
+    public static class SamplesBuffer {
+        public int format; // AudioFormat.ENCODING_PCM_16BIT
+        public int count; // samples count
+        public int position;
+        public short[] shorts; // 8-bits or 16 bits
+        public int[] ints; // 24-bits or 32-bits
+        public float[] floats; // PCM float
+
+        public SamplesBuffer(int format, int count) {
+            this.format = format;
+            this.count = count;
+            switch (format) {
+                case AudioFormat.ENCODING_PCM_8BIT:
+                    shorts = new short[count];
+                    break;
+                case AudioFormat.ENCODING_PCM_16BIT:
+                    shorts = new short[count];
+                    break;
+                case Sound.ENCODING_PCM_24BIT_PACKED:
+                    ints = new int[count];
+                    break;
+                case Sound.ENCODING_PCM_32BIT:
+                    ints = new int[count];
+                    break;
+                case AudioFormat.ENCODING_PCM_FLOAT:
+                    floats = new float[count];
+                    break;
+            }
+        }
+
+        public void flip() {
+            position = 0;
+        }
+
+        public void put(SamplesBuffer buf) { // put all samples from but into current buffer
+            int tail = buf.count - buf.position;
+            switch (format) {
+                case AudioFormat.ENCODING_PCM_8BIT:
+                    break;
+                case AudioFormat.ENCODING_PCM_16BIT:
+                    System.arraycopy(buf.shorts, 0, shorts, position, tail);
+                    break;
+                case Sound.ENCODING_PCM_24BIT_PACKED:
+                    break;
+                case Sound.ENCODING_PCM_32BIT:
+                    break;
+                case AudioFormat.ENCODING_PCM_FLOAT:
+                    System.arraycopy(buf.floats, 0, floats, position, tail);
+                    break;
+            }
+            position += tail;
+        }
+
+        public void put(SamplesBuffer buf, int pos, int size) {
+            switch (format) {
+                case AudioFormat.ENCODING_PCM_8BIT:
+                    break;
+                case AudioFormat.ENCODING_PCM_16BIT:
+                    System.arraycopy(buf.shorts, pos, shorts, position, size);
+                    break;
+                case Sound.ENCODING_PCM_24BIT_PACKED:
+                    break;
+                case Sound.ENCODING_PCM_32BIT:
+                    break;
+                case AudioFormat.ENCODING_PCM_FLOAT:
+                    System.arraycopy(buf.floats, pos, floats, position, size);
+                    break;
+            }
+            position += size;
+        }
+
+        public int get(SamplesBuffer buf, int pos, int size) { // pos - target buffer
+            switch (format) {
+                case AudioFormat.ENCODING_PCM_8BIT:
+                    return -1;
+                case AudioFormat.ENCODING_PCM_16BIT:
+                    System.arraycopy(shorts, position, buf.shorts, pos, size);
+                    break;
+                case Sound.ENCODING_PCM_24BIT_PACKED:
+                    return -1;
+                case Sound.ENCODING_PCM_32BIT:
+                    return -1;
+                case AudioFormat.ENCODING_PCM_FLOAT:
+                    System.arraycopy(floats, position, buf.floats, pos, size);
+                    break;
+                default:
+                    throw new RuntimeException("Unknown format");
+            }
+            position += size;
+            return size;
+        }
+
+        public int size() {
+            return count;
+        }
+    }
+
     public static class AudioParams {
         public int hz; // sample rate
         public int c; // AudioFormat.CHANNEL_OUT_MONO or AudioFormat.CHANNEL_OUT_STEREO
@@ -77,11 +175,11 @@ public class AudioTrack extends android.media.AudioTrack {
     }
 
     public static class AudioBuffer extends AudioParams {
-        public short[] buffer; // buffer including zeros (to fill minimum size)
-        public int len; // buffer length
+        public SamplesBuffer buffer; // buffer including zeros (to fill minimum size)
+        public int len; // buffer samples length
         public int pos; // write AudioTrack pos
 
-        public AudioBuffer(int sampleRate, int channelConfig, int audioFormat, short[] buf, int len) {
+        public AudioBuffer(int sampleRate, int channelConfig, int audioFormat, SamplesBuffer buf, int len) {
             this.hz = sampleRate;
             this.c = channelConfig;
             this.a = audioFormat;
@@ -101,7 +199,7 @@ public class AudioTrack extends android.media.AudioTrack {
             int blen = b / SHORT_SIZE;
 
             this.len = len;
-            this.buffer = new short[blen];
+            this.buffer = new SamplesBuffer(audioFormat, blen);
         }
 
         public AudioBuffer(int sampleRate, int channelConfig, int audioFormat) {
@@ -111,7 +209,7 @@ public class AudioTrack extends android.media.AudioTrack {
             this.len = getMinSize(sampleRate, c, audioFormat, 0);
             if (len <= 0)
                 throw new RuntimeException("unable to initialize audio");
-            this.buffer = new short[len];
+            this.buffer = new SamplesBuffer(audioFormat, len);
         }
 
         public void write(short[] buf, int pos, int len) {
@@ -119,17 +217,17 @@ public class AudioTrack extends android.media.AudioTrack {
         }
 
         public void write(int pos, short s) {
-            buffer[pos] = s;
+            buffer.shorts[pos] = s;
         }
 
         public void write(int pos, short s1, short s2) {
-            buffer[pos] = s1;
-            buffer[pos + 1] = s2;
+            buffer.shorts[pos] = s1;
+            buffer.shorts[pos + 1] = s2;
         }
 
         public void write(int pos, short... ss) {
             for (int i = 0; i < ss.length; i++)
-                buffer[pos + i] = ss[i];
+                buffer.shorts[pos + i] = ss[i];
         }
 
         public void write(int pos, short s, int cn) {
@@ -142,7 +240,7 @@ public class AudioTrack extends android.media.AudioTrack {
                     break;
                 default:
                     for (int i = 0; i < cn; i++)
-                        buffer[pos + i] = s;
+                        buffer.shorts[pos + i] = s;
             }
         }
 
@@ -151,7 +249,7 @@ public class AudioTrack extends android.media.AudioTrack {
         }
 
         public int getBytesLen() {
-            return buffer.length * SHORT_SIZE;
+            return buffer.count * SHORT_SIZE;
         }
 
         public int getBytesMin() {
@@ -294,7 +392,7 @@ public class AudioTrack extends android.media.AudioTrack {
     }
 
     public int write(AudioBuffer buf) {
-        int out = write(buf, buf.pos, buf.buffer.length - buf.pos); // use 'buffer.length' instead of 'len'
+        int out = write(buf, buf.pos, buf.buffer.count - buf.pos); // use 'buffer.length' instead of 'len'
         if (out > 0) {
             buf.pos += out;
             this.len += out / getChannelCount();
@@ -303,7 +401,28 @@ public class AudioTrack extends android.media.AudioTrack {
         return out;
     }
 
+    public int write(@NonNull float[] audioData, int offsetInFloats, int sizeInFloats) {
+        return write(audioData, offsetInFloats, sizeInFloats, WRITE_BLOCKING);
+    }
+
+    @Override
+    public int write(@NonNull float[] audioData, int offsetInFloats, int sizeInFloats, int writeMode) {
+        int out = super.write(audioData, offsetInFloats, sizeInFloats, writeMode);
+        if (out > 0) {
+            this.len += out / getChannelCount();
+            this.frames += out;
+        }
+        return out;
+    }
+
     public int write(AudioBuffer buffer, int pos, int len) {
-        return write(buffer.buffer, pos, len);
+        switch (buffer.buffer.format) {
+            case AudioFormat.ENCODING_PCM_16BIT:
+                return write(buffer.buffer.shorts, pos, len);
+            case AudioFormat.ENCODING_PCM_FLOAT:
+                return write(buffer.buffer.floats, pos, len);
+            default:
+                throw new RuntimeException("Unknown format");
+        }
     }
 }

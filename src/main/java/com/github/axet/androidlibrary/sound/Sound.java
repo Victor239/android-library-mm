@@ -31,6 +31,9 @@ public class Sound {
     public static final int ZEN_MODE_NO_INTERRUPTIONS = 2;
     public static final int ZEN_MODE_ALARMS = 3;
 
+    public static final int ENCODING_PCM_24BIT_PACKED = 0x00000015;
+    public static final int ENCODING_PCM_32BIT = 0x00000016;
+
     public static final long LAST = 1000; // last delay
 
     public Context context;
