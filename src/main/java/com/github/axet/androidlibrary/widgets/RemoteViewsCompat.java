@@ -28,7 +28,6 @@ public class RemoteViewsCompat extends RemoteViews {
 
     public Context context;
     public View view;
-    public LayoutInflater inflater;
 
     public static class StyledAttrs {
         public int[] aa;
@@ -335,7 +334,7 @@ public class RemoteViewsCompat extends RemoteViews {
     public RemoteViewsCompat(Context context, String packageName, int layoutId) {
         super(packageName, layoutId);
         this.context = context;
-        inflater = LayoutInflater.from(context);
+        LayoutInflater inflater = LayoutInflater.from(context);
         view = inflater.inflate(layoutId, null);
     }
 
