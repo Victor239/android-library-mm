@@ -10,6 +10,7 @@ import android.support.annotation.NonNull;
 
 public class AudioTrack extends android.media.AudioTrack {
     public static final int SHORT_SIZE = Short.SIZE / Byte.SIZE;
+    public static final int FLOAT_SIZE = Float.SIZE / Byte.SIZE;
 
     public long playStart = 0;
     public int len; // len in frames (stereo frames = len * 2)
@@ -56,7 +57,7 @@ public class AudioTrack extends android.media.AudioTrack {
         public int capacity; // samples count
         public int pos;
         public int limit;
-        public byte[] bytes;
+        public byte[] bytes; // 8 bits
         public short[] shorts; // 16 bits
         public int[] ints; // 24-bits or 32-bits
         public float[] floats; // PCM float
@@ -234,7 +235,7 @@ public class AudioTrack extends android.media.AudioTrack {
         }
 
         public void write(short[] buf, int pos, int len) {
-            System.arraycopy(buf, pos, buffer, 0, len);
+            System.arraycopy(buf, pos, buffer.shorts, 0, len);
         }
 
         public void write(int pos, short s) {
@@ -252,17 +253,26 @@ public class AudioTrack extends android.media.AudioTrack {
         }
 
         public void write(int pos, short s, int cn) {
-            switch (cn) {
-                case 1:
-                    write(pos, s);
-                    break;
-                case 2:
-                    write(pos, s, s);
-                    break;
-                default:
-                    for (int i = 0; i < cn; i++)
-                        buffer.shorts[pos + i] = s;
-            }
+            for (int i = 0; i < cn; i++)
+                buffer.shorts[pos + i] = s;
+        }
+
+        public void write(int pos, float f) {
+            buffer.floats[pos] = f;
+        }
+
+        public void write(int pos, float f, float f2) {
+            buffer.floats[pos] = f;
+            buffer.floats[pos + 1] = f2;
+        }
+
+        public void write(int pos, float s, int cn) {
+            for (int i = 0; i < cn; i++)
+                buffer.floats[pos + i] = s;
+        }
+
+        public void write(float[] buf, int pos, int len) {
+            System.arraycopy(buf, pos, buffer.floats, 0, len);
         }
 
         public void reset() {
@@ -270,7 +280,14 @@ public class AudioTrack extends android.media.AudioTrack {
         }
 
         public int getBytesLen() {
-            return buffer.capacity * SHORT_SIZE;
+            switch (a) {
+                case AudioFormat.ENCODING_PCM_16BIT:
+                    return buffer.capacity * SHORT_SIZE;
+                case AudioFormat.ENCODING_PCM_FLOAT:
+                    return buffer.capacity * FLOAT_SIZE;
+                default:
+                    throw new RuntimeException("unknown format");
+            }
         }
 
         public int getBytesMin() {
