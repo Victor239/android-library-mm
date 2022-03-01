@@ -119,7 +119,7 @@ dependencies {
     api 'cz.msebera.android:httpclient:4.4.1.2'
     api 'commons-codec:commons-codec:1.10'
     api 'org.jsoup:jsoup:1.14.3'
-    api 'commons-io:commons-io:2.5'
+    api 'commons-io:commons-io:2.7'
     api('net.i2p.android.ext:floatingactionbutton:1.10.1') { exclude group: 'com.android.support' }
     api('com.github.axet:java-unrar:1.7.0-4') { exclude group: 'commons-logging', module: 'commons-logging' }
     api 'com.github.axet:zip4j:2.9.0-1'
