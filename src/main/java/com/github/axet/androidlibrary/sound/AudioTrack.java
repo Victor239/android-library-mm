@@ -57,7 +57,7 @@ public class AudioTrack extends android.media.AudioTrack {
         public int capacity; // samples count
         public int pos;
         public int limit;
-        public byte[] bytes;
+        public byte[] bytes; // 8 bits
         public short[] shorts; // 16 bits
         public int[] ints; // 24-bits or 32-bits
         public float[] floats; // PCM float
