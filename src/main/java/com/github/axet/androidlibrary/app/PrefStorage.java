@@ -1,6 +1,8 @@
 package com.github.axet.androidlibrary.app;
 
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.support.v7.preference.PreferenceManager;
 import android.util.Log;
 
 import java.lang.reflect.Field;
@@ -8,16 +10,16 @@ import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.UUID;
 
-public class PrefStorage extends HashMap<Integer, PrefStorage.PrefDelayed> {
+public class PrefStorage {
     private static final String TAG = PrefStorage.class.getSimpleName();
 
-    public static PrefStorage DELAYED = new PrefStorage();
+    public static PrefsMap DELAYED = new PrefsMap();
 
     public static void create(Context context) {
         DELAYED.load(context);
     }
 
-    public static Class getCallingClass() {
+    public static Class<?> getCallingClass() {
         StackTraceElement[] ss = Thread.currentThread().getStackTrace();
         String k = PrefStorage.class.getCanonicalName();
         int i = 1;
@@ -46,6 +48,10 @@ public class PrefStorage extends HashMap<Integer, PrefStorage.PrefDelayed> {
         return DELAYED.add(getCallingClass(), key);
     }
 
+    public static PrefStorage from(Context context) {
+        return new PrefStorage(context);
+    }
+
     public static class PrefDelayed {
         public Class c;
         public UUID uuid;
@@ -58,30 +64,42 @@ public class PrefStorage extends HashMap<Integer, PrefStorage.PrefDelayed> {
         }
     }
 
-    public void load(Context context) {
-        for (Integer k : keySet()) {
-            PrefDelayed d = get(k);
-            for (Field f : d.c.getDeclaredFields()) {
-                if (Modifier.isStatic(f.getModifiers()) && f.getType().equals(String.class)) {
-                    try {
-                        String v = (String) f.get(null);
-                        if (v != null && v.equals(d.uuid.toString())) {
-                            String dv = context.getString(d.key);
-                            f.setAccessible(true);
-                            f.set(null, dv);
+    public static class PrefsMap extends HashMap<Integer, PrefDelayed> {
+        public void load(Context context) {
+            for (Integer k : keySet()) {
+                PrefDelayed d = get(k);
+                for (Field f : d.c.getDeclaredFields()) {
+                    if (Modifier.isStatic(f.getModifiers()) && f.getType().equals(String.class)) {
+                        try {
+                            String v = (String) f.get(null);
+                            if (v != null && v.equals(d.uuid.toString())) {
+                                String dv = context.getString(d.key);
+                                f.setAccessible(true);
+                                f.set(null, dv);
+                            }
+                        } catch (IllegalAccessException e) {
+                            Log.w(TAG, e);
                         }
-                    } catch (IllegalAccessException e) {
-                        Log.w(TAG, e);
                     }
                 }
             }
         }
+
+        public String add(Class c, int key) {
+            UUID u = UUID.randomUUID();
+            PrefDelayed d = new PrefDelayed(c, key, u);
+            put(key, d);
+            return u.toString();
+        }
     }
 
-    public String add(Class c, int key) {
-        UUID u = UUID.randomUUID();
-        PrefDelayed d = new PrefDelayed(c, key, u);
-        put(key, d);
-        return u.toString();
+    public SharedPreferences shared;
+
+    public PrefStorage(Context context) {
+        shared = PreferenceManager.getDefaultSharedPreferences(context);
+    }
+
+    public PrefStorage(SharedPreferences shared) {
+        this.shared = shared;
     }
 }
