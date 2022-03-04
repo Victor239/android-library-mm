@@ -25,6 +25,8 @@ import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpCookie;
 import java.net.HttpURLConnection;
+import java.net.Inet6Address;
+import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
 import java.net.URI;
@@ -181,26 +183,63 @@ public class HttpClient {
         }
     }
 
-    public static HttpURLConnection openConnection(int i, URL url, String useragent) {
+    public static HttpURLConnection openConnection(int i, URL url, String useragent) { // handling infinite redirects and ipv6 timeout
         try {
             if (i > 5)
                 throw new RuntimeException("Circular redirect exception");
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setConnectTimeout(HttpClient.CONNECTION_TIMEOUT);
-            conn.setReadTimeout(HttpClient.CONNECTION_TIMEOUT);
-            conn.setInstanceFollowRedirects(false);
-            if (useragent != null)
-                conn.setRequestProperty("User-Agent", useragent);
-            switch (conn.getResponseCode()) {
-                case HttpURLConnection.HTTP_MOVED_PERM:
-                case HttpURLConnection.HTTP_MOVED_TEMP:
-                    String location = conn.getHeaderField("Location");
-                    location = URLDecoder.decode(location, Charset.defaultCharset().name());
-                    URL base = url;
-                    url = new URL(base, location);  // Deal with relative URLs
-                    return openConnection(i + 1, url, useragent);
+            URL base = url;
+            InetAddress[] aa = InetAddress.getAllByName(url.getHost());
+            int h = 0;
+            HttpURLConnection conn = null;
+            while (h < aa.length) {
+                String host = null;
+                if (aa.length > 1) {
+                    host = base.getHost();
+                    InetAddress a = aa[h];
+                    String auth = a.getHostAddress();
+                    if (a instanceof Inet6Address)
+                        auth = "[" + auth + "]";
+                    Uri.Builder b = Uri.parse(url.toString()).buildUpon();
+                    b.encodedAuthority(auth);
+                    url = new URL(b.build().toString());
+                }
+                conn = (HttpURLConnection) url.openConnection();
+                if (host != null) {
+                    conn.setRequestProperty("host", host);
+                    if (conn instanceof HttpsURLConnection) {
+                        HttpsURLConnection hs = (HttpsURLConnection) conn;
+                        final String m = host;
+                        final HostnameVerifier vf = hs.getHostnameVerifier();
+                        hs.setHostnameVerifier(new HostnameVerifier() {
+                            @Override
+                            public boolean verify(String s, SSLSession sslSession) {
+                                return vf.verify(m, sslSession);
+                            }
+                        });
+                    }
+                }
+                conn.setConnectTimeout(HttpClient.CONNECTION_TIMEOUT);
+                conn.setReadTimeout(HttpClient.CONNECTION_TIMEOUT);
+                conn.setInstanceFollowRedirects(false);
+                if (useragent != null)
+                    conn.setRequestProperty("User-Agent", useragent);
+                try {
+                    switch (conn.getResponseCode()) {
+                        case HttpURLConnection.HTTP_MOVED_PERM:
+                        case HttpURLConnection.HTTP_MOVED_TEMP:
+                            String location = conn.getHeaderField("Location");
+                            location = URLDecoder.decode(location, Charset.defaultCharset().name());
+                            url = new URL(base, location);  // Deal with relative URLs
+                            return openConnection(i + 1, url, useragent);
 
+                    }
+                    break;
+                } catch (SocketTimeoutException ignore) {
+                    h++;
+                }
             }
+            if (conn == null)
+                throw new SocketTimeoutException("Unable to connect");
             return conn;
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -304,7 +343,7 @@ public class HttpClient {
         Throwable e;
 
         public HttpError(String url, Throwable e) {
-            super(CONTENTTYPE_TEXT, Charset.defaultCharset().name(), (InputStream) null);
+            super(CONTENTTYPE_TEXT, Charset.defaultCharset().name(), (InputStream) null, true);
             this.e = e;
 
             Uri u = Uri.parse(url);
@@ -419,15 +458,15 @@ public class HttpClient {
             contentLength = entity.getContentLength();
         }
 
-        public DownloadResponse(String mimeType, String encoding, InputStream data) {
+        public DownloadResponse(String mimeType, String encoding, InputStream data, boolean d) {
             this.mimetype = mimeType;
             this.encoding = encoding;
             this.is = data;
-            this.downloaded = true;
+            this.downloaded = d;
         }
 
         public DownloadResponse(String mimeType, String encoding, String data) {
-            this(mimeType, encoding, (InputStream) null);
+            this(mimeType, encoding, (InputStream) null, true);
             setHtml(data);
         }
 
@@ -435,7 +474,7 @@ public class HttpClient {
             this.is = new BufferedInputStream(conn.getInputStream());
             this.contentType = ContentType.create(conn.getContentType());
             this.contentLength = conn.getContentLength();
-            this.downloaded = true;
+            this.downloaded = true; // connected, BUG!
         }
 
         public String getUrl() {
@@ -463,38 +502,42 @@ public class HttpClient {
             }
         }
 
+        public void charset() {
+            Charset enc = contentType.getCharset();
+            if (isHtml()) {
+                if (enc == null) {
+                    Document doc = Jsoup.parse(new String(buf, Charset.defaultCharset()));
+                    Element e = doc.select("meta[http-equiv=Content-Type]").first();
+                    if (e != null) {
+                        String content = e.attr("content");
+                        try {
+                            contentType = ContentType.parse(content);
+                            enc = contentType.getCharset();
+                        } catch (ParseException ignore) {
+                        }
+                    } else {
+                        e = doc.select("meta[charset]").first();
+                        if (e != null) {
+                            String content = e.attr("charset");
+                            try {
+                                enc = Charset.forName(content);
+                            } catch (UnsupportedCharsetException ignore) {
+                            }
+                        }
+                    }
+                }
+                if (enc == null)
+                    enc = Charset.defaultCharset();
+            }
+            if (enc != null)
+                encoding = (Charsets.toCharset(enc).name());
+        }
+
         public void download() {
             try {
                 if (entity != null) { // old phones it can be null
                     buf = IOUtils.toByteArray(entity.getContent());
-                    Charset enc = contentType.getCharset();
-                    if (isHtml()) {
-                        if (enc == null) {
-                            Document doc = Jsoup.parse(new String(buf, Charset.defaultCharset()));
-                            Element e = doc.select("meta[http-equiv=Content-Type]").first();
-                            if (e != null) {
-                                String content = e.attr("content");
-                                try {
-                                    contentType = ContentType.parse(content);
-                                    enc = contentType.getCharset();
-                                } catch (ParseException ignore) {
-                                }
-                            } else {
-                                e = doc.select("meta[charset]").first();
-                                if (e != null) {
-                                    String content = e.attr("charset");
-                                    try {
-                                        enc = Charset.forName(content);
-                                    } catch (UnsupportedCharsetException ignore) {
-                                    }
-                                }
-                            }
-                        }
-                        if (enc == null)
-                            enc = Charset.defaultCharset();
-                    }
-                    if (enc != null)
-                        encoding = (Charsets.toCharset(enc).name());
+                    charset();
                     is = new ByteArrayInputStream(buf);
                     downloaded = true;
                 }
@@ -516,11 +559,10 @@ public class HttpClient {
         }
 
         public void downloadText() {
-            if (isAttachment()) {
+            if (isAttachment())
                 attachment();
-            } else {
+            else
                 download();
-            }
         }
 
         public void attachment() {
@@ -577,7 +619,6 @@ public class HttpClient {
 
     public HttpClient(String cookies) {
         create();
-
         if (cookies != null && !cookies.isEmpty())
             addCookies(cookies);
     }
@@ -651,11 +692,10 @@ public class HttpClient {
 
     public RequestConfig build(RequestConfig config) {
         RequestConfig.Builder builder;
-        if (config == null) {
+        if (config == null)
             builder = RequestConfig.custom();
-        } else {
+        else
             builder = RequestConfig.copy(config);
-        }
         return build(builder);
     }
 
@@ -686,9 +726,8 @@ public class HttpClient {
         List<HttpCookie> cc = HttpCookie.parse(cookies);
         for (HttpCookie c : cc) {
             BasicClientCookie m = from(c);
-            if (m.getDomain() == null) {
+            if (m.getDomain() == null)
                 m.setDomain(u.getAuthority());
-            }
             removeCookie(m);
             s.addCookie(m);
         }
