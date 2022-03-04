@@ -45,7 +45,7 @@ Unread Count Drawable
 ## gradle
 
 ```gradle
-    compile 'com.github.axet:android-library:1.33.0'
+    compile 'com.github.axet:android-library:1.35.5'
 ```
 
 ## maven
@@ -54,7 +54,7 @@ Unread Count Drawable
 <dependency>
   <groupId>com.github.axet</groupId>
   <artifactId>android-library</artifactId>
-  <version>1.33.0</version>
+  <version>1.35.5</version>
   <type>aar</type>
 </dependency>
 ```
