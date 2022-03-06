@@ -145,6 +145,8 @@ public class StoragePathPreferenceCompat extends EditTextPreference {
     }
 
     public void onRequestPermissionsResult(String[] permissions, int[] grantResults) {
+        String f = StoragePathPreference.getPath(this);
+        updatePath(f); // permission has changed, visible path may change
         choicer.onRequestPermissionsResult(permissions, grantResults);
     }
 
