@@ -3,11 +3,14 @@ package com.github.axet.androidlibrary.app;
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 import org.apache.commons.io.IOUtils;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,6 +30,8 @@ import dalvik.system.DexFile;
 
 public class AssetsDexLoader {
     public static String TAG = AssetsDexLoader.class.getSimpleName();
+
+    public static int DELAY_TEST = 1 * AlarmManager.MIN1; // load timeout
 
     public static final String JAR = "jar";
     public static final String DEX = "dex";
@@ -123,6 +128,8 @@ public class AssetsDexLoader {
             for (String dep : deps) {
                 AssetManager am = context.getAssets();
                 String[] aa = am.list("");
+                if (aa == null)
+                    return parent;
                 for (String a : aa) {
                     if (a.startsWith(dep)) {
                         if (a.endsWith("." + JAR)) {
@@ -182,10 +189,19 @@ public class AssetsDexLoader {
 
         public Context context;
         public String[] deps; // delayed load
+        public Handler handler;
+        public Runnable test = new Runnable() {
+            @Override
+            public void run() {
+                Log.d(TAG, "loading dex timeout...");
+                clear();
+            }
+        };
 
         public ThreadLoader(Context context, String... deps) {
             this.context = context;
             this.deps = Arrays.asList(deps).toArray(new String[]{});
+            this.handler = new Handler(Looper.getMainLooper());
         }
 
         public ThreadLoader(Context context, boolean block, String... deps) {
@@ -206,8 +222,34 @@ public class AssetsDexLoader {
             return AssetsDexLoader.deps(context, deps);
         }
 
-        public void load() {
+        public void clear() {
+            Log.d(TAG, "clear dexes");
+            clear(getExternalCodeCacheDir(context));
+            clear(getCodeCacheDir(context));
+        }
+
+        public void clear(File tmp) {
+            if (tmp == null)
+                return;
+            File[] ff = tmp.listFiles(new FileFilter() {
+                @Override
+                public boolean accept(File pathname) {
+                    return pathname.getName().endsWith("." + DEX);
+                }
+            });
+            if (ff == null)
+                return;
+            for (File f : ff) {
+                Log.d(TAG, "delete " + f);
+                f.delete();
+            }
+        }
+
+        public void load() { // load(block) only call
+            Log.d(TAG, "loading...");
             done(deps());
+            handler.removeCallbacks(test);
+            Log.d(TAG, "load done");
         }
 
         public Object lock() {
@@ -223,6 +265,7 @@ public class AssetsDexLoader {
         }
 
         public void load(boolean block) {
+            handler.postDelayed(test, DELAY_TEST);
             Thread t;
             synchronized (lock()) {
                 if (thread == null) {
