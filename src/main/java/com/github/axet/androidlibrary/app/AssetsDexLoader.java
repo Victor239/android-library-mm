@@ -128,6 +128,26 @@ public class AssetsDexLoader {
         }
     }
 
+    public static ClassLoader deps(Context context, Json json, String... deps) {
+        ClassLoader parent = null;
+        try {
+            if (deps == null || deps.length == 0) {
+                for (Json.Library dep : json.deps) {
+                    for (Json.Library a : json.getDeps(dep))
+                        parent = deps(context, parent, a.dex);
+                }
+            } else {
+                for (String dep : deps) {
+                    for (Json.Library a : json.getDeps(dep))
+                        parent = deps(context, parent, a.dex);
+                }
+            }
+            return parent; // return null if no jars/dex found
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static ClassLoader deps(Context context, String... deps) {
         ClassLoader parent = null;
         try {
@@ -161,32 +181,13 @@ public class AssetsDexLoader {
         return parent;
     }
 
-    public static ClassLoader deps(Context context, Json json, String... deps) {
-        ClassLoader parent = null;
-        try {
-            if (deps == null || deps.length == 0) {
-                for (Json.Library a : json.deps)
-                    parent = deps(context, parent, a.dex);
-            } else {
-                for (String dep : deps) {
-                    for (Json.Library a : json.getDeps(dep)) {
-                        parent = deps(context, parent, a.dex);
-                    }
-                }
-            }
-            return parent; // return null if no jars/dex found
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public static ClassLoader load(Context context, File tmp, ClassLoader parent) {
+        Log.d(TAG, "Loading: " + tmp);
         if (parent == null)
             parent = context.getClassLoader();
         File ext = getExternalCodeCacheDir(context);
         if (ext == null)
             ext = getCodeCacheDir(context);
-        Log.d(TAG, "Loading: " + tmp);
         return new DexClassLoader(tmp.getPath(), ext.getPath(), null, parent);
     }
 
@@ -213,20 +214,29 @@ public class AssetsDexLoader {
         }
     }
 
+    public static boolean equals(Object a, Object b) {
+        return (a == b) || (a != null && a.equals(b));
+    }
+
     public static class Json {
-        public LinkedHashMap<String, Library> mm = new LinkedHashMap<>();
-        public ArrayList<Library> deps;
+        public LinkedHashMap<String, Library> mm = new LinkedHashMap<>(); // all deps including depencecies
+        public ArrayList<Library> deps; // top level deps (build.gradle list)
 
         public static class Library {
             public String group;
             public String id;
             public String v;
             public String dex;
+            public String md5;
             public ArrayList<Library> deps = new ArrayList<>();
+
+            public String getId() {
+                return group + ":" + id + ":" + v;
+            }
 
             @Override
             public String toString() {
-                return group + ":" + id + ":" + v;
+                return getId();
             }
 
             @Override
@@ -234,16 +244,12 @@ public class AssetsDexLoader {
                 if (this == o) return true;
                 if (o == null || getClass() != o.getClass()) return false;
                 Library library = (Library) o;
-                return equals(group, library.group) && equals(id, library.id) && equals(v, library.v);
-            }
-
-            public static boolean equals(Object a, Object b) {
-                return (a == b) || (a != null && a.equals(b));
+                return AssetsDexLoader.equals(group, library.group) && AssetsDexLoader.equals(id, library.id) && AssetsDexLoader.equals(v, library.v);
             }
 
             @Override
             public int hashCode() {
-                return (group + ":" + ":" + id + ":" + v).hashCode();
+                return (getId()).hashCode();
             }
         }
 
@@ -273,10 +279,11 @@ public class AssetsDexLoader {
                     info.id = o.getString("id");
                     info.v = o.getString("v");
                     info.dex = o.getString("asset");
+                    info.md5 = o.optString("md5");
                     JSONArray deps = o.optJSONArray("deps");
                     if (deps != null && deps.length() > 0)
                         info.deps = loadDeps(deps);
-                    mm.put(info.group + ":" + info.id + ":" + info.v, info);
+                    mm.put(info.getId(), info);
                     kk.add(info);
                 } catch (JSONException e) {
                     Log.w(TAG, e);
