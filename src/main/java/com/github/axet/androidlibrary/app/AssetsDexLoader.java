@@ -8,6 +8,9 @@ import android.os.Looper;
 import android.util.Log;
 
 import org.apache.commons.io.IOUtils;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -19,9 +22,11 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -32,6 +37,7 @@ public class AssetsDexLoader {
     public static String TAG = AssetsDexLoader.class.getSimpleName();
 
     public static int DELAY_TEST = 1 * AlarmManager.MIN1; // load timeout
+    public static String JSON = "gradle-android-dx.json";
 
     public static final String JAR = "jar";
     public static final String DEX = "dex";
@@ -131,17 +137,40 @@ public class AssetsDexLoader {
                 if (aa == null)
                     return parent;
                 for (String a : aa) {
-                    if (a.startsWith(dep)) {
-                        if (a.endsWith("." + JAR)) {
-                            File tmp = extract(context, a);
-                            parent = load(context, tmp, parent);
-                            tmp.delete(); // getCodeCacheDir() should keep classes
-                        }
-                        if (a.endsWith("." + DEX)) {
-                            File tmp = pack(context, a);
-                            parent = load(context, tmp, parent);
-                            tmp.delete(); // getCodeCacheDir() should keep classes
-                        }
+                    if (a.startsWith(dep))
+                        parent = deps(context, parent, a);
+                }
+            }
+            return parent; // return null if no jars/dex found
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static ClassLoader deps(Context context, ClassLoader parent, String a) throws IOException {
+        if (a.endsWith("." + JAR)) {
+            File tmp = extract(context, a);
+            parent = load(context, tmp, parent);
+            tmp.delete(); // getCodeCacheDir() should keep classes
+        }
+        if (a.endsWith("." + DEX)) {
+            File tmp = pack(context, a);
+            parent = load(context, tmp, parent);
+            tmp.delete(); // getCodeCacheDir() should keep classes
+        }
+        return parent;
+    }
+
+    public static ClassLoader deps(Context context, Json json, String... deps) {
+        ClassLoader parent = null;
+        try {
+            if (deps == null || deps.length == 0) {
+                for (Json.Library a : json.deps)
+                    parent = deps(context, parent, a.dex);
+            } else {
+                for (String dep : deps) {
+                    for (Json.Library a : json.getDeps(dep)) {
+                        parent = deps(context, parent, a.dex);
                     }
                 }
             }
@@ -157,6 +186,7 @@ public class AssetsDexLoader {
         File ext = getExternalCodeCacheDir(context);
         if (ext == null)
             ext = getCodeCacheDir(context);
+        Log.d(TAG, "Loading: " + tmp);
         return new DexClassLoader(tmp.getPath(), ext.getPath(), null, parent);
     }
 
@@ -183,6 +213,115 @@ public class AssetsDexLoader {
         }
     }
 
+    public static class Json {
+        public LinkedHashMap<String, Library> mm = new LinkedHashMap<>();
+        public ArrayList<Library> deps;
+
+        public static class Library {
+            public String group;
+            public String id;
+            public String v;
+            public String dex;
+            public ArrayList<Library> deps = new ArrayList<>();
+
+            @Override
+            public String toString() {
+                return group + ":" + id + ":" + v;
+            }
+
+            @Override
+            public boolean equals(Object o) {
+                if (this == o) return true;
+                if (o == null || getClass() != o.getClass()) return false;
+                Library library = (Library) o;
+                return equals(group, library.group) && equals(id, library.id) && equals(v, library.v);
+            }
+
+            public static boolean equals(Object a, Object b) {
+                return (a == b) || (a != null && a.equals(b));
+            }
+
+            @Override
+            public int hashCode() {
+                return (group + ":" + ":" + id + ":" + v).hashCode();
+            }
+        }
+
+        public Json(Context context) {
+            AssetManager am = context.getAssets();
+            InputStream is = null;
+            JSONArray json = null;
+            try {
+                is = am.open(JSON);
+                String j = IOUtils.toString(is, Charset.defaultCharset());
+                json = new JSONArray(j);
+                deps = loadDeps(json);
+            } catch (JSONException | IOException e) {
+                Log.w(TAG, e);
+            } finally {
+                IOUtils.closeQuietly(is);
+            }
+        }
+
+        public ArrayList<Library> loadDeps(JSONArray aa) {
+            ArrayList<Library> kk = new ArrayList<>();
+            for (int i = 0; i < aa.length(); i++) {
+                try {
+                    JSONObject o = aa.getJSONObject(i);
+                    Library info = new Library();
+                    info.group = o.getString("group");
+                    info.id = o.getString("id");
+                    info.v = o.getString("v");
+                    info.dex = o.getString("asset");
+                    JSONArray deps = o.optJSONArray("deps");
+                    if (deps != null && deps.length() > 0)
+                        info.deps = loadDeps(deps);
+                    mm.put(info.group + ":" + info.id + ":" + info.v, info);
+                    kk.add(info);
+                } catch (JSONException e) {
+                    Log.w(TAG, e);
+                }
+            }
+            return kk;
+        }
+
+        public ArrayList<Library> getDeps(String dep) {
+            String[] dd = dep.split(":");
+            ArrayList<Library> kk = new ArrayList<>();
+            if (dd.length == 3) {
+                Library info = mm.get(dep);
+                if (info != null)
+                    return info.deps;
+            }
+            for (String id : mm.keySet()) {
+                String[] ss = id.split(":");
+                if (dd.length == 1) {
+                    if (ss[1].equals(dd[0])) {
+                        Library info = mm.get(id);
+                        for (Library l : getDeps(info)) {
+                            if (kk.contains(l))
+                                continue;
+                            kk.add(l);
+                        }
+                    }
+                }
+            }
+            return kk;
+        }
+
+        public ArrayList<Library> getDeps(Library info) {
+            ArrayList<Library> kk = new ArrayList<>();
+            if (info.deps != null) {
+                for (Library l : info.deps) {
+                    kk.addAll(getDeps(l));
+                    kk.add(l);
+                }
+            }
+            kk.add(info);
+            return kk;
+        }
+    }
+
     public static class ThreadLoader {
         public static final HashMap<Class, Object> locks = new HashMap<>();
         public static Thread thread;
@@ -198,10 +337,14 @@ public class AssetsDexLoader {
             }
         };
 
-        public ThreadLoader(Context context, String... deps) {
+        public ThreadLoader(Context context) {
             this.context = context;
-            this.deps = Arrays.asList(deps).toArray(new String[]{});
             this.handler = new Handler(Looper.getMainLooper());
+        }
+
+        public ThreadLoader(Context context, String... deps) {
+            this(context);
+            this.deps = Arrays.asList(deps).toArray(new String[]{});
         }
 
         public ThreadLoader(Context context, boolean block, String... deps) {
@@ -249,9 +392,9 @@ public class AssetsDexLoader {
             Log.d(TAG, "loading...");
             handler.postDelayed(test, DELAY_TEST);
             try {
-              done(deps());
+                done(deps());
             } finally {
-              handler.removeCallbacks(test);
+                handler.removeCallbacks(test);
             }
             Log.d(TAG, "load done");
         }
@@ -306,6 +449,53 @@ public class AssetsDexLoader {
         }
 
         public void done(ClassLoader l) {
+        }
+    }
+
+    public static class JsonThreadLoader extends ThreadLoader {
+        Json json;
+
+        public JsonThreadLoader(Context context) {
+            super(context);
+            json = new Json(context);
+        }
+
+        public JsonThreadLoader(Context context, String... deps) {
+            super(context, deps);
+            json = new Json(context);
+        }
+
+        public JsonThreadLoader(Context context, boolean block, String... deps) {
+            super(context, block, deps);
+            json = new Json(context);
+        }
+
+        @Override
+        public void clear(File tmp) {
+            if (tmp == null)
+                return;
+            File[] ff = tmp.listFiles(new FileFilter() {
+                @Override
+                public boolean accept(File pathname) {
+                    for (Json.Library l : json.mm.values()) {
+                        if (pathname.getName().endsWith(l.dex))
+                            return true;
+                    }
+                    return false;
+                }
+            });
+            if (ff == null)
+                return;
+            for (File f : ff) {
+                Log.d(TAG, "delete " + f);
+                f.delete();
+            }
+        }
+
+        @Override
+        public ClassLoader deps() {
+            Json json = new Json(context);
+            return AssetsDexLoader.deps(context, json, deps);
         }
     }
 }
