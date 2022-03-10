@@ -247,8 +247,12 @@ public class AssetsDexLoader {
 
         public void load() { // load(block) only call
             Log.d(TAG, "loading...");
-            done(deps());
-            handler.removeCallbacks(test);
+            handler.postDelayed(test, DELAY_TEST);
+            try {
+              done(deps());
+            } finally {
+              handler.removeCallbacks(test);
+            }
             Log.d(TAG, "load done");
         }
 
@@ -265,7 +269,6 @@ public class AssetsDexLoader {
         }
 
         public void load(boolean block) {
-            handler.postDelayed(test, DELAY_TEST);
             Thread t;
             synchronized (lock()) {
                 if (thread == null) {
@@ -278,7 +281,7 @@ public class AssetsDexLoader {
                                 try {
                                     load();
                                 } catch (Exception e) {
-                                    Log.e(TAG, "error", e);
+                                    Log.w(TAG, e);
                                     error(e);
                                 }
                             }
