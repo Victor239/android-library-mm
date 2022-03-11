@@ -3,11 +3,17 @@ package com.github.axet.androidlibrary.app;
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 import org.apache.commons.io.IOUtils;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,9 +22,11 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -27,6 +35,9 @@ import dalvik.system.DexFile;
 
 public class AssetsDexLoader {
     public static String TAG = AssetsDexLoader.class.getSimpleName();
+
+    public static int DELAY_TEST = 1 * AlarmManager.MIN1; // load timeout
+    public static String JSON = "gradle-android-dx.json";
 
     public static final String JAR = "jar";
     public static final String DEX = "dex";
@@ -117,25 +128,18 @@ public class AssetsDexLoader {
         }
     }
 
-    public static ClassLoader deps(Context context, String... deps) {
+    public static ClassLoader deps(Context context, Json json, String... deps) {
         ClassLoader parent = null;
         try {
-            for (String dep : deps) {
-                AssetManager am = context.getAssets();
-                String[] aa = am.list("");
-                for (String a : aa) {
-                    if (a.startsWith(dep)) {
-                        if (a.endsWith("." + JAR)) {
-                            File tmp = extract(context, a);
-                            parent = load(context, tmp, parent);
-                            tmp.delete(); // getCodeCacheDir() should keep classes
-                        }
-                        if (a.endsWith("." + DEX)) {
-                            File tmp = pack(context, a);
-                            parent = load(context, tmp, parent);
-                            tmp.delete(); // getCodeCacheDir() should keep classes
-                        }
-                    }
+            if (deps == null || deps.length == 0) {
+                for (Json.Library dep : json.deps) {
+                    for (Json.Library a : json.getDeps(dep))
+                        parent = deps(context, parent, a.dex);
+                }
+            } else {
+                for (String dep : deps) {
+                    for (Json.Library a : json.getDeps(dep))
+                        parent = deps(context, parent, a.dex);
                 }
             }
             return parent; // return null if no jars/dex found
@@ -144,7 +148,41 @@ public class AssetsDexLoader {
         }
     }
 
+    public static ClassLoader deps(Context context, String... deps) {
+        ClassLoader parent = null;
+        try {
+            for (String dep : deps) {
+                AssetManager am = context.getAssets();
+                String[] aa = am.list("");
+                if (aa == null)
+                    return parent;
+                for (String a : aa) {
+                    if (a.startsWith(dep))
+                        parent = deps(context, parent, a);
+                }
+            }
+            return parent; // return null if no jars/dex found
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static ClassLoader deps(Context context, ClassLoader parent, String a) throws IOException {
+        if (a.endsWith("." + JAR)) {
+            File tmp = extract(context, a);
+            parent = load(context, tmp, parent);
+            tmp.delete(); // getCodeCacheDir() should keep classes
+        }
+        if (a.endsWith("." + DEX)) {
+            File tmp = pack(context, a);
+            parent = load(context, tmp, parent);
+            tmp.delete(); // getCodeCacheDir() should keep classes
+        }
+        return parent;
+    }
+
     public static ClassLoader load(Context context, File tmp, ClassLoader parent) {
+        Log.d(TAG, "Loading: " + tmp);
         if (parent == null)
             parent = context.getClassLoader();
         File ext = getExternalCodeCacheDir(context);
@@ -176,15 +214,145 @@ public class AssetsDexLoader {
         }
     }
 
+    public static boolean equals(Object a, Object b) {
+        return (a == b) || (a != null && a.equals(b));
+    }
+
+    public static class Json {
+        public LinkedHashMap<String, Library> mm = new LinkedHashMap<>(); // all deps including depencecies
+        public ArrayList<Library> deps; // top level deps (build.gradle list)
+
+        public static class Library {
+            public String group;
+            public String id;
+            public String v;
+            public String dex;
+            public String md5;
+            public long size;
+            public ArrayList<Library> deps = new ArrayList<>();
+
+            public String getId() {
+                return group + ":" + id + ":" + v;
+            }
+
+            @Override
+            public String toString() {
+                return getId();
+            }
+
+            @Override
+            public boolean equals(Object o) {
+                if (this == o) return true;
+                if (o == null || getClass() != o.getClass()) return false;
+                Library library = (Library) o;
+                return AssetsDexLoader.equals(group, library.group) && AssetsDexLoader.equals(id, library.id) && AssetsDexLoader.equals(v, library.v);
+            }
+
+            @Override
+            public int hashCode() {
+                return (getId()).hashCode();
+            }
+        }
+
+        public Json(Context context) {
+            AssetManager am = context.getAssets();
+            InputStream is = null;
+            JSONArray json = null;
+            try {
+                is = am.open(JSON);
+                String j = IOUtils.toString(is, Charset.defaultCharset());
+                json = new JSONArray(j);
+                deps = loadDeps(json);
+            } catch (JSONException | IOException e) {
+                Log.w(TAG, e);
+            } finally {
+                IOUtils.closeQuietly(is);
+            }
+        }
+
+        public ArrayList<Library> loadDeps(JSONArray aa) {
+            ArrayList<Library> kk = new ArrayList<>();
+            for (int i = 0; i < aa.length(); i++) {
+                try {
+                    JSONObject o = aa.getJSONObject(i);
+                    Library info = new Library();
+                    info.group = o.getString("group");
+                    info.id = o.getString("id");
+                    info.v = o.getString("v");
+                    info.dex = o.getString("asset");
+                    info.size = o.optLong("size");
+                    info.md5 = o.optString("md5");
+                    JSONArray deps = o.optJSONArray("deps");
+                    if (deps != null && deps.length() > 0)
+                        info.deps = loadDeps(deps);
+                    mm.put(info.getId(), info);
+                    kk.add(info);
+                } catch (JSONException e) {
+                    Log.w(TAG, e);
+                }
+            }
+            return kk;
+        }
+
+        public ArrayList<Library> getDeps(String dep) {
+            String[] dd = dep.split(":");
+            ArrayList<Library> kk = new ArrayList<>();
+            if (dd.length == 3) {
+                Library info = mm.get(dep);
+                if (info != null)
+                    return info.deps;
+            }
+            for (String id : mm.keySet()) {
+                String[] ss = id.split(":");
+                if (dd.length == 1) {
+                    if (ss[1].equals(dd[0])) {
+                        Library info = mm.get(id);
+                        for (Library l : getDeps(info)) {
+                            if (kk.contains(l))
+                                continue;
+                            kk.add(l);
+                        }
+                    }
+                }
+            }
+            return kk;
+        }
+
+        public ArrayList<Library> getDeps(Library info) {
+            ArrayList<Library> kk = new ArrayList<>();
+            if (info.deps != null) {
+                for (Library l : info.deps) {
+                    kk.addAll(getDeps(l));
+                    kk.add(l);
+                }
+            }
+            kk.add(info);
+            return kk;
+        }
+    }
+
     public static class ThreadLoader {
         public static final HashMap<Class, Object> locks = new HashMap<>();
         public static Thread thread;
 
         public Context context;
         public String[] deps; // delayed load
+        public Handler handler;
+        public Runnable test = new Runnable() {
+            @Override
+            public void run() {
+                Log.d(TAG, "loading dex timeout...");
+                clear();
+            }
+        };
+
+        public ThreadLoader(Context context) {
+            this.context = context;
+            this.handler = new Handler(Looper.getMainLooper());
+        }
 
         public ThreadLoader(Context context, String... deps) {
-            this.context = context;
+            this(context);
             this.deps = Arrays.asList(deps).toArray(new String[]{});
         }
 
@@ -206,8 +374,38 @@ public class AssetsDexLoader {
             return AssetsDexLoader.deps(context, deps);
         }
 
-        public void load() {
-            done(deps());
+        public void clear() {
+            Log.d(TAG, "clear dexes");
+            clear(getExternalCodeCacheDir(context));
+            clear(getCodeCacheDir(context));
+        }
+
+        public void clear(File tmp) {
+            if (tmp == null)
+                return;
+            File[] ff = tmp.listFiles(new FileFilter() {
+                @Override
+                public boolean accept(File pathname) {
+                    return pathname.getName().endsWith("." + DEX);
+                }
+            });
+            if (ff == null)
+                return;
+            for (File f : ff) {
+                Log.d(TAG, "delete " + f);
+                f.delete();
+            }
+        }
+
+        public void load() { // load(block) only call
+            Log.d(TAG, "loading...");
+            handler.postDelayed(test, DELAY_TEST);
+            try {
+                done(deps());
+            } finally {
+                handler.removeCallbacks(test);
+            }
+            Log.d(TAG, "load done");
         }
 
         public Object lock() {
@@ -235,7 +433,7 @@ public class AssetsDexLoader {
                                 try {
                                     load();
                                 } catch (Exception e) {
-                                    Log.e(TAG, "error", e);
+                                    Log.w(TAG, e);
                                     error(e);
                                 }
                             }
@@ -260,6 +458,53 @@ public class AssetsDexLoader {
         }
 
         public void done(ClassLoader l) {
+        }
+    }
+
+    public static class JsonThreadLoader extends ThreadLoader {
+        Json json;
+
+        public JsonThreadLoader(Context context) {
+            super(context);
+            json = new Json(context);
+        }
+
+        public JsonThreadLoader(Context context, String... deps) {
+            super(context, deps);
+            json = new Json(context);
+        }
+
+        public JsonThreadLoader(Context context, boolean block, String... deps) {
+            super(context, block, deps);
+            json = new Json(context);
+        }
+
+        @Override
+        public void clear(File tmp) {
+            if (tmp == null)
+                return;
+            File[] ff = tmp.listFiles(new FileFilter() {
+                @Override
+                public boolean accept(File pathname) {
+                    for (Json.Library l : json.mm.values()) {
+                        if (pathname.getName().endsWith(l.dex))
+                            return true;
+                    }
+                    return false;
+                }
+            });
+            if (ff == null)
+                return;
+            for (File f : ff) {
+                Log.d(TAG, "delete " + f);
+                f.delete();
+            }
+        }
+
+        @Override
+        public ClassLoader deps() {
+            Json json = new Json(context);
+            return AssetsDexLoader.deps(context, json, deps);
         }
     }
 }

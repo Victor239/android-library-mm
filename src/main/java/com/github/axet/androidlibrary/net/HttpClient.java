@@ -353,9 +353,9 @@ public class HttpClient {
         return new SSLConnectionSocketFactory(sc, host);
     }
 
-    public static class SpongyLoader extends AssetsDexLoader.ThreadLoader {
+    public static class SpongyLoader extends AssetsDexLoader.JsonThreadLoader {
         public SpongyLoader(Context context) {
-            super(context, "core", "prov", "bcpkix", "bctls");
+            super(context, "bctls-jdk15on");
         }
 
         public SpongyLoader(Context context, boolean block) {

@@ -3,6 +3,8 @@ package com.github.axet.androidlibrary.widgets;
 import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
@@ -50,36 +52,38 @@ public class ErrorDialog extends AlertDialog.Builder {
         });
     }
 
-    public static void Post(final Activity a, final Throwable e) {
+    public static void Post(final Activity context, final Throwable e) {
+        Post((Context) context, e);
+    }
+
+    public static void Post(final Context context, final Throwable e) {
         Log.e(TAG, "Error", e);
-        a.runOnUiThread(new Runnable() {
+        Handler handler = new Handler(Looper.getMainLooper());
+        handler.post(new Runnable() {
             @Override
             public void run() {
-                if (a.isFinishing())
-                    return;
-                Error(a, toMessage(e));
+                Error(context, toMessage(e));
             }
         });
     }
 
-    public static void Post(final Activity a, final String e) {
-        a.runOnUiThread(new Runnable() {
+    public static void Post(final Context context, final String e) {
+        Handler handler = new Handler(Looper.getMainLooper());
+        handler.post(new Runnable() {
             @Override
             public void run() {
-                if (a.isFinishing())
-                    return;
-                Error(a, e);
+                Error(context, e);
             }
         });
     }
 
-    public static AlertDialog Error(Activity a, Throwable e) {
+    public static AlertDialog Error(Context context, Throwable e) {
         Log.e(TAG, "Error", e);
-        return Error(a, ErrorDialog.toMessage(e));
+        return Error(context, ErrorDialog.toMessage(e));
     }
 
-    public static AlertDialog Error(Activity a, String msg) {
-        ErrorDialog builder = new ErrorDialog(a, msg);
+    public static AlertDialog Error(Context context, String msg) {
+        ErrorDialog builder = new ErrorDialog(context, msg);
         return builder.show();
     }
 }
