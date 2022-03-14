@@ -48,7 +48,9 @@ public class PopupShareActionProvider extends ListPopupWindow {
     }
 
     public static void show(Context context, View share, Intent intent) {
-        if (Build.VERSION.SDK_INT >= 11) {
+        if (Build.VERSION.SDK_INT >= 30 && context.getApplicationInfo().targetSdkVersion >= 30) // API30 limit share apps if not started before by caller
+            context.startActivity(intent);
+        else if (Build.VERSION.SDK_INT >= 11) {
             PopupShareActionProvider shareProvider = new PopupShareActionProvider(context, share);
             shareProvider.setShareIntent(intent);
             shareProvider.show();
