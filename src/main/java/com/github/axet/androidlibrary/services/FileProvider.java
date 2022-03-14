@@ -82,7 +82,7 @@ public class FileProvider extends ContentProvider {
     }
 
     public static void grantPermissions(Context context, Intent intent, Uri u, int flags) {
-        List<ResolveInfo> rr = context.getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
+        List<ResolveInfo> rr = context.getPackageManager().queryIntentActivities(intent, 0);
         for (ResolveInfo r : rr) {
             String packageName = r.activityInfo.packageName;
             context.grantUriPermission(packageName, u, flags);
