@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
@@ -18,6 +19,7 @@ import android.util.Log;
 import android.widget.Button;
 
 import com.github.axet.androidlibrary.R;
+import com.github.axet.androidlibrary.app.AssetsDexLoader;
 import com.github.axet.androidlibrary.app.Storage;
 import com.github.axet.androidlibrary.preferences.OptimizationPreferenceCompat;
 
@@ -32,6 +34,7 @@ public class OpenChoicer {
 
     public static final String EXTRA_INITIAL_URI = "android.provider.extra.INITIAL_URI";
     public static final String MIME_ALL = "*/*";
+    public static final int PRIVATE_FLAG_REQUEST_LEGACY_EXTERNAL_STORAGE = 1 << 29; // ApplicationInfo.java
 
     public Context context;
     public OpenFileDialog.DIALOG_TYPE type;
@@ -167,7 +170,23 @@ public class OpenChoicer {
     public void show(Uri old) {
         this.old = old;
         if (Build.VERSION.SDK_INT >= 21) {
-            boolean nofile = a == null && f == null;
+            boolean nofile = a == null && f == null; // force SAF?
+            if (!readonly && context != null) { // RW and 'a' or 'f' is set
+                if (Build.VERSION.SDK_INT >= 30 && context.getApplicationInfo().targetSdkVersion >= 30) {
+                    if (!OptimizationPreferenceCompat.findPermission(context, Storage.MANAGE_EXTERNAL_STORAGE))
+                        nofile = true; // MANAGE_EXTERNAL_STORAGE not set
+                } else if (Build.VERSION.SDK_INT == 29) {
+                    PackageManager packageManager = context.getPackageManager();
+                    try {
+                        ApplicationInfo info = packageManager.getApplicationInfo(context.getPackageName(), 0);
+                        int privateFlags = (int) AssetsDexLoader.getPrivateField(info.getClass(), "privateFlags").get(info);
+                        if ((privateFlags & PRIVATE_FLAG_REQUEST_LEGACY_EXTERNAL_STORAGE) != PRIVATE_FLAG_REQUEST_LEGACY_EXTERNAL_STORAGE)
+                            nofile = true; // requestLegacyExternalStorage not enabled
+                    } catch (PackageManager.NameNotFoundException | NoSuchFieldException | IllegalAccessException e) {
+                        Log.w(TAG, e);
+                    }
+                }
+            }
             if (showSAF(nofile))
                 return;
         }
@@ -186,7 +205,7 @@ public class OpenChoicer {
                 fileDialog();
             return; // perms shown
         }
-        Log.e(TAG, "Not setStorageAccessFramework or setPermissionsDialog called");
+        Log.e(TAG, "Neither setStorageAccessFramework or setPermissionsDialog called");
         onDismiss(); // all failed, dismissed
     }
 
@@ -224,9 +243,8 @@ public class OpenChoicer {
         ss.add(local.getPath());
         File[] ext = OpenFileDialog.getLocalExternals(context, readonly);
         if (ext != null) {
-            for (File f : ext) {
+            for (File f : ext)
                 ss.add(f.getPath());
-            }
         }
         AlertDialog.Builder b = showFallbackFoldersBuild(ss);
         AlertDialog d = b.create();
@@ -347,11 +365,10 @@ public class OpenChoicer {
     }
 
     public void onRequestPermissionsResult(String[] permissions, int[] grantResults) {
-        if (Storage.permitted(context, permissions)) {
+        if (Storage.permitted(context, permissions))
             fileDialog();
-        } else {
+        else
             onRequestPermissionsFailed(permissions);
-        }
     }
 
     public void onRequestPermissionsFailed(String[] permissions) {
