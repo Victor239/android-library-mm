@@ -44,6 +44,7 @@
     <attr name="progressbar_round" format="reference" />
     <attr name="toolbar_icon_bg" format="reference" />
 
+    <string name="Theme_System" translatable="false">Theme_System</string>
     <string name="Theme_Light" translatable="false">Theme_Light</string>
     <string name="Theme_Dark" translatable="false">Theme_Dark</string>
 
