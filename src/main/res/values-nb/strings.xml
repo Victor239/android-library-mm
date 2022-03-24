@@ -75,4 +75,10 @@
     <string name="pref_screenlock_title">Hold skjermen påskrudd</string>
 
     <string name="migrating_data">Migrerer dataene</string>
+
+    <string-array name="themes_text">
+        <item>@string/system_default</item>
+        <item>Hvitt tema</item>
+        <item>Mørkt tema</item>
+    </string-array>
 </resources>

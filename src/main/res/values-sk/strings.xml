@@ -78,4 +78,10 @@
     <string name="optimization_system_summary">Otvorí systémové nastavenia optimalizácie batérie</string>
 
     <string name="migrating_data">Migrácia údajov</string>
+
+    <string-array name="themes_text">
+        <item>@string/system_default</item>
+        <item>Svetlý vzhľad</item>
+        <item>Tmavý vzhľad</item>
+    </string-array>
 </resources>

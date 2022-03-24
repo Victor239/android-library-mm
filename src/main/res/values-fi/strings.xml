@@ -75,4 +75,10 @@
     <string name="pref_screenlock_title">Pidä näyttö päällä</string>
 
     <string name="migrating_data">Yhdistetään tietoja</string>
+
+    <string-array name="themes_text">
+        <item>@string/system_default</item>
+        <item>Vaalea</item>
+        <item>Tumma</item>
+    </string-array>
 </resources>

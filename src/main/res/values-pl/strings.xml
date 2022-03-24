@@ -75,4 +75,10 @@
     <string name="pref_screenlock_title">Pozostaw ekran włączony</string>
 
     <string name="migrating_data">Migracja danych</string>
+
+    <string-array name="themes_text">
+        <item>@string/system_default</item>
+        <item>Jasny motyw</item>
+        <item>Ciemny motyw</item>
+    </string-array>
 </resources>

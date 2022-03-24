@@ -75,4 +75,10 @@
     <string name="pref_screenlock_title">Ekranı açık tut</string>
 
     <string name="migrating_data">Veri Taşıma</string>
+
+    <string-array name="themes_text">
+        <item>@string/system_default</item>
+        <item>Aydınlık Gövde</item>
+        <item>Karanlık Gövde</item>
+    </string-array>
 </resources>

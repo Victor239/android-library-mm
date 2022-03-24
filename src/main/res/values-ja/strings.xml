@@ -72,4 +72,10 @@
     <string name="optimization_system_summary">電池の最適化の設定を開く</string>
 
     <string name="migrating_data">データ移行</string>
+
+    <string-array name="themes_text">
+        <item>@string/system_default</item>
+        <item>テーマ ホワイト</item>
+        <item>テーマ ダーク</item>
+    </string-array>
 </resources>

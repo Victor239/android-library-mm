@@ -75,4 +75,10 @@
     <string name="pref_screenlock_title">Hold skærmen tændt</string>
 
     <string name="migrating_data">Migrering af data</string>
+
+    <string-array name="themes_text">
+        <item>@string/system_default</item>
+        <item>Theme White</item>
+        <item>Theme Dark</item>
+    </string-array>
 </resources>

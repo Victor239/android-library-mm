@@ -75,4 +75,10 @@
     <string name="pref_screenlock_title">Képernyő bekapcsolva tartása</string>
 
     <string name="migrating_data">Adatok átmásolása</string>
+
+    <string-array name="themes_text">
+        <item>@string/system_default</item>
+        <item>Világos téma</item>
+        <item>Sötét téma</item>
+    </string-array>
 </resources>

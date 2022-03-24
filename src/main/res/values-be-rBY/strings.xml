@@ -83,4 +83,10 @@
     <string name="pref_screenlock_title">Трымаць экран уключаным</string>
 
     <string name="migrating_data">Міграцыя даных</string>
+
+    <string-array name="themes_text">
+        <item>@string/system_default</item>
+        <item>Светлая тэма</item>
+        <item>Цёмная тэма</item>
+    </string-array>
 </resources>

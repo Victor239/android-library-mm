@@ -156,7 +156,7 @@ public class MainApplication extends Application {
         return str.trim();
     }
 
-    public static int getTheme(Context context, String key, int light, int dark, String def) {
+    public static int getTheme(Context context, String key, int light, int dark) {
         SharedPreferences shared = PreferenceManager.getDefaultSharedPreferences(context);
         String theme = shared.getString(key, "");
         if (theme.isEmpty() || theme.equals(context.getString(R.string.Theme_System))) {
@@ -166,7 +166,7 @@ public class MainApplication extends Application {
             else
                 return light;
         }
-        if (theme.equals(def))
+        if (theme.equals(context.getString(R.string.Theme_Dark)))
             return dark;
         else
             return light;

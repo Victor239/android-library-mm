@@ -48,6 +48,12 @@
     <string name="Theme_Light" translatable="false">Theme_Light</string>
     <string name="Theme_Dark" translatable="false">Theme_Dark</string>
 
+    <string-array name="themes_values" translatable="false">
+        <item>@string/Theme_System</item>
+        <item>@string/Theme_Light</item>
+        <item>@string/Theme_Dark</item>
+    </string-array>
+
     <string-array name="screen_lock_values" translatable="false">
         <item>-1</item>
         <item>0</item>

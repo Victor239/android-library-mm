@@ -75,4 +75,11 @@
     <string name="pref_screenlock_title">Дръж екрана включен</string>
 
     <string name="migrating_data">Мигриране на данните</string>
+
+    <string-array name="themes_text">
+        <item>@string/system_default</item>
+        <item>Светло</item>
+        <item>Тъмно</item>
+    </string-array>
 </resources>
+

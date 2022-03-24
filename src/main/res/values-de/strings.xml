@@ -75,4 +75,10 @@
     <string name="optimization_system_summary">Systemdialogfeld zur Optimierung des Akkus öffnen</string>
 
     <string name="migrating_data">Migriere Daten</string>
+
+    <string-array name="themes_text">
+        <item>@string/system_default</item>
+        <item>Helles Aussehen</item>
+        <item>Dunkles Aussehen</item>
+    </string-array>
 </resources>
