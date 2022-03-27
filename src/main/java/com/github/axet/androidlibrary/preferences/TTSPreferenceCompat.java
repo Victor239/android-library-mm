@@ -12,19 +12,20 @@ import android.view.inputmethod.InputMethodSubtype;
 import com.github.axet.androidlibrary.R;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
 public class TTSPreferenceCompat extends ListPreference {
-    CharSequence defSummary;
-    ArrayList<CharSequence> text;
-    ArrayList<CharSequence> value;
-
     public static void addLocale(HashSet<Locale> list, Locale l) {
+        String s = l.toString();
+        if (s == null || s.isEmpty())
+            return;
         for (Locale m : list) {
-            if (m.toString().equals(l.toString()))
+            if (m.toString().equals(s))
                 return;
         }
         list.add(l);
@@ -75,12 +76,10 @@ public class TTSPreferenceCompat extends ListPreference {
     public static String formatLocale(Locale l) {
         String n = l.getDisplayLanguage();
         String v = l.toString();
-        String t;
         if (n == null || n.isEmpty() || n.equals(v))
-            t = v;
+            return v;
         else
-            t = String.format("%s (%s)", n, v);
-        return t;
+            return String.format("%s (%s)", n, v);
     }
 
     public TTSPreferenceCompat(Context context, AttributeSet attrs, int defStyleAttr) {
@@ -99,36 +98,31 @@ public class TTSPreferenceCompat extends ListPreference {
     }
 
     public void create() {
-        defSummary = getSummary();
-        text = new ArrayList<>();
-        value = new ArrayList<>();
-        text.add(getContext().getString(R.string.system_default));
-        value.add("");
-        Set<Locale> ll = null;
-        if (ll == null)
-            ll = getInputLanguages(getContext());
-        if (ll == null) {
-            ll = new HashSet<>();
+        LinkedHashMap<String, String> mm = new LinkedHashMap<>();
+        mm.put("", getContext().getString(R.string.system_default));
+        HashSet<Locale> ll = getInputLanguages(getContext());
+        if (ll.isEmpty())
             ll.add(Locale.US);
-        }
-        for (Locale l : ll) {
-            text.add(formatLocale(l));
-            value.add(l.toString());
-        }
-        setEntries(text.toArray(new CharSequence[0]));
-        setEntryValues(value.toArray(new CharSequence[0]));
-        setDefaultValue("");
+        for (Locale l : ll)
+            mm.put(l.toString(), formatLocale(l));
+        setEntries(mm);
+    }
+
+    public void setEntries(LinkedHashMap<String, String> mm) {
+        String def = getValue();
+        setEntries(mm.values().toArray(new CharSequence[0]));
+        setEntryValues(mm.keySet().toArray(new CharSequence[0]));
+        int i = findIndexOfValue(def);
+        if (i == -1)
+            setValueIndex(0);
+        else
+            setValueIndex(i);
     }
 
     @Override
     public void onSetInitialValue(boolean restoreValue, Object defaultValue) {
         super.onSetInitialValue(restoreValue, defaultValue);
         setSummary(getEntry());
-    }
-
-    @Override
-    public void onClick() {
-        super.onClick();
     }
 
     @Override

@@ -72,4 +72,10 @@
     <string name="optimization_system_summary">Aprire il dialogo di sistema per l\'ottimizzazione della batteria.</string>
 
     <string name="migrating_data">Migrazione dei dati</string>
+
+    <string-array name="themes_text">
+        <item>@string/system_default</item>
+        <item>Tema chiaro</item>
+        <item>Tema scuro</item>
+    </string-array>
 </resources>

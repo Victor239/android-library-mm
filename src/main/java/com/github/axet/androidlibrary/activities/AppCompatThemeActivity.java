@@ -48,7 +48,7 @@ public abstract class AppCompatThemeActivity extends AppCompatActivity {
     public static String OVERRIDE_PENDING_TRANSITION = "OVERRIDE_PENDING_TRANSITION";
 
     public int themeId;
-    public int manifestThemeid;
+    public int manifestThemeId;
 
     public ActivityAnimations animations;
     public Handler handler = new Handler();
@@ -174,8 +174,8 @@ public abstract class AppCompatThemeActivity extends AppCompatActivity {
         super.setTheme(id);
         themeId = id;
         try {
-            if (manifestThemeid == 0)
-                manifestThemeid = getPackageManager().getActivityInfo(this.getComponentName(), PackageManager.GET_META_DATA).getThemeResource();
+            if (manifestThemeId == 0)
+                manifestThemeId = getPackageManager().getActivityInfo(this.getComponentName(), PackageManager.GET_META_DATA).getThemeResource();
         } catch (PackageManager.NameNotFoundException e) {
             Log.w(TAG, e);
         }
@@ -229,7 +229,7 @@ public abstract class AppCompatThemeActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         setAppTheme(getAppTheme());
         super.onCreate(savedInstanceState == null ? getIntent().getBundleExtra(SAVE_INSTANCE_STATE) : savedInstanceState);
-        if (manifestThemeid != themeId && !getIntent().getBooleanExtra(OVERRIDE_PENDING_TRANSITION, false))
+        if (manifestThemeId != themeId && !getIntent().getBooleanExtra(OVERRIDE_PENDING_TRANSITION, false))
             overridePendingTransition(animations.activityOpenEnterAnimation, animations.activityOpenExitAnimation);
         else
             getIntent().removeExtra(OVERRIDE_PENDING_TRANSITION);
@@ -238,7 +238,7 @@ public abstract class AppCompatThemeActivity extends AppCompatActivity {
     @Override
     public void finish() {
         super.finish();
-        if (manifestThemeid != themeId && !getIntent().getBooleanExtra(OVERRIDE_PENDING_TRANSITION, false))
+        if (manifestThemeId != themeId && !getIntent().getBooleanExtra(OVERRIDE_PENDING_TRANSITION, false))
             overridePendingTransition(animations.activityCloseEnterAnimation, animations.activityCloseExitAnimation);
         else
             getIntent().removeExtra(OVERRIDE_PENDING_TRANSITION);
@@ -283,7 +283,7 @@ public abstract class AppCompatThemeActivity extends AppCompatActivity {
         int id = getAppThemeBar(toolbar);
         if (theme != null && id != 0) {
             if (theme == this)
-                Log.e(TAG, "set 'theme' attribute for for Toolbar");
+                Log.e(TAG, "set 'theme' attribute for Toolbar");
             else
                 theme.setTheme(id);
         }

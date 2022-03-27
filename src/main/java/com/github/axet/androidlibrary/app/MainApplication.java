@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
+import android.content.res.Configuration;
 import android.support.v7.preference.PreferenceManager;
 
 import com.github.axet.androidlibrary.R;
@@ -155,10 +156,17 @@ public class MainApplication extends Application {
         return str.trim();
     }
 
-    public static int getTheme(Context context, String key, int light, int dark, String def) {
+    public static int getTheme(Context context, String key, int light, int dark) {
         SharedPreferences shared = PreferenceManager.getDefaultSharedPreferences(context);
         String theme = shared.getString(key, "");
-        if (theme.equals(def))
+        if (theme.isEmpty() || theme.equals(context.getString(R.string.Theme_System))) {
+            int system = context.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+            if (system == Configuration.UI_MODE_NIGHT_YES)
+                return dark;
+            else
+                return light;
+        }
+        if (theme.equals(context.getString(R.string.Theme_Dark)))
             return dark;
         else
             return light;

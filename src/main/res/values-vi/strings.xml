@@ -74,4 +74,10 @@
 
     <string name="pref_screenlock_title">Giữ sáng màn hình</string>
     <string name="migrating_data">Di chuyển dữ liệu</string>
+
+    <string-array name="themes_text">
+        <item>@string/system_default</item>
+        <item>Chủ đề trắng</item>
+        <item>Chủ đề đen</item>
+    </string-array>
 </resources>

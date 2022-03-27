@@ -75,4 +75,10 @@
     <string name="pref_screenlock_title">Layar Tetap Nyala</string>
 
     <string name="migrating_data">Memindahkan data</string>
+
+    <string-array name="themes_text">
+        <item>@string/system_default</item>
+        <item>Tema Terang</item>
+        <item>Tema Gelap</item>
+    </string-array>
 </resources>

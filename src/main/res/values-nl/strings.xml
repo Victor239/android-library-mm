@@ -75,4 +75,10 @@
     <string name="pref_screenlock_title">Houd scherm aan</string>
 
     <string name="migrating_data">Data migreren</string>
+
+    <string-array name="themes_text">
+        <item>@string/system_default</item>
+        <item>Licht Thema</item>
+        <item>Donker Thema</item>
+    </string-array>
 </resources>
