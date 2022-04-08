@@ -143,6 +143,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         if (Build.VERSION.SDK_INT >= 26 && context.getApplicationInfo().targetSdkVersion >= 26) {
             Class k = context.getClass();
             try {
+                Log.d(TAG, "startForegroundService(" + intent.getComponent().flattenToShortString() + ")");
                 Method m = k.getMethod("startForegroundService", Intent.class);
                 return (ComponentName) m.invoke(context, intent);
             } catch (NoSuchMethodException e) {
@@ -966,7 +967,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         }
 
         public void updateIcon() { // Override with icon.updateIcon(new Intent())
-            icon.updateIcon(null);
+            icon.updateIcon((Intent) null);
         }
 
         public Notification build(Intent intent) {
@@ -1129,12 +1130,12 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         }
     }
 
-    public static class NotificationIcon {
-        public Service context;
+    public static class PersistentIcon {
+        public Context context;
         public Notification notification;
         public int id;
 
-        public NotificationIcon(Service context, int id) {
+        public PersistentIcon(Context context, int id) {
             this.context = context;
             this.id = id;
         }
@@ -1164,13 +1165,13 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
             if (intent != null || isOptimization()) {
                 Notification n = build(intent);
                 if (notification == null) {
-                    context.startForeground(id, n);
+                    showIcon(n);
                 } else {
                     String co = NotificationChannelCompat.getChannelId(notification);
                     String cn = NotificationChannelCompat.getChannelId(n);
                     if (co == null && cn != null || co != null && cn == null || co != null && cn != null && !co.equals(cn))
                         nm.cancel(id);
-                    nm.notify(id, n);
+                    updateIcon(n);
                 }
                 notification = n;
             } else {
@@ -1178,11 +1179,51 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
             }
         }
 
+        public void showIcon(Notification n) { // initial showup
+            NotificationManagerCompat nm = NotificationManagerCompat.from(context);
+            nm.notify(id, n);
+        }
+
+        public void updateIcon(Notification n) { // update previous
+            NotificationManagerCompat nm = NotificationManagerCompat.from(context);
+            nm.notify(id, n);
+        }
+
         public void hideIcon() {
             NotificationManagerCompat nm = NotificationManagerCompat.from(context);
-            context.stopForeground(true);
             nm.cancel(id);
             notification = null;
+        }
+    }
+
+    public static class NotificationIcon extends PersistentIcon {
+        public Service context;
+
+        public NotificationIcon(Service context, int id) {
+            super(context, id);
+            this.context = context;
+        }
+
+        @Override
+        public void updateIcon() { // Override with updateIcon(null), to make default persistent service behaviour
+            updateIcon(new Intent()); // null == hide
+        }
+
+        @Override
+        public boolean isOptimization() { // not showing icon by default, unless config is on or api>26
+            return false;
+        }
+
+        @Override
+        public void showIcon(Notification n) {
+            Log.d(TAG, "startForeground(" + new ComponentName(context, context.getClass()).flattenToShortString() + ")");
+            context.startForeground(id, n);
+        }
+
+        @Override
+        public void hideIcon() {
+            context.stopForeground(true);
+            super.hideIcon();
         }
     }
 
@@ -1200,7 +1241,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
 
         @Override
         public void updateIcon() { // Override with updateIcon(new Intent())
-            updateIcon(null); // default: null = hide (service behaviour)
+            updateIcon((Intent) null); // default: null = hide (service behaviour)
         }
     }
 

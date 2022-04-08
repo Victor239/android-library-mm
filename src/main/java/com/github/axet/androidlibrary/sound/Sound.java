@@ -221,16 +221,10 @@ public class Sound {
 
     public void done(Runnable done) {
         if (done != null && dones.contains(done)) {
-            dones.remove(done);
+            dones.remove(done); // remove before run
             done.run();
-        } else {
-            dones.remove(done);
         }
-        if (dones.isEmpty()) {
-            for (Runnable r : exits)
-                r.run();
-            exits.clear();
-        }
+        remove(done);
     }
 
     public void after(Runnable done) {
@@ -238,5 +232,14 @@ public class Sound {
             done.run();
         else
             exits.add(done);
+    }
+
+    public void remove(Runnable done) {
+        dones.remove(done);
+        if (dones.isEmpty()) {
+            for (Runnable r : exits)
+                r.run();
+            exits.clear();
+        }
     }
 }

@@ -212,7 +212,7 @@ public class WifiKeepService extends Service {
 
         @Override
         public void updateIcon() {
-            updateIcon(null);
+            updateIcon((Intent) null);
         }
 
         @Override
