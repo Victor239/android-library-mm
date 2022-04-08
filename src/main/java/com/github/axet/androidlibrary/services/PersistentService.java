@@ -64,7 +64,6 @@ public class PersistentService extends Service {
     public void onDestroy() {
         super.onDestroy();
         Log.d(TAG, "onDestroy");
-
         if (optimization != null) {
             optimization.close();
             optimization = null;

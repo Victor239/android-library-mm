@@ -29,6 +29,7 @@ import android.webkit.MimeTypeMap;
 import android.widget.ProgressBar;
 
 import com.github.axet.androidlibrary.R;
+import com.github.axet.androidlibrary.preferences.OptimizationPreferenceCompat;
 import com.github.axet.androidlibrary.services.FileProvider;
 import com.github.axet.androidlibrary.widgets.OpenFileDialog;
 import com.github.axet.androidlibrary.widgets.ThemeUtils;
@@ -47,6 +48,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -60,6 +62,7 @@ public class Storage {
 
     public static final String MANAGE_EXTERNAL_STORAGE = "android.permission.MANAGE_EXTERNAL_STORAGE"; // Manifest.permission.MANAGE_EXTERNAL_STORAGE
     public static final String ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION = "android.settings.MANAGE_APP_ALL_FILES_ACCESS_PERMISSION";
+    public static final int PRIVATE_FLAG_REQUEST_LEGACY_EXTERNAL_STORAGE = 1 << 29; // ApplicationInfo.java
 
     public static final String PATH_TREE = "tree";
     public static final String PATH_DOCUMENT = "document";
@@ -82,6 +85,8 @@ public class Storage {
 
     public static final String COLON = ":";
     public static final String CSS = COLON + "//"; // COLON SLASH SLASH
+
+    public static String LIMITED = "Content is limited, please provide Legacy External Storage support";
 
     protected Context context;
     protected ContentResolver resolver;
@@ -819,15 +824,51 @@ public class Storage {
 
     // context methods
 
+    public static boolean isLegacyRequred(Context context) {
+        boolean ext = Storage.isLegacyManifest30(context);
+        if (Build.VERSION.SDK_INT >= 30 && context.getApplicationInfo().targetSdkVersion >= 30 && ext) {
+            return true;
+        }
+        if (Build.VERSION.SDK_INT == 29 && context.getApplicationInfo().targetSdkVersion == 29) {
+            return Storage.hasRequestedLegacyExternalStorage(context);
+        }
+        return false;
+    }
+
+    public static boolean isLegacyPermitted(Context context, boolean show) {
+        if (Build.VERSION.SDK_INT >= 30 && context.getApplicationInfo().targetSdkVersion >= 30 && Storage.isLegacyManifest30(context)) {
+            boolean manager = Storage.isExternalStorageManager(context);
+            if (!manager) {
+                if (show)
+                    Storage.showExternalStorageManager(context);
+                return false;
+            }
+        }
+        if (Build.VERSION.SDK_INT == 29 && context.getApplicationInfo().targetSdkVersion == 29) {
+            if (Storage.hasRequestedLegacyExternalStorage(context) && !Storage.isExternalStorageLegacy(context))
+                if (show)
+                    Toast.makeText(context, LIMITED, Toast.LENGTH_LONG).show();
+            return false;
+        }
+        return true;
+    }
+
     public static boolean permitted(Context context, String[] ss) {
         if (permittedForce)
             return true;
         if (Build.VERSION.SDK_INT < 16)
             return true;
+        SplitStoragePermissions sp = new SplitStoragePermissions(ss);
+        if (sp.storage.length > 0 && isLegacyRequred(context))
+            ss = sp.rest;
+        else
+            sp = null;
         for (String s : ss) {
             if (ContextCompat.checkSelfPermission(context, s) != PackageManager.PERMISSION_GRANTED)
                 return false;
         }
+        if (sp != null)
+            return isLegacyPermitted(context, false);
         return true;
     }
 
@@ -836,6 +877,11 @@ public class Storage {
             return true;
         if (Build.VERSION.SDK_INT < 16)
             return true;
+        SplitStoragePermissions sp = new SplitStoragePermissions(ss);
+        if (sp.storage.length > 0 && isLegacyRequred(a))
+            ss = sp.rest;
+        else
+            sp = null;
         for (String s : ss) {
             if (ContextCompat.checkSelfPermission(a, s) != PackageManager.PERMISSION_GRANTED) {
                 try {
@@ -847,6 +893,8 @@ public class Storage {
                 return false;
             }
         }
+        if (sp != null)
+            return isLegacyPermitted(a, true);
         return true;
     }
 
@@ -855,6 +903,11 @@ public class Storage {
             return true;
         if (Build.VERSION.SDK_INT < 16)
             return true;
+        SplitStoragePermissions sp = new SplitStoragePermissions(ss);
+        if (sp.storage.length > 0 && isLegacyRequred(f.getContext()))
+            ss = sp.rest;
+        else
+            sp = null;
         for (String s : ss) {
             if (ContextCompat.checkSelfPermission(f.getContext(), s) != PackageManager.PERMISSION_GRANTED) {
                 try {
@@ -866,6 +919,8 @@ public class Storage {
                 return false;
             }
         }
+        if (sp != null)
+            return isLegacyPermitted(f.getContext(), true);
         return true;
     }
 
@@ -898,8 +953,7 @@ public class Storage {
             try {
                 return (boolean) AssetsDexLoader.getPrivateMethod(ApplicationInfo.class, "hasRequestedLegacyExternalStorage").invoke(context.getApplicationInfo());
             } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-                int PRIVATE_FLAG_REQUEST_LEGACY_EXTERNAL_STORAGE = 1 << 29;
-                return (context.getApplicationInfo().flags & PRIVATE_FLAG_REQUEST_LEGACY_EXTERNAL_STORAGE) != 0;
+                return isLegacyManifest29(context);
             }
         }
         return false;
@@ -912,6 +966,23 @@ public class Storage {
             } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
                 Log.w(TAG, e);
             }
+        }
+        return false;
+    }
+
+    public static boolean isLegacyManifest30(Context context) {
+        return OptimizationPreferenceCompat.findPermission(context, Storage.MANAGE_EXTERNAL_STORAGE);
+    }
+
+    public static boolean isLegacyManifest29(Context context) {
+        PackageManager packageManager = context.getPackageManager();
+        try {
+            ApplicationInfo info = packageManager.getApplicationInfo(context.getPackageName(), 0);
+            int privateFlags = (int) AssetsDexLoader.getPrivateField(info.getClass(), "privateFlags").get(info);
+            if ((privateFlags & PRIVATE_FLAG_REQUEST_LEGACY_EXTERNAL_STORAGE) == PRIVATE_FLAG_REQUEST_LEGACY_EXTERNAL_STORAGE)
+                return true; // requestLegacyExternalStorage enabled
+        } catch (PackageManager.NameNotFoundException | NoSuchFieldException | IllegalAccessException e) {
+            Log.w(TAG, e);
         }
         return false;
     }
@@ -1637,5 +1708,24 @@ public class Storage {
     }
 
     public void migrateLocalStorage() {
+    }
+
+    public static class SplitStoragePermissions {
+        public String[] storage;
+        public String[] rest;
+
+        public SplitStoragePermissions(String[] ss) {
+            ArrayList<String> mm = new ArrayList<>(Arrays.asList(PERMISSIONS_RW));
+            ArrayList<String> st = new ArrayList<>();
+            ArrayList<String> re = new ArrayList<>();
+            for (String s : ss) {
+                if (mm.contains(s))
+                    st.add(s);
+                else
+                    re.add(s);
+            }
+            storage = st.toArray(new String[0]);
+            rest = re.toArray(new String[0]);
+        }
     }
 }

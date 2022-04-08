@@ -34,7 +34,6 @@ public class OpenChoicer {
 
     public static final String EXTRA_INITIAL_URI = "android.provider.extra.INITIAL_URI";
     public static final String MIME_ALL = "*/*";
-    public static final int PRIVATE_FLAG_REQUEST_LEGACY_EXTERNAL_STORAGE = 1 << 29; // ApplicationInfo.java
 
     public Context context;
     public OpenFileDialog.DIALOG_TYPE type;
@@ -173,18 +172,12 @@ public class OpenChoicer {
             boolean nofile = a == null && f == null; // force SAF?
             if (!readonly && context != null) { // RW and 'a' or 'f' is set
                 if (Build.VERSION.SDK_INT >= 30 && context.getApplicationInfo().targetSdkVersion >= 30) {
-                    if (!OptimizationPreferenceCompat.findPermission(context, Storage.MANAGE_EXTERNAL_STORAGE))
+                    boolean ext = Storage.isLegacyManifest30(context);
+                    if (!ext)
                         nofile = true; // MANAGE_EXTERNAL_STORAGE not set
                 } else if (Build.VERSION.SDK_INT == 29) {
-                    PackageManager packageManager = context.getPackageManager();
-                    try {
-                        ApplicationInfo info = packageManager.getApplicationInfo(context.getPackageName(), 0);
-                        int privateFlags = (int) AssetsDexLoader.getPrivateField(info.getClass(), "privateFlags").get(info);
-                        if ((privateFlags & PRIVATE_FLAG_REQUEST_LEGACY_EXTERNAL_STORAGE) != PRIVATE_FLAG_REQUEST_LEGACY_EXTERNAL_STORAGE)
-                            nofile = true; // requestLegacyExternalStorage not enabled
-                    } catch (PackageManager.NameNotFoundException | NoSuchFieldException | IllegalAccessException e) {
-                        Log.w(TAG, e);
-                    }
+                    if (!Storage.isLegacyManifest29(context))
+                        nofile = true;
                 }
             }
             if (showSAF(nofile))
@@ -254,8 +247,12 @@ public class OpenChoicer {
     public AlertDialog.Builder showFallbackFoldersBuild(final List<String> ss) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setTitle(title);
-        File summ = Storage.getFile(old);
-        builder.setSingleChoiceItems(ss.toArray(new CharSequence[]{}), ss.indexOf(summ.getPath()), new DialogInterface.OnClickListener() {
+        int index = 0;
+        if (old != null) {
+            File summ = Storage.getFile(old);
+            index = ss.indexOf(summ.getPath());
+        }
+        builder.setSingleChoiceItems(ss.toArray(new CharSequence[]{}), index, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 String fileName = ss.get(which);
