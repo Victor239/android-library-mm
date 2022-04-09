@@ -75,6 +75,8 @@
     <string name="pref_screenlock_title">Mantendu pantaila aktibo</string>
 
     <string name="migrating_data">Migrazio datuak</string>
+    <string name="legacy_summary">Enable / Disable legacy storage access</string>
+    <string name="legacy_title">Legacy Storage</string>
 
     <string-array name="themes_text">
         <item>@string/system_default</item>

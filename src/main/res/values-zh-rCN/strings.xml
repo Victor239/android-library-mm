@@ -75,6 +75,8 @@
     <string name="pref_screenlock_title">保持亮屏</string>
 
     <string name="migrating_data">数据迁移</string>
+    <string name="legacy_summary">Enable / Disable legacy storage access</string>
+    <string name="legacy_title">Legacy Storage</string>
 
     <string-array name="themes_text">
         <item>@string/system_default</item>

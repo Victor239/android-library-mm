@@ -34,7 +34,6 @@ public class OpenChoicer {
 
     public static final String EXTRA_INITIAL_URI = "android.provider.extra.INITIAL_URI";
     public static final String MIME_ALL = "*/*";
-    public static boolean MANAGER_DENIED = false;
 
     public Context context;
     public OpenFileDialog.DIALOG_TYPE type;
@@ -96,9 +95,8 @@ public class OpenChoicer {
         ff = ContextCompat.getExternalFilesDirs(context, ""); // can show no external dir: https://stackoverflow.com/questions/33350250
         int count = 0;
         for (File f : ff) {
-            if (f == null || f.getPath().startsWith(ext.getPath())) { // f can be null, if media unmounted
+            if (f == null || f.getPath().startsWith(ext.getPath())) // f can be null, if media unmounted
                 continue;
-            }
             count++;
         }
         if (count > 0) // have external SD formatted as portable?
@@ -170,12 +168,14 @@ public class OpenChoicer {
     public void show(Uri old) {
         this.old = old;
         if (Build.VERSION.SDK_INT >= 21) {
-            boolean nofile = a == null && f == null || MANAGER_DENIED; // force SAF?
+            boolean nofile = a == null && f == null; // force SAF?
             if (!readonly && context != null) { // RW and 'a' or 'f' is set
                 if (Build.VERSION.SDK_INT >= 30 && context.getApplicationInfo().targetSdkVersion >= 30) {
                     boolean ext = Storage.isLegacyManifest30(context);
                     if (!ext)
                         nofile = true; // MANAGE_EXTERNAL_STORAGE not set
+                    else if (!Storage.isExternalStorageManager(context))
+                        nofile = true; // MANGER not enabled, use settings pref to enable
                 } else if (Build.VERSION.SDK_INT == 29) {
                     if (!Storage.isLegacyManifest29(context))
                         nofile = true;
@@ -201,6 +201,11 @@ public class OpenChoicer {
         }
         Log.e(TAG, "Neither setStorageAccessFramework or setPermissionsDialog called");
         onDismiss(); // all failed, dismissed
+    }
+
+    public boolean showSAF(Uri old) {
+        this.old = old;
+        return showSAF(true);
     }
 
     @TargetApi(21)
@@ -308,8 +313,11 @@ public class OpenChoicer {
 
     public OpenFileDialog fileDialogBuild() {
         final OpenFileDialog dialog = new OpenFileDialog(context, type, readonly);
-        if (old != null)
-            dialog.setCurrentPath(Storage.getFile(old));
+        if (old != null) {
+            String s = old.getScheme();
+            if (s.equals(ContentResolver.SCHEME_FILE))
+                dialog.setCurrentPath(Storage.getFile(old));
+        }
         dialog.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface d, int which) {
@@ -336,19 +344,6 @@ public class OpenChoicer {
             }
         });
         return dialog;
-    }
-
-    public void onResume() {
-        if (Storage.MANAGER_REQUEST) {
-            Storage.MANAGER_REQUEST = false;
-            if (Storage.isExternalStorageManager(context)) {
-                fileDialog();
-            } else {
-                MANAGER_DENIED = true;
-                Toast.makeText(context, "All files access dennied", Toast.LENGTH_LONG).show();
-                showSAF(true);
-            }
-        }
     }
 
     public void onActivityResult(int resultCode, Intent data) {
