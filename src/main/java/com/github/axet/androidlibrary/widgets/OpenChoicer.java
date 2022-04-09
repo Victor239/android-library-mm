@@ -34,6 +34,7 @@ public class OpenChoicer {
 
     public static final String EXTRA_INITIAL_URI = "android.provider.extra.INITIAL_URI";
     public static final String MIME_ALL = "*/*";
+    public static boolean MANAGER_DENIED = false;
 
     public Context context;
     public OpenFileDialog.DIALOG_TYPE type;
@@ -169,7 +170,7 @@ public class OpenChoicer {
     public void show(Uri old) {
         this.old = old;
         if (Build.VERSION.SDK_INT >= 21) {
-            boolean nofile = a == null && f == null; // force SAF?
+            boolean nofile = a == null && f == null || MANAGER_DENIED; // force SAF?
             if (!readonly && context != null) { // RW and 'a' or 'f' is set
                 if (Build.VERSION.SDK_INT >= 30 && context.getApplicationInfo().targetSdkVersion >= 30) {
                     boolean ext = Storage.isLegacyManifest30(context);
@@ -335,6 +336,19 @@ public class OpenChoicer {
             }
         });
         return dialog;
+    }
+
+    public void onResume() {
+        if (Storage.MANAGER_REQUEST) {
+            Storage.MANAGER_REQUEST = false;
+            if (Storage.isExternalStorageManager(context)) {
+                fileDialog();
+            } else {
+                MANAGER_DENIED = true;
+                Toast.makeText(context, "All files access dennied", Toast.LENGTH_LONG).show();
+                showSAF(true);
+            }
+        }
     }
 
     public void onActivityResult(int resultCode, Intent data) {

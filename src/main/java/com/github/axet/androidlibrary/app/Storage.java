@@ -88,6 +88,8 @@ public class Storage {
 
     public static String LIMITED = "Content is limited, please provide Legacy External Storage support";
 
+    public static boolean MANAGER_REQUEST = false; // manager requested
+
     protected Context context;
     protected ContentResolver resolver;
 
@@ -839,8 +841,10 @@ public class Storage {
         if (Build.VERSION.SDK_INT >= 30 && context.getApplicationInfo().targetSdkVersion >= 30 && Storage.isLegacyManifest30(context)) {
             boolean manager = Storage.isExternalStorageManager(context);
             if (!manager) {
-                if (show)
+                if (show) {
+                    MANAGER_REQUEST = true;
                     Storage.showExternalStorageManager(context);
+                }
                 return false;
             }
         }
