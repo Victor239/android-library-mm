@@ -169,7 +169,7 @@ public class OpenChoicer {
         this.old = old;
         if (Build.VERSION.SDK_INT >= 21) {
             boolean nofile = a == null && f == null; // force SAF?
-            if (!readonly && context != null) { // RW and 'a' or 'f' is set
+            if (context != null) { // RW and 'a' or 'f' is set
                 if (Build.VERSION.SDK_INT >= 30 && context.getApplicationInfo().targetSdkVersion >= 30) {
                     boolean ext = Storage.isLegacyManifest30(context);
                     if (!ext)
