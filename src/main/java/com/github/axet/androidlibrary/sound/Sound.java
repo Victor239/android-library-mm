@@ -223,8 +223,10 @@ public class Sound {
         if (done != null && dones.contains(done)) {
             dones.remove(done); // remove before run
             done.run();
+            removed();
+            return;
         }
-        removed();
+        remove(done);
     }
 
     public void after(Runnable done) {
