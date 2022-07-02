@@ -224,7 +224,7 @@ public class Sound {
             dones.remove(done); // remove before run
             done.run();
         }
-        remove(done);
+        removed();
     }
 
     public void after(Runnable done) {
@@ -236,6 +236,10 @@ public class Sound {
 
     public void remove(Runnable done) {
         dones.remove(done);
+        removed();
+    }
+
+    public void removed() {
         if (dones.isEmpty()) {
             for (Runnable r : exits)
                 r.run();
