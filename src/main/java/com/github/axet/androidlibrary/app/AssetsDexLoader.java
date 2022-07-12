@@ -475,8 +475,9 @@ public class AssetsDexLoader {
         }
 
         public JsonThreadLoader(Context context, boolean block, String... deps) {
-            super(context, block, deps);
+            super(context, deps);
             json = new Json(context);
+            init(block);
         }
 
         @Override
@@ -503,7 +504,6 @@ public class AssetsDexLoader {
 
         @Override
         public ClassLoader deps() {
-            json = new Json(context);
             return AssetsDexLoader.deps(context, json, deps);
         }
     }
