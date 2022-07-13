@@ -229,6 +229,7 @@ public class AssetsDexLoader {
             public String dex;
             public String md5;
             public long size;
+            public boolean empty;
             public ArrayList<Library> deps = new ArrayList<>();
 
             public String getId() {
@@ -282,6 +283,7 @@ public class AssetsDexLoader {
                     info.dex = o.getString("asset");
                     info.size = o.optLong("size");
                     info.md5 = o.optString("md5");
+                    info.empty = o.optBoolean("empty", false);
                     JSONArray deps = o.optJSONArray("deps");
                     if (deps != null && deps.length() > 0)
                         info.deps = loadDeps(deps);
@@ -323,10 +325,12 @@ public class AssetsDexLoader {
             if (info.deps != null) {
                 for (Library l : info.deps) {
                     kk.addAll(getDeps(l));
-                    kk.add(l);
+                    if (!l.empty)
+                        kk.add(l);
                 }
             }
-            kk.add(info);
+            if (!info.empty)
+                kk.add(info);
             return kk;
         }
     }
@@ -475,8 +479,9 @@ public class AssetsDexLoader {
         }
 
         public JsonThreadLoader(Context context, boolean block, String... deps) {
-            super(context, block, deps);
+            super(context, deps);
             json = new Json(context);
+            init(block);
         }
 
         @Override
@@ -503,7 +508,6 @@ public class AssetsDexLoader {
 
         @Override
         public ClassLoader deps() {
-            json = new Json(context);
             return AssetsDexLoader.deps(context, json, deps);
         }
     }

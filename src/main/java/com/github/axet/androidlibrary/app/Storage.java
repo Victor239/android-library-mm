@@ -69,6 +69,8 @@ public class Storage {
     public static final String[] PERMISSIONS_RO = new String[]{Manifest.permission.READ_EXTERNAL_STORAGE};
     public static final String[] PERMISSIONS_RW = new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
     public static final String SAF = "com.android.externalstorage";
+    public static final int SAF_RO = Intent.FLAG_GRANT_READ_URI_PERMISSION;
+    public static final int SAF_RW = SAF_RO | Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
 
     public final static String STORAGE_PRIMARY = "primary"; // sdcard name
     public final static String STORAGE_HOME = "home"; // 'Documents' folder on internal sdcard
@@ -989,6 +991,11 @@ public class Storage {
             Log.w(TAG, e);
         }
         return false;
+    }
+
+    public static void takePersistableUriPermission(Context context, Uri uri, int perms) { // refresh perms
+        ContentResolver resolver = context.getContentResolver();
+        resolver.takePersistableUriPermission(uri, perms); // refresh perms
     }
 
     // file and content twists

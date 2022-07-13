@@ -1,0 +1,19 @@
+4.0.0+ no longer supports SDK9+
+
+keep using:
+
+classpath 'com.android.tools.build:gradle:3.5.4'
+
+NoClassDefFoundError: java.util.Objects
+
+Happens when trying to create inner class with java:
+
+class Test {
+  class Inner {
+  }
+}
+
+Test test = new Test();
+test.new Inner();
+
+causing a crash due to calling Objects.requireNonNull(test) inside (compiler time) 'new' operator.
