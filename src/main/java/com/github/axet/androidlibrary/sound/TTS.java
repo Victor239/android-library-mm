@@ -62,6 +62,27 @@ public class TTS extends Sound {
         }
     }
 
+    public static String ttsLangError(Locale locale, int d) {
+        String str = "";
+        switch (d) {
+            case TextToSpeech.LANG_AVAILABLE:
+                break;
+            case TextToSpeech.LANG_COUNTRY_AVAILABLE:
+                break;
+            case TextToSpeech.LANG_COUNTRY_VAR_AVAILABLE:
+                break;
+            case TextToSpeech.LANG_NOT_SUPPORTED:
+                str = String.format(TTS_LANG_FAILED, locale) + " (not supported)";
+                break;
+            case TextToSpeech.LANG_MISSING_DATA:
+                str = String.format(TTS_LANG_FAILED, locale) + " (missing data)";
+                break;
+            default:
+                str = String.format(TTS_LANG_FAILED, locale) + String.format(" (unknown error: %d)", d);
+        }
+        return str;
+    }
+
     public static class Speak {
         public Locale locale;
         public String text;
@@ -308,32 +329,12 @@ public class TTS extends Sound {
         return playSpeech(speak.locale, speak.text);
     }
 
-    public String ttsLangError(Locale locale, int d) {
-        String str = "";
-        switch (d) {
-            case TextToSpeech.LANG_AVAILABLE:
-                break;
-            case TextToSpeech.LANG_COUNTRY_AVAILABLE:
-                break;
-            case TextToSpeech.LANG_COUNTRY_VAR_AVAILABLE:
-                break;
-            case TextToSpeech.LANG_NOT_SUPPORTED:
-                str = String.format(TTS_LANG_FAILED, locale) + " (not supported)";
-                break;
-            case TextToSpeech.LANG_MISSING_DATA:
-                str = String.format(TTS_LANG_FAILED, locale) + " (missing data)";
-                break;
-            default:
-                str = String.format(TTS_LANG_FAILED, locale) + " (unknown error) " + d;
-        }
-        return str;
-    }
-
-    public void setLanguage(Locale locale) {
-        int l = tts.setLanguage(locale);
+    public Locale setLanguage(Locale locale) {
+        Locale d = locale;
+        int l = tts.setLanguage(d);
         if (l < 0) {
-            Toast.makeText(context, ttsLangError(locale, l), Toast.LENGTH_LONG).show();
-            Locale d = Locale.getDefault();
+            Toast.makeText(context, ttsLangError(d, l), Toast.LENGTH_LONG).show();
+            d = Locale.getDefault();
             l = tts.setLanguage(d);
             if (l < 0) {
                 d = Locale.US;
@@ -347,6 +348,7 @@ public class TTS extends Sound {
                 }
             }
         }
+        return d;
     }
 
     public boolean playSpeech(Locale locale, String speak) {
