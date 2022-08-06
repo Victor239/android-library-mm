@@ -11,6 +11,7 @@ import android.speech.tts.Voice;
 import android.util.AndroidRuntimeException;
 import android.util.Log;
 
+import com.android.dx.Local;
 import com.github.axet.androidlibrary.app.AlarmManager;
 import com.github.axet.androidlibrary.preferences.OptimizationPreferenceCompat;
 import com.github.axet.androidlibrary.widgets.Toast;
@@ -18,11 +19,17 @@ import com.github.axet.androidlibrary.widgets.Toast;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
+import java.util.MissingResourceException;
 import java.util.Set;
 import java.util.UUID;
 
 public class TTS extends Sound {
     public static final String TAG = TTS.class.getSimpleName();
+
+    public static String TTS_WAIT = "Waiting for TTS";
+    public static String TTS_FAILED_AGAIN = "Failed TTS again, skipping";
+    public static String TTS_FAILED_RESTART = "Failed TTS again, restarting";
+    public static String TTS_LANG_FAILED = "TTS language failed %s";
 
     public static final int DELAYED_DELAY = 5 * AlarmManager.SEC1;
     public static final String TTS_INIT = TTS.class.getCanonicalName() + ".TTS_INIT";
@@ -203,8 +210,8 @@ public class TTS extends Sound {
         // TTS may say failed, but play sounds successfully. we need regardless or failed do not
         // play speech twice if clear.run() was called.
         if (!playSpeech(speak)) {
-            Log.d(TAG, "Waiting for TTS");
-            Toast.makeText(context, "Waiting for TTS", Toast.LENGTH_SHORT).show();
+            Log.d(TAG, TTS_WAIT);
+            Toast.makeText(context, TTS_WAIT, Toast.LENGTH_SHORT).show();
             dones.remove(delayed);
             handler.removeCallbacks(delayed);
             delayed = new Runnable() {
@@ -214,13 +221,13 @@ public class TTS extends Sound {
                     if (!playSpeech(speak)) {
                         closeTTS();
                         if (restart >= 1) {
-                            Log.d(TAG, "Failed TTS again, skipping");
-                            Toast.makeText(context, "Failed TTS again, skipping", Toast.LENGTH_SHORT).show();
+                            Log.d(TAG, TTS_FAILED_AGAIN);
+                            Toast.makeText(context, TTS_FAILED_AGAIN, Toast.LENGTH_SHORT).show();
                             clear.run();
                         } else {
-                            Log.d(TAG, "Failed TTS again, restarting");
+                            Log.d(TAG, TTS_FAILED_RESTART);
                             restart++;
-                            Toast.makeText(context, "Failed TTS again, restarting", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(context, TTS_FAILED_RESTART, Toast.LENGTH_SHORT).show();
                             dones.remove(delayed);
                             handler.removeCallbacks(delayed);
                             delayed = new Runnable() {
@@ -300,7 +307,16 @@ public class TTS extends Sound {
     }
 
     public boolean playSpeech(Locale locale, String speak) {
-        tts.setLanguage(locale);
+        if (tts.setLanguage(locale) != TextToSpeech.LANG_AVAILABLE) {
+            Locale d = Locale.getDefault();
+            Toast.makeText(context, String.format(TTS_LANG_FAILED, locale), Toast.LENGTH_LONG).show();
+            if (tts.setLanguage(d) != TextToSpeech.LANG_AVAILABLE) {
+                d = Locale.ENGLISH;
+                Toast.makeText(context, String.format(TTS_LANG_FAILED, d), Toast.LENGTH_LONG).show();
+            }
+            if (tts.setLanguage(d) != TextToSpeech.LANG_AVAILABLE)
+                Toast.makeText(context, String.format(TTS_LANG_FAILED, d), Toast.LENGTH_LONG).show();
+        }
         if (Build.VERSION.SDK_INT >= 21) {
             Bundle params = new Bundle();
             params.putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, getSoundChannel().streamType);

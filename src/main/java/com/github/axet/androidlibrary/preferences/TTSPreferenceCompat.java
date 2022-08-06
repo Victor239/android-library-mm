@@ -20,6 +20,8 @@ import java.util.Locale;
 import java.util.Set;
 
 public class TTSPreferenceCompat extends ListPreference {
+    public static String ZZ = "[Developer] Accented English";
+
     public static void addLocale(HashSet<Locale> list, Locale l) {
         String s = l.toString();
         if (s == null || s.isEmpty())
@@ -76,10 +78,13 @@ public class TTSPreferenceCompat extends ListPreference {
     public static String formatLocale(Locale l) {
         String n = l.getDisplayLanguage();
         String v = l.toString();
-        if (n == null || n.isEmpty() || n.equals(v))
-            return v;
-        else
-            return String.format("%s (%s)", n, v);
+        if (n == null || n.isEmpty() || n.equals(v)) {
+            if (v.equals("zz") || v.equals("zz_ZZ"))
+                n = ZZ;
+            else
+                return v;
+        }
+        return String.format("%s (%s)", n, v);
     }
 
     public TTSPreferenceCompat(Context context, AttributeSet attrs, int defStyleAttr) {
