@@ -311,11 +311,13 @@ public class TTS extends Sound {
             Locale d = Locale.getDefault();
             Toast.makeText(context, String.format(TTS_LANG_FAILED, locale), Toast.LENGTH_LONG).show();
             if (tts.setLanguage(d) != TextToSpeech.LANG_AVAILABLE) {
-                d = Locale.ENGLISH;
-                Toast.makeText(context, String.format(TTS_LANG_FAILED, d), Toast.LENGTH_LONG).show();
+                d = Locale.US;
+                if (tts.setLanguage(d) != TextToSpeech.LANG_AVAILABLE) {
+                    d = Locale.ENGLISH;
+                    if (tts.setLanguage(d) != TextToSpeech.LANG_AVAILABLE)
+                        Toast.makeText(context, String.format(TTS_LANG_FAILED, d), Toast.LENGTH_LONG).show();
+                }
             }
-            if (tts.setLanguage(d) != TextToSpeech.LANG_AVAILABLE)
-                Toast.makeText(context, String.format(TTS_LANG_FAILED, d), Toast.LENGTH_LONG).show();
         }
         if (Build.VERSION.SDK_INT >= 21) {
             Bundle params = new Bundle();
