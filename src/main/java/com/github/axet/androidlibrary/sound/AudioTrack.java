@@ -7,18 +7,39 @@ import android.media.AudioManager;
 import android.os.Build;
 import android.os.Handler;
 import android.support.annotation.NonNull;
+import android.util.Log;
 
 public class AudioTrack extends android.media.AudioTrack {
+    public static String TAG = AudioTrack.class.getSimpleName();
+
     public static final int SHORT_SIZE = Short.SIZE / Byte.SIZE;
     public static final int FLOAT_SIZE = Float.SIZE / Byte.SIZE;
 
-    public long playStart = 0;
+    public long playStart = 0; // start time, reset on end
     public int len; // len in frames (stereo frames = len * 2)
     public int frames; // frames written to audiotrack (including zeros, stereo frames = frames)
 
     Handler playbackHandler = new Handler();
     Runnable playbackUpdate;
-    OnPlaybackPositionUpdateListener playbackListener;
+    OnPlaybackPositionUpdateListener userListener;
+    OnPlaybackPositionUpdateListener systemListener = new OnPlaybackPositionUpdateListener() {
+        @Override
+        public void onMarkerReached(android.media.AudioTrack track) {
+            Log.d(TAG, "onMarkerReached");
+            if (playStart <= 0)
+                return;
+            playStart = 0;
+            if (userListener != null)
+                userListener.onMarkerReached(track);
+        }
+
+        @Override
+        public void onPeriodicNotification(android.media.AudioTrack track) {
+            Log.d(TAG, "onPeriodicNotification");
+            if (userListener != null)
+                userListener.onPeriodicNotification(track);
+        }
+    };
 
     int markerInFrames = -1;
     int periodInFrames = 1000;
@@ -330,18 +351,7 @@ public class AudioTrack extends android.media.AudioTrack {
     }
 
     void playbackListenerUpdate() {
-        if (playbackListener == null)
-            return;
-        if (playStart <= 0)
-            return;
-
-        int mark = 0;
-        try {
-            mark = getNotificationMarkerPosition();
-        } catch (IllegalStateException ignore) { // Unable to retrieve AudioTrack pointer for getMarkerPosition()
-        }
-
-        if (mark <= 0 && markerInFrames >= 0) { // some old bugged phones unable to set markers
+        if (markerInFrames >= 0 && userListener != null && playStart > 0) { // some old bugged phones unable to set markers
             playbackHandler.removeCallbacks(playbackUpdate);
             playbackUpdate = new Runnable() {
                 @Override
@@ -350,11 +360,11 @@ public class AudioTrack extends android.media.AudioTrack {
                     if (markerInFrames >= 0) {
                         long playEnd = playStart + markerInFrames * 1000 / getSampleRate();
                         if (now >= playEnd) {
-                            playbackListener.onMarkerReached(AudioTrack.this);
+                            systemListener.onMarkerReached(AudioTrack.this);
                             return;
                         }
                     }
-                    playbackListener.onPeriodicNotification(AudioTrack.this);
+                    systemListener.onPeriodicNotification(AudioTrack.this);
                     long update = periodInFrames * 1000 / getSampleRate();
 
                     int len = getNativeFrameCount() * 1000 / getSampleRate(); // getNativeFrameCount() checking stereo fine
@@ -402,15 +412,15 @@ public class AudioTrack extends android.media.AudioTrack {
 
     @Override
     public void setPlaybackPositionUpdateListener(OnPlaybackPositionUpdateListener listener) {
-        super.setPlaybackPositionUpdateListener(listener);
-        this.playbackListener = listener;
+        super.setPlaybackPositionUpdateListener(systemListener);
+        this.userListener = listener;
         playbackListenerUpdate();
     }
 
     @Override
     public void setPlaybackPositionUpdateListener(OnPlaybackPositionUpdateListener listener, Handler handler) {
-        super.setPlaybackPositionUpdateListener(listener, handler);
-        this.playbackListener = listener;
+        super.setPlaybackPositionUpdateListener(systemListener, handler);
+        this.userListener = listener;
         if (handler != null) {
             this.playbackHandler.removeCallbacks(playbackUpdate);
             this.playbackHandler = handler;

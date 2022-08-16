@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.speech.tts.Voice;
+import android.support.annotation.NonNull;
 import android.util.AndroidRuntimeException;
 import android.util.Log;
 
@@ -16,6 +17,10 @@ import com.github.axet.androidlibrary.app.AlarmManager;
 import com.github.axet.androidlibrary.preferences.OptimizationPreferenceCompat;
 import com.github.axet.androidlibrary.widgets.Toast;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
@@ -62,6 +67,27 @@ public class TTS extends Sound {
         }
     }
 
+    public static String ttsLangError(Locale locale, int d) {
+        String str = "";
+        switch (d) {
+            case TextToSpeech.LANG_AVAILABLE:
+                break;
+            case TextToSpeech.LANG_COUNTRY_AVAILABLE:
+                break;
+            case TextToSpeech.LANG_COUNTRY_VAR_AVAILABLE:
+                break;
+            case TextToSpeech.LANG_NOT_SUPPORTED:
+                str = String.format(TTS_LANG_FAILED, locale) + " (not supported)";
+                break;
+            case TextToSpeech.LANG_MISSING_DATA:
+                str = String.format(TTS_LANG_FAILED, locale) + " (missing data)";
+                break;
+            default:
+                str = String.format(TTS_LANG_FAILED, locale) + String.format(" (unknown error: %d)", d);
+        }
+        return str;
+    }
+
     public static class Speak {
         public Locale locale;
         public String text;
@@ -74,6 +100,44 @@ public class TTS extends Sound {
         @Override
         public String toString() {
             return text + " (" + locale + ")";
+        }
+    }
+
+    public static class PreferedLocales implements Comparator<Locale> {
+        ArrayList<Locale> pp;
+
+        public PreferedLocales(Locale userSelection, Locale systemLanguage) {
+            pp = new ArrayList<>(Arrays.asList(userSelection, systemLanguage,
+                    Locale.US, Locale.ENGLISH));
+        }
+
+        public int indexOf(Locale l) {
+            for (int i = 0; i < pp.size(); i++) {
+                if (pp.get(i).equals(l))
+                    return i;
+            }
+            for (int i = 0; i < pp.size(); i++) {
+                if (pp.get(i).getLanguage().equals(l.getLanguage()))
+                    return i;
+            }
+            return -1;
+        }
+
+        @Override
+        public int compare(Locale o1, Locale o2) {
+            int i1 = indexOf(o1);
+            int i2 = indexOf(o2);
+            if (i1 != -1 && i2 != -1) {
+                int r = Integer.compare(i1, i2);
+                if (r != 0)
+                    return r;
+                return o1.toString().compareTo(o2.toString());
+            }
+            if (i1 != -1)
+                return -1;
+            if (i2 != -1)
+                return 1;
+            return o1.toString().compareTo(o2.toString());
         }
     }
 
@@ -247,7 +311,7 @@ public class TTS extends Sound {
         }
     }
 
-    public Locale getUserLocale() {
+    public Locale getUserLocale() { // overided with user selection
         return Locale.getDefault();
     }
 
@@ -308,45 +372,45 @@ public class TTS extends Sound {
         return playSpeech(speak.locale, speak.text);
     }
 
-    public String ttsLangError(Locale locale, int d) {
-        String str = "";
-        switch (d) {
-            case TextToSpeech.LANG_AVAILABLE:
-                break;
-            case TextToSpeech.LANG_COUNTRY_AVAILABLE:
-                break;
-            case TextToSpeech.LANG_COUNTRY_VAR_AVAILABLE:
-                break;
-            case TextToSpeech.LANG_NOT_SUPPORTED:
-                str = String.format(TTS_LANG_FAILED, locale) + " (not supported)";
-                break;
-            case TextToSpeech.LANG_MISSING_DATA:
-                str = String.format(TTS_LANG_FAILED, locale) + " (missing data)";
-                break;
-            default:
-                str = String.format(TTS_LANG_FAILED, locale) + " (unknown error) " + d;
-        }
-        return str;
+    public void sort(ArrayList<Locale> ll) {
+        Collections.sort(ll, new PreferedLocales(getUserLocale(), Locale.getDefault()));
     }
 
-    public void setLanguage(Locale locale) {
-        int l = tts.setLanguage(locale);
+    public Locale setLanguage(Locale locale) {
+        Locale d = locale;
+        int l = tts.setLanguage(d);
         if (l < 0) {
-            Toast.makeText(context, ttsLangError(locale, l), Toast.LENGTH_LONG).show();
-            Locale d = Locale.getDefault();
-            l = tts.setLanguage(d);
+            Toast.makeText(context, ttsLangError(d, l), Toast.LENGTH_LONG).show();
+            ArrayList<Locale> ll = new ArrayList<>();
+            for (Voice v : tts.getVoices())
+                ll.add(v.getLocale());
+            sort(ll);
+            for (Locale k : ll) {
+                k = ll.get(0);
+                l = tts.setLanguage(k);
+                if (l == 0)
+                    return k;
+            }
+            for (Locale k : ll) {
+                k = ll.get(0);
+                l = tts.setLanguage(k);
+                if (l >= 0)
+                    return k;
+            }
             if (l < 0) {
-                d = Locale.US;
+                d = Locale.getDefault();
                 l = tts.setLanguage(d);
                 if (l < 0) {
-                    Toast.makeText(context, ttsLangError(d, l), Toast.LENGTH_LONG).show();
-                    d = Locale.ENGLISH;
+                    d = Locale.US;
                     l = tts.setLanguage(d);
-                    if (l < 0)
-                        Toast.makeText(context, ttsLangError(d, l), Toast.LENGTH_LONG).show();
+                    if (l < 0) {
+                        d = Locale.ENGLISH;
+                        tts.setLanguage(d);
+                    }
                 }
             }
         }
+        return d;
     }
 
     public boolean playSpeech(Locale locale, String speak) {

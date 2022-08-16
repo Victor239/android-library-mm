@@ -1,10 +1,14 @@
 package com.github.axet.androidlibrary;
 
-import com.github.axet.androidlibrary.app.Storage;
-
 import org.junit.Test;
 
+import com.github.axet.androidlibrary.sound.*;
+
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Locale;
 
 import static org.junit.Assert.*;
 
@@ -20,6 +24,13 @@ public class ExampleUnitTest {
     @Test
     public void storageName() throws Exception {
         File f = new File("/tmp/abc (888).txt");
-        File t = Storage.getNextFile(f);
+    }
+
+    @Test
+    public void localeSortTest() {
+        TTS.PreferedLocales d = new TTS.PreferedLocales(new Locale("ru", "RU"), Locale.CANADA_FRENCH);
+        ArrayList<Locale> ll = new ArrayList<>(Arrays.asList(new Locale("en", "US"), new Locale("ru"), Locale.CANADA_FRENCH));
+        Collections.sort(ll, d);
+        System.out.println(ll);
     }
 }
