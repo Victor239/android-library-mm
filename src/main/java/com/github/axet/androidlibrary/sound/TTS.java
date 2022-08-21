@@ -382,8 +382,13 @@ public class TTS extends Sound {
         if (l < 0) {
             Toast.makeText(context, ttsLangError(d, l), Toast.LENGTH_LONG).show();
             ArrayList<Locale> ll = new ArrayList<>();
-            for (Voice v : tts.getVoices())
-                ll.add(v.getLocale());
+            if (Build.VERSION.SDK_INT >= 21) {
+                Set<Voice> vv = tts.getVoices();
+                if (vv != null) {
+                    for (Voice v : vv)
+                        ll.add(v.getLocale());
+                }
+            }
             sort(ll);
             for (Locale k : ll) {
                 k = ll.get(0);
