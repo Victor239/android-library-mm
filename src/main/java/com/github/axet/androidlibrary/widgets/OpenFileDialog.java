@@ -938,6 +938,20 @@ public class OpenFileDialog extends AlertDialog.Builder {
 
         listView.setAdapter(adapter);
 
+        setNeutralButton(getContext().getString(R.string.manual_path), new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                final EditTextDialog edit = new EditTextDialog(getContext());
+                edit.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        setCurrentPath(new File(edit.getText()));
+                    }
+                });
+                edit.show();
+            }
+        });
+
         final AlertDialog d = super.create();
 
         onshow = new DialogInterface.OnShowListener() {
