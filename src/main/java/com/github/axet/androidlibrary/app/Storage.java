@@ -95,6 +95,12 @@ public class Storage {
     protected Context context;
     protected ContentResolver resolver;
 
+    public static class PermissionDenied extends RuntimeException {
+        public PermissionDenied(){
+            super("Permission denied");
+        }
+    }
+
     // String functions
 
     public static String relative(String base, String file) {
@@ -1384,7 +1390,7 @@ public class Storage {
                 }
                 return files;
             }
-            throw new RuntimeException("Unable to read");
+            throw new PermissionDenied();
         } else if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
             String id;
             if (DocumentsContract.isDocumentUri(context, uri))
@@ -1403,7 +1409,7 @@ public class Storage {
                 cursor.close();
                 return files;
             }
-            throw new RuntimeException("Unable to read");
+            throw new PermissionDenied();
         } else {
             throw new UnknownUri();
         }
