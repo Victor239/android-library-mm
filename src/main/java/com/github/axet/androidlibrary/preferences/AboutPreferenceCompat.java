@@ -90,7 +90,7 @@ public class AboutPreferenceCompat extends DialogPreference {
         return title;
     }
 
-    public static AlertDialog.Builder buildDialog(final Context context, int id) {
+    public static WebViewCustom buildView(Context context, int id) {
         WebViewCustom web = new WebViewCustom(context) {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, final String url) {
@@ -107,10 +107,13 @@ public class AboutPreferenceCompat extends DialogPreference {
         } catch (Exception e) {
             web.loadHtmlWithBaseURL("", HttpClient.toStackTrace(e), "");
         }
+        return web;
+    }
 
+    public static AlertDialog.Builder buildDialog(final Context context, int id) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setCustomTitle(buildTitle(context));
-        builder.setView(web);
+        builder.setView(buildView(context, id));
         builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
