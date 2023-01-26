@@ -8,25 +8,25 @@ Android Widgets and Support Class Library
 
 Android Directory / File Choicer Dialog with options to create / rename / delete file.
 
-![openfiledialog.png](./docs/openfiledialog.png)
+![openfiledialog.png](./imgs/openfiledialog.png)
 
 * [PopupShareActionProvider.java](./src/main/java/com/github/axet/androidlibrary/widgets/PopupShareActionProvider.java)
 
-![popupshareactionprovider.png](./docs/popupshareactionprovider.png)
+![popupshareactionprovider.png](./imgs/popupshareactionprovider.png)
 
 * [SeekBarPreference.java](./src/main/java/com/github/axet/androidlibrary/widgets/SeekBarPreference.java)
 
-![seekbarpreference.png](./docs/seekbarpreference.png)
+![seekbarpreference.png](./imgs/seekbarpreference.png)
 
 Expandable List View
 
 * [RemoveItemAnimation.java](./src/main/java/com/github/axet/androidlibrary/animations/RemoveItemAnimation.java)
 
-![removeitemanimation.gif](./docs/removeitemanimation.gif)
+![removeitemanimation.gif](./imgs/removeitemanimation.gif)
 
 * [MarginAnimation.java](./src/main/java/com/github/axet/androidlibrary/animations/MarginAnimation.java)
 
-![expanditem.gif](./docs/expanditem.gif)
+![expanditem.gif](./imgs/expanditem.gif)
 
 WebViewCustom
 
@@ -38,7 +38,7 @@ Support Apache HttpClient, Proxying...
 
 Unread Count Drawable
 
-![./docs/unread.png](./docs/unread.png)
+![./imgs/unread.png](./imgs/unread.png)
 
 # Install
 

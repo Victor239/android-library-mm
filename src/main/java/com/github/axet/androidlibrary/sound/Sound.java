@@ -238,6 +238,7 @@ public class Sound {
 
     public void remove(Runnable done) {
         dones.remove(done);
+        handler.removeCallbacks(done);
         removed();
     }
 

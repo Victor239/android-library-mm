@@ -8,11 +8,9 @@ import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.speech.tts.Voice;
-import android.support.annotation.NonNull;
 import android.util.AndroidRuntimeException;
 import android.util.Log;
 
-import com.android.dx.Local;
 import com.github.axet.androidlibrary.app.AlarmManager;
 import com.github.axet.androidlibrary.preferences.OptimizationPreferenceCompat;
 import com.github.axet.androidlibrary.widgets.Toast;
@@ -22,10 +20,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Locale;
-import java.util.MissingResourceException;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.UUID;
 
 public class TTS extends Sound {
@@ -40,9 +37,10 @@ public class TTS extends Sound {
     public static final String TTS_INIT = TTS.class.getCanonicalName() + ".TTS_INIT";
 
     public TextToSpeech tts;
-    public Runnable delayed; // delayedSpeach. tts may not be initalized, on init done, run delayed.run()
+    public Runnable delayedTTS; // delayedSpeach. tts may not be initalized, on init done, run delayed.run()
     public int restart; // restart tts once if failed. on apk upgrade tts always failed.
     public Runnable onInit; // once
+    public TreeMap<String, Runnable> utterance = new TreeMap<>();
 
     public static void startTTSInstall(Context context) {
         try {
@@ -173,57 +171,16 @@ public class TTS extends Sound {
                     .build());
         }
 
-        handler.removeCallbacks(onInit);
-        onInit = null;
-
-        done(delayed);
-        handler.removeCallbacks(delayed);
-        delayed = null;
-    }
-
-    public void close() { // external close
-        closeTTS();
-    }
-
-    public void closeTTS() { // internal close
-        Log.d(TAG, "closeTTS()");
-        if (tts != null) {
-            tts.shutdown();
-            tts = null;
-        }
-        handler.removeCallbacks(onInit);
-        onInit = null;
-        dones.remove(delayed);
-        handler.removeCallbacks(delayed);
-        delayed = null;
-    }
-
-    public void playSpeech(final Speak speak, final Runnable done) {
-        dones.add(done);
-
-        dones.remove(delayed);
-        handler.removeCallbacks(delayed);
-        delayed = null;
-
-        if (tts == null)
-            ttsCreate();
-
-        // clear delayed(), sound just played
-        final Runnable clear = new Runnable() {
-            @Override
-            public void run() {
-                dones.remove(delayed);
-                handler.removeCallbacks(delayed);
-                delayed = null;
-                done(done);
-            }
-        };
-
         if (Build.VERSION.SDK_INT < 15) {
             tts.setOnUtteranceCompletedListener(new TextToSpeech.OnUtteranceCompletedListener() {
                 @Override
-                public void onUtteranceCompleted(String s) {
-                    handler.post(clear);
+                public void onUtteranceCompleted(final String utteranceId) {
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            TTS.this.onDone(utteranceId);
+                        }
+                    });
                 }
             });
         } else {
@@ -233,9 +190,7 @@ public class TTS extends Sound {
                     handler.post(new Runnable() {
                         @Override
                         public void run() {
-                            dones.remove(delayed);
-                            handler.removeCallbacks(delayed);
-                            delayed = null;
+                            TTS.this.onStart(utteranceId);
                         }
                     });
                 }
@@ -254,7 +209,7 @@ public class TTS extends Sound {
                     handler.post(new Runnable() {
                         @Override
                         public void run() {
-                            TTS.this.onDone(utteranceId, clear);
+                            TTS.this.onDone(utteranceId);
                         }
                     });
                 }
@@ -264,21 +219,69 @@ public class TTS extends Sound {
                     handler.post(new Runnable() {
                         @Override
                         public void run() {
-                            TTS.this.onError(utteranceId, clear);
+                            TTS.this.onError(utteranceId);
                         }
                     });
                 }
             });
         }
 
+        handler.removeCallbacks(onInit);
+        onInit = null;
+
+        done(delayedTTS);
+        handler.removeCallbacks(delayedTTS);
+        delayedTTS = null;
+    }
+
+    public void close() { // external close
+        closeTTS();
+    }
+
+    public void closeTTS() { // internal close
+        Log.d(TAG, "closeTTS()");
+        if (tts != null) {
+            tts.shutdown();
+            tts = null;
+        }
+        handler.removeCallbacks(onInit);
+        onInit = null;
+        dones.remove(delayedTTS);
+        handler.removeCallbacks(delayedTTS);
+        delayedTTS = null;
+    }
+
+    public void playSpeech(final Speak speak, final Runnable done) {
+        dones.add(done);
+
+        dones.remove(delayedTTS);
+        handler.removeCallbacks(delayedTTS);
+        delayedTTS = null;
+
+        if (tts == null)
+            ttsCreate();
+
+        // clear delayed(), sound just played
+        final Runnable clear = new Runnable() {
+            @Override
+            public void run() {
+                dones.remove(delayedTTS);
+                handler.removeCallbacks(delayedTTS);
+                delayedTTS = null;
+                done(done);
+            }
+        };
+        dones.add(clear);
+        utterance.put(Integer.toString(speak.hashCode()), clear);
+
         // TTS may say failed, but play sounds successfully. we need regardless or failed do not
         // play speech twice if clear.run() was called.
         if (!playSpeech(speak)) {
             Log.d(TAG, TTS_WAIT);
             Toast.makeText(context, TTS_WAIT, Toast.LENGTH_SHORT).show();
-            dones.remove(delayed);
-            handler.removeCallbacks(delayed);
-            delayed = new Runnable() {
+            dones.remove(delayedTTS);
+            handler.removeCallbacks(delayedTTS);
+            delayedTTS = new Runnable() {
                 @Override
                 public void run() {
                     Log.d(TAG, "delayed run()");
@@ -292,22 +295,22 @@ public class TTS extends Sound {
                             Log.d(TAG, TTS_FAILED_RESTART);
                             restart++;
                             Toast.makeText(context, TTS_FAILED_RESTART, Toast.LENGTH_SHORT).show();
-                            dones.remove(delayed);
-                            handler.removeCallbacks(delayed);
-                            delayed = new Runnable() {
+                            dones.remove(delayedTTS);
+                            handler.removeCallbacks(delayedTTS);
+                            delayedTTS = new Runnable() {
                                 @Override
                                 public void run() {
                                     playSpeech(speak, done);
                                 }
                             };
-                            dones.add(delayed);
-                            handler.postDelayed(delayed, DELAYED_DELAY);
+                            dones.add(delayedTTS);
+                            handler.postDelayed(delayedTTS, DELAYED_DELAY);
                         }
                     }
                 }
             };
-            dones.add(delayed);
-            handler.postDelayed(delayed, DELAYED_DELAY);
+            dones.add(delayedTTS);
+            handler.postDelayed(delayedTTS, DELAYED_DELAY);
         }
     }
 
@@ -369,7 +372,24 @@ public class TTS extends Sound {
     public boolean playSpeech(Speak speak) {
         if (onInit != null)
             return false;
-        return playSpeech(speak.locale, speak.text);
+        setLanguage(speak.locale); // live
+        String u = Integer.toString(speak.hashCode());
+        if (Build.VERSION.SDK_INT >= 21) {
+            Bundle params = new Bundle();
+            params.putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, getSoundChannel().streamType);
+            params.putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, getVolume());
+            if (tts.speak(speak.text, TextToSpeech.QUEUE_FLUSH, params, u) != TextToSpeech.SUCCESS)
+                return false;
+        } else {
+            HashMap<String, String> params = new HashMap<>();
+            params.put(TextToSpeech.Engine.KEY_PARAM_STREAM, String.valueOf(getSoundChannel().streamType));
+            params.put(TextToSpeech.Engine.KEY_PARAM_VOLUME, Float.toString(getVolume()));
+            params.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, u);
+            if (tts.speak(speak.text, TextToSpeech.QUEUE_FLUSH, params) != TextToSpeech.SUCCESS)
+                return false;
+        }
+        restart = 0;
+        return true;
     }
 
     public void sort(ArrayList<Locale> ll) {
@@ -418,35 +438,27 @@ public class TTS extends Sound {
         return d;
     }
 
-    public boolean playSpeech(Locale locale, String speak) {
-        setLanguage(locale); // live
-        if (Build.VERSION.SDK_INT >= 21) {
-            Bundle params = new Bundle();
-            params.putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, getSoundChannel().streamType);
-            params.putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, getVolume());
-            params.putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "DONE");
-            if (tts.speak(speak, TextToSpeech.QUEUE_FLUSH, params, UUID.randomUUID().toString()) != TextToSpeech.SUCCESS)
-                return false;
-        } else {
-            HashMap<String, String> params = new HashMap<>();
-            params.put(TextToSpeech.Engine.KEY_PARAM_STREAM, String.valueOf(getSoundChannel().streamType));
-            params.put(TextToSpeech.Engine.KEY_PARAM_VOLUME, Float.toString(getVolume()));
-            params.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "DONE");
-            if (tts.speak(speak, TextToSpeech.QUEUE_FLUSH, params) != TextToSpeech.SUCCESS)
-                return false;
-        }
-        restart = 0;
-        return true;
+    public void onStart(String utteranceId) {
     }
 
     public void onRangeStart(String utteranceId, int start, int end, int frame) {
     }
 
-    public void onDone(String utteranceId, Runnable done) {
-        done.run();
+    public void onDone(String utteranceId) {
+        Log.d(TAG, "onDone " + utteranceId);
+        Runnable r = utterance.get(utteranceId);
+        if (r != null) {
+            done(r);
+            utterance.remove(utteranceId);
+        }
     }
 
-    public void onError(String utteranceId, Runnable done) {
-        done.run();
+    public void onError(String utteranceId) {
+        Log.d(TAG, "onError " + utteranceId);
+        Runnable r = utterance.get(utteranceId);
+        if (r != null) {
+            done(r);
+            utterance.remove(utteranceId);
+        }
     }
 }

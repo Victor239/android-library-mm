@@ -247,16 +247,14 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         return isCallable(context, samsung);
     }
 
-    public static boolean startActivity(Context context, Intent intent) {
-        if (isCallable(context, intent)) {
-            try {
-                context.startActivity(intent);
-                return true;
-            } catch (SecurityException e) {
-                Log.d(TAG, "unable to start activity", e);
-            }
+    public static boolean startActivity(Context context, Intent intent) { // for open / share intents
+        try { // TODO replace exception catching with isCallable like method
+            context.startActivity(intent);
+            return true;
+        } catch (Exception e) { // SecurityException and others
+            Log.d(TAG, "unable to start activity", e);
+            return false;
         }
-        return false;
     }
 
     @TargetApi(23)
