@@ -10,6 +10,11 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+// Only recent (19+) phones has no issue loading natives.
+// Old phones (16+) unable to locate library dependencies.
+// Very old phones (15+) unable choice proper native library
+// ABI version and crash with error UnsatifiedLinkExcetpion.
+
 public class Natives {
     public static String TAG = Natives.class.getSimpleName();
 
