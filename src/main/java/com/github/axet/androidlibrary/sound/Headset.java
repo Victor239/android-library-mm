@@ -1,5 +1,6 @@
 package com.github.axet.androidlibrary.sound;
 
+import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -30,7 +31,10 @@ public class Headset {
     public void create(Context context, Class cls) {
         Log.d(TAG, "headset mediabutton on");
         ComponentName name = new ComponentName(context, cls);
-        msc = new MediaSessionCompat(context, TAG, name, null);
+        Intent mediaButtonIntent = new Intent(Intent.ACTION_MEDIA_BUTTON);
+        mediaButtonIntent.setComponent(name);
+        PendingIntent mbrIntent = PendingIntent.getBroadcast(context, 0, mediaButtonIntent, PendingIntent.FLAG_IMMUTABLE);
+        msc = new MediaSessionCompat(context, TAG, name, mbrIntent);
         msc.setCallback(new MediaSessionCompat.Callback() {
             @Override
             public void onPlay() {
