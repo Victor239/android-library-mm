@@ -25,6 +25,7 @@ import java.lang.reflect.Method;
 public class ProximityShader implements SensorEventListener {
     public static int PROXIMITY_READY = 1000;
     public static int PROXIMITY_DELAY = 700; // onNear delay
+    public static final String BROADCAST_CLOSE_SYSTEM_DIALOGS = "android.permission.BROADCAST_CLOSE_SYSTEM_DIALOGS";
 
     public Dialog d;
     public Sensor proximity;
@@ -42,8 +43,10 @@ public class ProximityShader implements SensorEventListener {
     };
 
     public static void closeSystemDialogs(Context context) {
-        Intent it = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
-        context.sendBroadcast(it);
+        if (Build.VERSION.SDK_INT < 31 || Storage.permitted(context, new String[]{BROADCAST_CLOSE_SYSTEM_DIALOGS})) {
+            Intent it = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
+            context.sendBroadcast(it);
+        }
     }
 
     public void clearFlags(WindowManager.LayoutParams attrs, int flags) {

@@ -295,6 +295,18 @@ public class NotificationChannelCompat {
         }
     }
 
+    public void setLockscreenVisibility(int v) {
+        if (Build.VERSION.SDK_INT >= 26) {
+            try {
+                NotificationChannel.getDeclaredMethod("setLockscreenVisibility", int.class).invoke(channel, v);
+            } catch (NoSuchMethodException e) {
+                throw new RuntimeException(e);
+            } catch (InvocationTargetException | IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
     public void apply(NotificationCompat.Builder builder) {
         int defaults = 0;
         Uri sound = null;

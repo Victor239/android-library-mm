@@ -219,7 +219,8 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
                 return String.valueOf(userSerial);
             else
                 return "";
-        } catch (NoSuchMethodException | IllegalArgumentException | InvocationTargetException | IllegalAccessException ignored) {
+        } catch (NoSuchMethodException | IllegalArgumentException | InvocationTargetException |
+                 IllegalAccessException ignored) {
         }
         return "";
     }
@@ -1100,7 +1101,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         public PersistentIconBuilder create(int theme, NotificationChannelCompat channel) {
             PackageManager pm = mContext.getPackageManager();
             Intent launch = pm.getLaunchIntentForPackage(mContext.getPackageName());
-            PendingIntent main = PendingIntent.getActivity(mContext, 0, launch, PendingIntent.FLAG_UPDATE_CURRENT);
+            PendingIntent main = PendingIntent.getActivity(mContext, 0, launch, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
             setTheme(theme)
                     .setChannel(channel)
