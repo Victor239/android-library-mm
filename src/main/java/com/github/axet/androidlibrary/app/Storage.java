@@ -42,6 +42,7 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -596,7 +597,7 @@ public class Storage {
     }
 
     @TargetApi(21)
-    public static Uri createDocumentFile(Context context, Uri u, String name) {
+    public static Uri createDocumentFile(Context context, Uri u, String name) throws FileNotFoundException {
         if (!DocumentsContract.isDocumentUri(context, u)) // tree uri?
             u = DocumentsContract.buildDocumentUriUsingTree(u, DocumentsContract.getTreeDocumentId(u));
         ContentResolver resolver = context.getContentResolver();
@@ -606,7 +607,7 @@ public class Storage {
     }
 
     @TargetApi(21)
-    public static Uri createDocumentFolder(Context context, Uri u, String name) {
+    public static Uri createDocumentFolder(Context context, Uri u, String name) throws FileNotFoundException {
         if (!DocumentsContract.isDocumentUri(context, u)) // tree uri?
             u = DocumentsContract.buildDocumentUriUsingTree(u, DocumentsContract.getTreeDocumentId(u));
         ContentResolver resolver = context.getContentResolver();
@@ -769,7 +770,7 @@ public class Storage {
     }
 
     @TargetApi(21)
-    synchronized public static Uri createFile(Context context, Uri parent, String path) {
+    synchronized public static Uri createFile(Context context, Uri parent, String path) throws FileNotFoundException {
         DocumentFile k = getDocumentFile(context, parent, path);
         if (k != null && k.exists())
             return k.getUri();
@@ -792,7 +793,7 @@ public class Storage {
     }
 
     @TargetApi(21)
-    synchronized public static Uri createFolder(Context context, Uri parent, String path) {
+    synchronized public static Uri createFolder(Context context, Uri parent, String path) throws FileNotFoundException {
         DocumentFile k = getDocumentFile(context, parent, path);
         if (k != null && k.exists())
             return k.getUri();
@@ -814,7 +815,7 @@ public class Storage {
     }
 
     @TargetApi(21)
-    public static Uri move(Context context, File f, Uri dir, String t) {
+    public static Uri move(Context context, File f, Uri dir, String t) throws FileNotFoundException {
         Uri u = createDocumentFile(context, dir, t);
         if (u == null)
             throw new RuntimeException("Unable to create file " + t);
@@ -836,12 +837,10 @@ public class Storage {
 
     public static boolean isLegacyRequred(Context context) {
         boolean ext = Storage.isLegacyManifest30(context);
-        if (Build.VERSION.SDK_INT >= 30 && context.getApplicationInfo().targetSdkVersion >= 30 && ext) {
+        if (Build.VERSION.SDK_INT >= 30 && context.getApplicationInfo().targetSdkVersion >= 30 && ext)
             return true;
-        }
-        if (Build.VERSION.SDK_INT == 29 && context.getApplicationInfo().targetSdkVersion == 29) {
+        if (Build.VERSION.SDK_INT == 29 && context.getApplicationInfo().targetSdkVersion == 29)
             return Storage.hasRequestedLegacyExternalStorage(context);
-        }
         return false;
     }
 
@@ -999,6 +998,7 @@ public class Storage {
         return false;
     }
 
+    @TargetApi(19)
     public static void takePersistableUriPermission(Context context, Uri uri, int perms) { // refresh perms
         ContentResolver resolver = context.getContentResolver();
         resolver.takePersistableUriPermission(uri, perms); // refresh perms
@@ -1074,7 +1074,7 @@ public class Storage {
         }
     }
 
-    public static boolean delete(Context context, Uri f) {
+    public static boolean delete(Context context, Uri f) throws FileNotFoundException {
         ContentResolver resolver = context.getContentResolver();
         String s = f.getScheme();
         if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
@@ -1098,7 +1098,7 @@ public class Storage {
         }
     }
 
-    public static Uri rename(Context context, Uri f, String t) {
+    public static Uri rename(Context context, Uri f, String t) throws FileNotFoundException {
         ContentResolver resolver = context.getContentResolver();
         String s = f.getScheme();
         if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
@@ -1235,7 +1235,7 @@ public class Storage {
         }
     }
 
-    public static Uri mkdir(Context context, Uri to, String name) {
+    public static Uri mkdir(Context context, Uri to, String name) throws FileNotFoundException {
         String s = to.getScheme();
         if (s.equals(ContentResolver.SCHEME_FILE)) {
             File k = getFile(to);
@@ -1298,7 +1298,7 @@ public class Storage {
     }
 
     // call getNextFile() on 't'
-    public static Uri move(Context context, File f, Uri t) {
+    public static Uri move(Context context, File f, Uri t) throws FileNotFoundException {
         String s = t.getScheme();
         if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
             Uri root = getDocumentTreeUri(t);
@@ -1329,7 +1329,7 @@ public class Storage {
         }
     }
 
-    public static Uri migrate(Context context, File f, Uri dir) {
+    public static Uri migrate(Context context, File f, Uri dir) throws FileNotFoundException {
         String s = dir.getScheme();
         if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
             Log.d(TAG, "migrate: " + f + " --> " + getDisplayName(context, dir));
