@@ -98,8 +98,18 @@ public class Storage {
     protected ContentResolver resolver;
 
     public static class PermissionDenied extends RuntimeException {
+        public static String PERMS = "Permission denied";
+
         public PermissionDenied() {
-            super("Permission denied");
+            super(PERMS);
+        }
+
+        public PermissionDenied(Throwable e) {
+            super(PERMS, e);
+        }
+
+        public PermissionDenied(String s) {
+            super(PERMS + ": " + s);
         }
     }
 
@@ -840,7 +850,7 @@ public class Storage {
     public static Uri move(Context context, File f, Uri dir, String t) throws FileNotFoundException {
         Uri u = createDocumentFile(context, dir, t);
         if (u == null)
-            throw new RuntimeException("Unable to create file " + t);
+            throw new PermissionDenied(t);
         ContentResolver resolver = context.getContentResolver();
         try {
             InputStream is = new FileInputStream(f);
@@ -1097,11 +1107,15 @@ public class Storage {
         }
     }
 
-    public static boolean delete(Context context, Uri f) throws FileNotFoundException {
+    public static boolean delete(Context context, Uri f) {
         ContentResolver resolver = context.getContentResolver();
         String s = f.getScheme();
         if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
-            return DocumentsContract.deleteDocument(resolver, f);
+            try {
+                return DocumentsContract.deleteDocument(resolver, f);
+            } catch (FileNotFoundException ignore) {
+                return false;
+            }
         } else if (s.equals(ContentResolver.SCHEME_FILE)) {
             File ff = getFile(f);
             return delete(ff);
@@ -1121,11 +1135,15 @@ public class Storage {
         }
     }
 
-    public static Uri rename(Context context, Uri f, String t) throws FileNotFoundException {
+    public static Uri rename(Context context, Uri f, String t) {
         ContentResolver resolver = context.getContentResolver();
         String s = f.getScheme();
         if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
-            return DocumentsContract.renameDocument(resolver, f, t);
+            try {
+                return DocumentsContract.renameDocument(resolver, f, t);
+            } catch (FileNotFoundException e) {
+                return null;
+            }
         } else if (s.equals(ContentResolver.SCHEME_FILE)) {
             File fs = getFile(f);
             File ft = new File(fs.getParent(), t);
@@ -1243,7 +1261,7 @@ public class Storage {
                 if (k == null || !k.exists()) {
                     doc = createDocumentFile(context, uri, name);
                     if (doc == null)
-                        throw new IOException("no permission");
+                        throw new PermissionDenied();
                 } else {
                     doc = k.getUri();
                 }
@@ -1260,7 +1278,7 @@ public class Storage {
         }
     }
 
-    public static Uri mkdir(Context context, Uri to, String name) throws FileNotFoundException {
+    public static Uri mkdir(Context context, Uri to, String name) {
         String s = to.getScheme();
         if (s.equals(ContentResolver.SCHEME_FILE)) {
             File k = getFile(to);
@@ -1280,7 +1298,11 @@ public class Storage {
                 to = m.getUri();
                 name = f.getName();
             }
-            return createDocumentFolder(context, to, name); // createFolder() 'mkdirs' mode
+            try {
+                return createDocumentFolder(context, to, name); // createFolder() 'mkdirs' mode
+            } catch (FileNotFoundException e) {
+                return null;
+            }
         } else {
             throw new UnknownUri();
         }
@@ -1323,11 +1345,15 @@ public class Storage {
     }
 
     // call getNextFile() on 't'
-    public static Uri move(Context context, File f, Uri t) throws FileNotFoundException {
+    public static Uri move(Context context, File f, Uri t) {
         String s = t.getScheme();
         if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
             Uri root = getDocumentTreeUri(t);
-            return move(context, f, root, getDocumentChildPath(t));
+            try {
+                return move(context, f, root, getDocumentChildPath(t));
+            } catch (FileNotFoundException e) {
+                throw new PermissionDenied(e);
+            }
         } else if (s.equals(ContentResolver.SCHEME_FILE)) {
             File parent = f.getParentFile();
 
@@ -1341,7 +1367,7 @@ public class Storage {
                 return null;
 
             if (!mkdirs(td))
-                throw new RuntimeException("Unable to create: " + td);
+                throw new PermissionDenied(td.toString());
 
             File to = getNextFile(td, n, ext);
 
@@ -1354,22 +1380,34 @@ public class Storage {
         }
     }
 
-    public static Uri migrate(Context context, File f, Uri dir) throws FileNotFoundException {
+    public static Uri migrate(Context context, File f, Uri dir) {
         String s = dir.getScheme();
         if (Build.VERSION.SDK_INT >= 21 && s.equals(ContentResolver.SCHEME_CONTENT)) {
             Log.d(TAG, "migrate: " + f + " --> " + getDisplayName(context, dir));
             String n = f.getName();
             if (f.isDirectory()) {
-                Uri tt = createDocumentFolder(context, dir, n); // create (1) automatically
+                Uri tt;
+                try {
+                    tt = createDocumentFolder(context, dir, n); // creates (1) automatically
+                } catch (FileNotFoundException e) {
+                    throw new PermissionDenied(e);
+                }
                 File[] files = f.listFiles();
                 if (files != null) {
-                    for (File m : files)
-                        migrate(context, m, tt);
+                    for (File m : files) {
+                        Uri u = migrate(context, m, tt);
+                        if (u == null)
+                            throw new PermissionDenied(m.toString());
+                    }
                 }
                 delete(f);
                 return tt;
             } else {
-                return move(context, f, dir, n); // create (1) automatically
+                try {
+                    return move(context, f, dir, n); // creates (1) automatically
+                } catch (FileNotFoundException e) {
+                    throw new PermissionDenied(e);
+                }
             }
         } else if (s.equals(ContentResolver.SCHEME_FILE)) {
             Log.d(TAG, "migrate: " + f + " --> " + dir.getPath());
@@ -1379,7 +1417,7 @@ public class Storage {
                     for (File ff : files) {
                         File tt = new File(getFile(dir), ff.getName());
                         if (!mkdirs(tt))
-                            throw new RuntimeException("No permissions: " + tt);
+                            throw new PermissionDenied(tt.toString());
                         move(ff, tt);
                     }
                 }
@@ -1388,7 +1426,7 @@ public class Storage {
             } else {
                 File to = getFile(dir);
                 if (!mkdirs(to))
-                    throw new RuntimeException("No permissions: " + to);
+                    throw new PermissionDenied(to.toString());
                 File tofile = new File(to, f.getName());
                 return Uri.fromFile(move(f, tofile));
             }
