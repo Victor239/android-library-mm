@@ -982,9 +982,13 @@ public class OpenFileDialog extends AlertDialog.Builder {
                         public void onClick(DialogInterface dialog2, int which) {
                             String s = edit.getText();
                             if (s.isEmpty()) {
-                                setCurrentPath(null);
-                                AlertDialog a = (AlertDialog) dialog;
-                                a.getButton(DialogInterface.BUTTON_POSITIVE).performClick();
+                                if (config.reset) {
+                                    setCurrentPath(null);
+                                    AlertDialog a = (AlertDialog) dialog;
+                                    a.getButton(DialogInterface.BUTTON_POSITIVE).performClick();
+                                } else {
+                                    dialog2.dismiss();
+                                }
                             } else {
                                 setCurrentPath(new File(s));
                             }

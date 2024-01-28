@@ -37,7 +37,7 @@ public class OpenChoicer {
 
     public Context context;
     public OpenFileDialog.DIALOG_TYPE type;
-    public boolean readonly;
+    public OpenFileDialog.Config config;
     public Uri old;
     public Activity a;
     public Fragment f;
@@ -128,7 +128,12 @@ public class OpenChoicer {
 
     public OpenChoicer(OpenFileDialog.DIALOG_TYPE type, boolean readonly) {
         this.type = type;
-        this.readonly = readonly;
+        this.config.readonly = readonly;
+    }
+
+    public OpenChoicer(OpenFileDialog.DIALOG_TYPE type, OpenFileDialog.Config config) {
+        this.type = type;
+        this.config = config;
     }
 
     public void setContext(Context context) {
@@ -195,7 +200,7 @@ public class OpenChoicer {
             return; // perms shown
         }
         if (context != null) {
-            if (Storage.permitted(context, readonly ? Storage.PERMISSIONS_RO : Storage.PERMISSIONS_RW))
+            if (Storage.permitted(context, config.readonly ? Storage.PERMISSIONS_RO : Storage.PERMISSIONS_RW))
                 fileDialog();
             return; // perms shown
         }
@@ -220,10 +225,10 @@ public class OpenChoicer {
             intent.addFlags(Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
         }
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
-        if (!readonly)
+        if (!config.readonly)
             intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
         intent.putExtra(EXTRA_INITIAL_URI, old); // API 26+
-        if (force || showStorageAccessFramework(context, old != null ? old.toString() : null, perms, intent, readonly)) {
+        if (force || showStorageAccessFramework(context, old != null ? old.toString() : null, perms, intent, config.readonly)) {
             if (sa != null) {
                 sa.startActivityForResult(intent, sresult);
                 return true;
@@ -240,7 +245,7 @@ public class OpenChoicer {
         final List<String> ss = new ArrayList<>();
         File local = OpenFileDialog.getLocalInternal(context);
         ss.add(local.getPath());
-        File[] ext = OpenFileDialog.getLocalExternals(context, readonly);
+        File[] ext = OpenFileDialog.getLocalExternals(context, config.readonly);
         if (ext != null) {
             for (File f : ext)
                 ss.add(f.getPath());
@@ -284,14 +289,14 @@ public class OpenChoicer {
     }
 
     public void fileDialog() {
-        if (!readonly && !Storage.permitted(context, Storage.PERMISSIONS_RW) && type != OpenFileDialog.DIALOG_TYPE.FILE_DIALOG) {
+        if (!config.readonly && !Storage.permitted(context, Storage.PERMISSIONS_RW) && type != OpenFileDialog.DIALOG_TYPE.FILE_DIALOG) {
             showFallbackFolders();
         } else {
             final OpenFileDialog f = fileDialogBuild();
             if (title != null)
                 f.setTitle(title);
             final AlertDialog d = f.create();
-            if (!readonly) {
+            if (!config.readonly) {
                 f.setChangeFolderListener(new Runnable() {
                     @Override
                     public void run() {
@@ -311,7 +316,7 @@ public class OpenChoicer {
     }
 
     public OpenFileDialog fileDialogBuild() {
-        final OpenFileDialog dialog = new OpenFileDialog(context, type, new OpenFileDialog.Config(readonly, true, true));
+        final OpenFileDialog dialog = new OpenFileDialog(context, type, config);
         if (old != null) {
             String s = old.getScheme();
             if (s.equals(ContentResolver.SCHEME_FILE))
@@ -360,7 +365,7 @@ public class OpenChoicer {
                 ContentResolver resolver = context.getContentResolver();
                 try {
                     int flags = Intent.FLAG_GRANT_READ_URI_PERMISSION;
-                    if (!readonly)
+                    if (!config.readonly)
                         flags |= Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
                     resolver.takePersistableUriPermission(u, flags);
                     onResult(u, false);
