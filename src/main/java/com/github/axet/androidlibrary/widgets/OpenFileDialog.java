@@ -1005,8 +1005,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
         currentPath = path;
         if (adapter != null) {
             adapter.currentPath = path;
-            if (adapter.currentPath != null)
-                rebuildFiles();
+            rebuildFiles();
         }
     }
 
