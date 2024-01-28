@@ -1734,7 +1734,7 @@ public class Storage {
             public void run() {
                 try {
                     migrateLocalStorage();
-                } catch (final RuntimeException e) {
+                } catch (RuntimeException | IOException e) {
                     Toast.Post(a, e);
                 }
                 a.runOnUiThread(new Runnable() {
@@ -1749,7 +1749,7 @@ public class Storage {
         thread.start();
     }
 
-    public void migrateLocalStorage() {
+    public void migrateLocalStorage() throws IOException {
     }
 
     public static class SplitStoragePermissions {
