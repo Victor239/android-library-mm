@@ -98,7 +98,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
     protected int paddingTop;
     protected Runnable changeFolder;
 
-    protected Config config = new Config();
+    protected boolean readonly;
     // allow select files, or just select directory
     protected DIALOG_TYPE type = DIALOG_TYPE.BOOTH;
 
@@ -240,21 +240,6 @@ public class OpenFileDialog extends AlertDialog.Builder {
         return d;
     }
 
-    public static class Config {
-        protected boolean readonly = false; // file / folder readonly dialog selection or output directory? also shows readonly folder tooltip.
-        protected boolean reset = false; // allow reset to default
-        protected boolean manual = true; // allow manual path selection
-
-        public Config() {
-        }
-
-        public Config(boolean readonly, boolean manual, boolean reset) {
-            this.readonly = readonly;
-            this.reset = reset;
-            this.manual = manual;
-        }
-    }
-
     public static class SortFiles implements Comparator<File> {
         @Override
         public int compare(File f1, File f2) {
@@ -275,7 +260,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
             this.builder = b;
             File ext = Environment.getExternalStorageDirectory();
             cache(ext);
-            if (ext == null || (!builder.config.readonly && !ext.canWrite()))
+            if (ext == null || (!builder.readonly && !ext.canWrite()))
                 ext = getLocalInternal(builder.getContext());
             add(ext);
             File data = getDataDir(builder.getContext());
@@ -283,7 +268,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
             if (datae != null)
                 datae = datae.getParentFile();
             if (Build.VERSION.SDK_INT >= 19) {
-                File[] ff = getLocalExternals(builder.getContext(), builder.config.readonly);
+                File[] ff = getLocalExternals(builder.getContext(), builder.readonly);
                 if (ff != null) {
                     for (File f : ff) {
                         if (f == null)
@@ -304,7 +289,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
                                 p = f;
                                 f = f.getParentFile();
                             }
-                            if (!builder.config.readonly) { // help user find writable root if algorithm above failed
+                            if (!builder.readonly) { // help user find writable root if algorithm above failed
                                 for (int i = pp.size() - 1; i >= 0; i--) {
                                     p = pp.get(i);
                                     if (p.canWrite()) {
@@ -336,7 +321,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
         boolean add(File f) {
             if (f == null)
                 return false;
-            if (!builder.config.readonly && !f.canWrite())
+            if (!builder.readonly && !f.canWrite())
                 return false;
             for (int i = 0; i < list.size(); i++) {
                 String s = list.get(i).getPath();
@@ -698,12 +683,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
 
     public OpenFileDialog(Context context, DIALOG_TYPE type, boolean readonly) {
         this(context, type);
-        config.readonly = readonly;
-    }
-
-    public OpenFileDialog(Context context, DIALOG_TYPE type, Config config) {
-        this(context, type);
-        this.config = config;
+        this.readonly = readonly;
     }
 
     public int dp2px(int dp) {
@@ -824,7 +804,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
                 toolbar.addView(textView);
             }
 
-            if (!config.readonly) { // show new folder button
+            if (!readonly) { // show new folder button
                 AppCompatButton textView = new AppCompatButton(getContext());
                 textView.setPadding(paddingLeft, 0, paddingRight, 0);
                 textView.setText(R.string.filedialog_newfolder);
@@ -869,7 +849,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
                 @Override
                 public boolean onItemLongClick(AdapterView<?> parent, View view, final int position, long id) {
                     final PopupMenu p = new PopupMenu(getContext(), view);
-                    if (!config.readonly) { // show rename / delete
+                    if (!readonly) { // show rename / delete
                         p.getMenu().add(getContext().getString(R.string.filedialog_rename));
                         p.getMenu().add(getContext().getString(R.string.filedialog_delete));
                     }
@@ -956,58 +936,6 @@ public class OpenFileDialog extends AlertDialog.Builder {
         setNegativeButton(android.R.string.cancel, null);
 
         listView.setAdapter(adapter);
-
-        if (config.manual) {
-            setNeutralButton(getContext().getString(R.string.manual_path), new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(final DialogInterface dialog, int which) {
-                    final EditTextDialog edit = new EditTextDialog(getContext());
-                    edit.setTitle(R.string.legacy_title);
-                    File p = getCurrentPath();
-                    if (p != null)
-                        edit.setText(p.getAbsolutePath());
-                    if (config.reset) {
-                        edit.setNeutralButton(R.string.reset_to_default, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog2, int which) {
-                                setCurrentPath(null);
-                                dialog2.dismiss();
-                                AlertDialog a = (AlertDialog) dialog;
-                                a.getButton(DialogInterface.BUTTON_POSITIVE).performClick();
-                            }
-                        });
-                    }
-                    edit.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog2, int which) {
-                            String s = edit.getText();
-                            if (s.isEmpty()) {
-                                if (config.reset) {
-                                    setCurrentPath(null);
-                                    AlertDialog a = (AlertDialog) dialog;
-                                    a.getButton(DialogInterface.BUTTON_POSITIVE).performClick();
-                                } else {
-                                    dialog2.dismiss();
-                                    dialog.dismiss();
-                                }
-                            } else {
-                                setCurrentPath(new File(s));
-                            }
-                        }
-                    });
-                    edit.show();
-                }
-            });
-        } else if (config.reset) {
-            setNeutralButton(R.string.reset_to_default, new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    setCurrentPath(null);
-                    AlertDialog a = (AlertDialog) dialog;
-                    a.getButton(DialogInterface.BUTTON_POSITIVE).performClick();
-                }
-            });
-        }
 
         final AlertDialog d = super.create();
 
@@ -1097,7 +1025,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
         if (changeFolder != null)
             changeFolder.run();
 
-        if (!config.readonly) { // show readonly directory tooltip
+        if (!readonly) { // show readonly directory tooltip
             File p = adapter.currentPath;
             while (!p.exists())
                 p = p.getParentFile();

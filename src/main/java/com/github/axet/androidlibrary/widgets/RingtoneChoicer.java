@@ -64,7 +64,7 @@ public class RingtoneChoicer extends OpenChoicer {
         if (title != null)
             intent.putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, title);
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
-        if (!config.readonly)
+        if (!readonly)
             intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
         f.startActivityForResult(intent, result);
     }

@@ -53,7 +53,7 @@ public class StoragePathPreferenceCompat extends EditTextPreference {
     }
 
     public void create() {
-        choicer = new OpenStorageChoicer(storage, OpenFileDialog.DIALOG_TYPE.FOLDER_DIALOG, new OpenFileDialog.Config(false, true, true)) {
+        choicer = new OpenStorageChoicer(storage, OpenFileDialog.DIALOG_TYPE.FOLDER_DIALOG, false) {
             @Override
             public void onResult(Uri uri) {
                 String s;
