@@ -218,12 +218,12 @@ public abstract class AppCompatThemeActivity extends AppCompatActivity {
         super.attachBaseContext(newBase);
     }
 
-    public void checkTranslucent() { // TODO figure it out, how to create trasparent default activity window / themed (black or white) window
+    public void checkTranslucent() { // TODO figure it out, how to create transparent initial activity window / themed (black or white) window
         PackageManager pm = getPackageManager();
         try {
             ActivityInfo ai = pm.getActivityInfo(getComponentName(), 0);
-            if (ai.theme != R.style.Translucent)
-                Log.d(TAG, "Please set android:theme=\"@style/Translucent\" for themed activity to prevent white blinking on activity start");
+            if (ai.theme != android.R.style.Theme_Translucent_NoTitleBar)
+                Log.d(TAG, "Please set android:theme=\"@android:style/Theme.Translucent.NoTitleBar\" for themed activity to prevent white blinking on activity start");
         } catch (PackageManager.NameNotFoundException ignored) {
         }
     }
