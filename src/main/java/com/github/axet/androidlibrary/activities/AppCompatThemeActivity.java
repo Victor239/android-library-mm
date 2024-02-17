@@ -184,7 +184,7 @@ public abstract class AppCompatThemeActivity extends AppCompatActivity {
     }
 
     public int getAppTheme() {
-        return MainApplication.getTheme(this, R.style.AppThemeLightLib, R.style.AppThemeDarkLib);
+        return MainApplication.getTheme(this, R.style.AppThemeLightLib, R.style.AppThemeDarkLib, R.style.AppThemeDarkBlackLib);
     }
 
     @SuppressLint("RestrictedApi")
