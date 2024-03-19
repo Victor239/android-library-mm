@@ -10,6 +10,7 @@ import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.LocaleList;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.preference.ListPreference;
@@ -116,7 +117,7 @@ public class TTSPreferenceCompat extends ListPreference {
     }
 
     public static CharSequence getImageText(final Context context, int res, final int tint) {
-        Drawable d = context.getResources().getDrawable(res);
+        Drawable d = ContextCompat.getDrawable(context, res);
         d.setBounds(0, 0, d.getIntrinsicWidth(), d.getIntrinsicHeight());
         d = DrawableCompat.wrap(d);
         DrawableCompat.setTint(d, ThemeUtils.getThemeColor(context, tint));
@@ -236,7 +237,7 @@ public class TTSPreferenceCompat extends ListPreference {
                 dialog.dismiss();
             }
         });
-        builder.setNeutralButton(getImageText(getContext(), R.drawable.ic_open_in_new_black_24dp, android.R.attr.colorAccent), new DialogInterface.OnClickListener() {
+        builder.setNeutralButton(getImageText(getContext(), R.drawable.ic_open_in_new_black_24dp, R.attr.colorAccent), new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 showTTS(getContext());
