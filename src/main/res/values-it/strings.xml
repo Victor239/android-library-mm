@@ -42,14 +42,14 @@
     <string name="size_kb">%1$.1f kb</string>
 
     <string name="optimization_dialog">Impostazioni Ottimizzazione</string>
-    <string name="optimization_message">Considera l'aggiunta dell'applicazione alla lista bianca del gestore della batteria per prevenirne la rimozione dalla memoria.</string>
-    <string name="optimization_killed">L'applicazione è stata fermata dal SO. Considera l'aggiunta dell'applicazione alla lista bianca.</string>
+    <string name="optimization_message">Considera l\'aggiunta dell\'applicazione alla lista bianca del gestore della batteria per prevenirne la rimozione dalla memoria.</string>
+    <string name="optimization_killed">L\'applicazione è stata fermata dal SO. Considera l\'aggiunta dell\'applicazione alla lista bianca.</string>
     <string name="optimization_alive">Keep Alive Service</string>
     <string name="optimization_alive_summary">Background service keep application running</string>
     <string name="optimization_icon">icona Persistente</string>
-    <string name="optimization_icon_summary">Richiesto da alcuni dispositivi quando l'applicazione viene costantemente rimossa</string>
+    <string name="optimization_icon_summary">Richiesto da alcuni dispositivi quando l\'applicazione viene costantemente rimossa</string>
     <string name="optimization_system">Ottimizzazione batteria</string>
-    <string name="optimization_system_summary">Apri l'ottimizzazione della batteria del sistema</string>
+    <string name="optimization_system_summary">Apri l\'ottimizzazione della batteria del sistema</string>
 
     <string name="menu_settings">Impostazioni</string>
     <string name="menu_about">Informazioni</string>
