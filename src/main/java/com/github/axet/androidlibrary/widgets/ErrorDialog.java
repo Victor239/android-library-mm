@@ -1,5 +1,6 @@
 package com.github.axet.androidlibrary.widgets;
 
+import android.app.Application;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -9,7 +10,6 @@ import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.github.axet.androidlibrary.R;
 import com.github.axet.androidlibrary.app.Storage;
@@ -30,6 +30,8 @@ public class ErrorDialog extends AlertDialog.Builder {
     public static final String TAG = ErrorDialog.class.getSimpleName();
 
     public static String ERROR = "Error"; // title
+
+    public static Thread.UncaughtExceptionHandler OLD;
 
     public File error;
 
@@ -58,6 +60,34 @@ public class ErrorDialog extends AlertDialog.Builder {
             Log.d(TAG, "Write crash", fe);
         }
         return d;
+    }
+
+    public static void unhandled(Context context) {
+        if (OLD != null)
+            return;
+        OLD = Thread.getDefaultUncaughtExceptionHandler();
+        Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+            @Override
+            public void uncaughtException(@NonNull Thread t, @NonNull Throwable e) {
+                unhandled(context, t, e);
+            }
+        });
+    }
+
+    public static void unhandled(Context context, Thread thread) {
+        thread.setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+            @Override
+            public void uncaughtException(@NonNull Thread t, @NonNull Throwable e) {
+                unhandled(context, t, e);
+            }
+        });
+    }
+
+    public static void unhandled(Context context, Thread t, Throwable e) {
+        if (context instanceof Application)
+            Toast.makeText(context, ERROR + " " + toMessage(e), Toast.LENGTH_SHORT).show();
+        else
+            Error(context, e);
     }
 
     public static Throwable getCause(Throwable e) { // get to the bottom
