@@ -131,6 +131,10 @@ public class ErrorDialog extends AlertDialog.Builder {
         });
     }
 
+    public static AlertDialog Error(Context context, Throwable e) {
+        return Error(context, e, null);
+    }
+
     public static AlertDialog Error(Context context, Throwable e, File f) {
         saveCrash(context, e);
         return Error(context, ErrorDialog.toMessage(e), f);
