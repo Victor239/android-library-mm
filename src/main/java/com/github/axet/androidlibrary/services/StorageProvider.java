@@ -274,6 +274,10 @@ public class StorageProvider extends ContentProvider {
             is.close();
         }
 
+        public long lastModified() {
+            return 0;
+        }
+
         public void onClose(File tmp, IOException e) { // SDK19+ / RW only
         }
     }
@@ -704,6 +708,8 @@ public class StorageProvider extends ContentProvider {
                         Log.d(TAG, "copy close error", e);
                     }
                 }
+                long last = is.lastModified();
+                tmp.setLastModified(last);
                 if (Build.VERSION.SDK_INT >= 19) {
                     final File finalTmp = tmp;
                     return ParcelFileDescriptor.open(tmp, FileProvider.modeToMode(mode), handler, new ParcelFileDescriptor.OnCloseListener() {
