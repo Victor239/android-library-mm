@@ -19,8 +19,6 @@ import android.support.v7.widget.AppCompatTextView;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
-import android.util.TypedValue;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -52,7 +50,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -82,7 +79,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
     protected static int FILE_ICON = R.drawable.ic_file;
     public static int PADDING = 14;
 
-    protected static Map<File, Set<File>> CACHE = new TreeMap<>(); // cache folders, keep folder visible, when android shows _none_
+    public static Cache CACHE = new Cache(); // cache folders, keep folder visible, when android shows _none_
 
     protected String title;
     protected File currentPath;
@@ -150,47 +147,8 @@ public class OpenFileDialog extends AlertDialog.Builder {
         imm.hideSoftInputFromWindow(input.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
     }
 
-    protected static void cache(Context context) {
-        cache(context.getExternalCacheDir());
-        if (Build.VERSION.SDK_INT >= 19) {
-            File[] ff = context.getExternalCacheDirs();
-            for (File f : ff)
-                cache(f);
-        }
-    }
-
-    protected static void cache(File path) {
-        while (path != null && path.isFile()) // skip file links, go up folder
-            path = path.getParentFile();
-        if (path == null)
-            return;
-        File old = path;
-        path = path.getParentFile();
-        while (path != null) {
-            TreeSet<File> list = new TreeSet<>();
-            list.add(old);
-            Set<File> tmp = CACHE.put(path, list);
-            if (tmp != null)
-                addAll(list, tmp);
-            old = path;
-            path = path.getParentFile();
-        }
-    }
-
     public static Display getDefaultDisplay(Context context) {
         return ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-    }
-
-    public static boolean isFile(File f) {
-        return !isDirectory(f);
-    }
-
-    public static boolean isDirectory(File f) {
-        if (f.isDirectory())
-            return true;
-        if (CACHE.get(f) != null)
-            return true;
-        return false;
     }
 
     public static File getDataDir(Context context) {
@@ -245,12 +203,53 @@ public class OpenFileDialog extends AlertDialog.Builder {
         return d;
     }
 
+    public static class Cache extends TreeMap<File, Set<File>> {
+        public void create(Context context) {
+            put(context.getExternalCacheDir());
+            if (Build.VERSION.SDK_INT >= 19) {
+                File[] ff = context.getExternalCacheDirs();
+                for (File f : ff)
+                    put(f);
+            }
+        }
+
+        public void put(File path) {
+            while (path != null && path.isFile()) // skip file links, go up folder
+                path = path.getParentFile();
+            if (path == null)
+                return;
+            File old = path;
+            path = path.getParentFile();
+            while (path != null) {
+                TreeSet<File> list = new TreeSet<>();
+                list.add(old);
+                Set<File> tmp = CACHE.put(path, list);
+                if (tmp != null)
+                    addAll(list, tmp);
+                old = path;
+                path = path.getParentFile();
+            }
+        }
+
+        public boolean isFile(File f) {
+            return !isDirectory(f);
+        }
+
+        public boolean isDirectory(File f) {
+            if (f.isDirectory())
+                return true;
+            if (CACHE.get(f) != null)
+                return true;
+            return false;
+        }
+    }
+
     public static class SortFiles implements Comparator<File> {
         @Override
         public int compare(File f1, File f2) {
-            if (isDirectory(f1) && isFile(f2))
+            if (CACHE.isDirectory(f1) && CACHE.isFile(f2))
                 return -1;
-            else if (isFile(f1) && isDirectory(f2))
+            else if (CACHE.isFile(f1) && CACHE.isDirectory(f2))
                 return 1;
             else
                 return f1.getPath().compareTo(f2.getPath());
@@ -266,7 +265,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
             this.context = context;
             this.readonly = readonly;
             File ext = Environment.getExternalStorageDirectory();
-            cache(ext);
+            CACHE.put(ext);
             if (ext == null || (!readonly && !ext.canWrite()))
                 ext = getLocalInternal(context);
             add(ext);
@@ -281,7 +280,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
                         if (f == null)
                             continue; // if storage unmounted null file here
 
-                        cache(f);
+                        CACHE.put(f);
 
                         {
                             ArrayList<File> pp = new ArrayList<>();
@@ -499,7 +498,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
         public void onBindViewHolder(final FileHolder h, int position) {
             File file = files.get(position);
             h.text.setText(file.getName());
-            if (OpenFileDialog.isDirectory(file))
+            if (CACHE.isDirectory(file))
                 setDrawable(h.text, getDrawable(context, FOLDER_ICON));
             else
                 setDrawable(h.text, getDrawable(context, FILE_ICON));
@@ -566,9 +565,9 @@ public class OpenFileDialog extends AlertDialog.Builder {
         }
 
         public void scan() {
-            OpenFileDialog.cache(currentPath);
+            CACHE.put(currentPath);
 
-            if (currentPath.exists() && !isDirectory(currentPath)) // file or symlink
+            if (currentPath.exists() && !CACHE.isDirectory(currentPath)) // file or symlink
                 currentPath = currentPath.getParentFile();
 
             if (currentPath == null)
@@ -687,7 +686,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
         super(context);
         this.type = type;
         currentPath = Environment.getExternalStorageDirectory();
-        cache(context);
+        CACHE.create(context);
     }
 
     public OpenFileDialog(Context context, DIALOG_TYPE type, boolean readonly) {
@@ -795,7 +794,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
                     public void onClick(View view) { // [UP] button
                         File parentDirectory = adapter.currentPath;
                         File old = parentDirectory;
-                        if (isDirectory(parentDirectory) || !parentDirectory.exists()) { // allow virtual up
+                        if (CACHE.isDirectory(parentDirectory) || !parentDirectory.exists()) { // allow virtual up
                             parentDirectory = parentDirectory.getParentFile();
                         } else {
                             parentDirectory = parentDirectory.getParentFile();
@@ -906,7 +905,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
 
                     adapter.currentPath = file;
 
-                    if (isDirectory(file)) {
+                    if (CACHE.isDirectory(file)) {
                         rebuildFiles();
                     } else {
                         switch (type) {
