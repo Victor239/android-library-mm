@@ -142,6 +142,18 @@ public class OpenFileDialog extends AlertDialog.Builder {
         });
     }
 
+    public static void setDrawable(TextView view, Drawable drawable) {
+        if (view != null) {
+            if (drawable != null) {
+                int iconPadding = ThemeUtils.dp2px(view.getContext(), 5);
+                drawable.setBounds(0, 0, drawable.getIntrinsicWidth() + iconPadding, drawable.getIntrinsicHeight() + iconPadding);
+                view.setCompoundDrawables(drawable, null, null, null);
+            } else {
+                view.setCompoundDrawables(null, null, null, null);
+            }
+        }
+    }
+
     public static void hideKeyboard(Context context, View input) {
         InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(input.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
@@ -466,7 +478,6 @@ public class OpenFileDialog extends AlertDialog.Builder {
 
         protected int colorSelected;
         protected int colorTransparent;
-        protected int iconPadding;
 
         protected ArrayList<File> files = new ArrayList<>();
 
@@ -484,7 +495,6 @@ public class OpenFileDialog extends AlertDialog.Builder {
                 colorSelected = context.getResources().getColor(R.color.holo_blue_dark);
                 colorTransparent = context.getResources().getColor(android.R.color.transparent);
             }
-            iconPadding = ThemeUtils.dp2px(context, 5);
         }
 
         @Override
@@ -519,17 +529,6 @@ public class OpenFileDialog extends AlertDialog.Builder {
                         onItemClickListener.onItemClick(null, v, h.getAdapterPosition(), -1);
                 }
             });
-        }
-
-        public void setDrawable(TextView view, Drawable drawable) {
-            if (view != null) {
-                if (drawable != null) {
-                    drawable.setBounds(0, 0, drawable.getIntrinsicWidth() + iconPadding, drawable.getIntrinsicHeight() + iconPadding);
-                    view.setCompoundDrawables(drawable, null, null, null);
-                } else {
-                    view.setCompoundDrawables(null, null, null, null);
-                }
-            }
         }
 
         @Override
@@ -785,7 +784,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
             {
                 TextView textView = (TextView) LayoutInflater.from(getContext()).inflate(android.R.layout.simple_list_item_1, null);
                 textView.setText(UP);
-                adapter.setDrawable(textView, getDrawable(getContext(), FOLDER_ICON));
+                setDrawable(textView, getDrawable(getContext(), FOLDER_ICON));
                 textView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
                 textView.setOnClickListener(new View.OnClickListener() {
                     @Override
