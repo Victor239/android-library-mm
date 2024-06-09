@@ -844,13 +844,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
             public void onShow(DialogInterface dialogInterface) {
                 positive = d.getButton(DialogInterface.BUTTON_POSITIVE);
                 rebuildFiles();
-                // scroll to selected item
-                listView.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        listView.scrollToPosition(adapter.selectedIndex);
-                    }
-                });
+                scrollToSelection();
                 if (neutral != null) {
                     Button n = d.getButton(DialogInterface.BUTTON_NEUTRAL);
                     n.setOnClickListener(new View.OnClickListener() {
@@ -1083,5 +1077,14 @@ public class OpenFileDialog extends AlertDialog.Builder {
     public AlertDialog.Builder setTitle(@Nullable CharSequence t) {
         title = t.toString();
         return this;
+    }
+
+    public void scrollToSelection() {
+        listView.post(new Runnable() { // scroll to selected item
+            @Override
+            public void run() {
+                listView.scrollToPosition(adapter.selectedIndex);
+            }
+        });
     }
 }
