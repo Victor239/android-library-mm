@@ -583,7 +583,6 @@ public class OpenFileDialog extends AlertDialog.Builder {
                     Collections.sort(files, new SortFiles());
                 }
             } catch (RuntimeException e) {
-                Log.e(TAG, "listFiles", e);
                 ErrorDialog.saveCrash(context, e);
                 if (emptyView != null) {
                     emptyView.setVisibility(View.VISIBLE);
