@@ -62,7 +62,7 @@ public class ErrorDialog extends AlertDialog.Builder {
         return d;
     }
 
-    public static void unhandled(Context context) {
+    public static void unhandled(final Context context) {
         if (OLD != null)
             return;
         OLD = Thread.getDefaultUncaughtExceptionHandler();
@@ -74,7 +74,7 @@ public class ErrorDialog extends AlertDialog.Builder {
         });
     }
 
-    public static void unhandled(Context context, Thread thread) {
+    public static void unhandled(final Context context, Thread thread) {
         thread.setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
             @Override
             public void uncaughtException(@NonNull Thread t, @NonNull Throwable e) {
@@ -143,7 +143,7 @@ public class ErrorDialog extends AlertDialog.Builder {
     }
 
     public static void Post(final Context context, final Throwable e) {
-        File f = saveCrash(context, e);
+        final File f = saveCrash(context, e);
         Handler handler = new Handler(Looper.getMainLooper());
         handler.post(new Runnable() {
             @Override
