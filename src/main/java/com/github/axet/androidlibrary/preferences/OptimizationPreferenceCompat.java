@@ -34,6 +34,7 @@ import android.support.v7.preference.SwitchPreferenceCompat;
 import android.support.v7.view.WindowCallbackWrapper;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.util.Pair;
 import android.util.TypedValue;
 import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
@@ -59,6 +60,9 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 //
@@ -86,8 +90,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
     public static int CHECK_DELAY = 5 * AlarmManager.MIN1;
     public static boolean ICON = false; // for(api23+ true means){ show persistent icon option } else {persistent service, icon}; use setIcon if default true and service persisted
 
-    public static long boot; // boot cache time, stable time
-    public static int BOOT_DELTA_MS = 30; // two calls can return 30 ms delta time
+    public static long BOOT; // boot cache time, stable time
 
     public static int BOOT_DELAY = 2 * 60 * 1000;
 
@@ -128,14 +131,34 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
     }
 
     public static long getBootTime() { // rounded time, to keep it stable
-        if (boot != 0)
-            return boot;
-        long time = System.currentTimeMillis() - SystemClock.elapsedRealtime();
-        int ms = (int) (time % 1000);
-        time = time / 1000 * 1000;
-        if (ms <= BOOT_DELTA_MS)
-            time -= 1000;
-        boot = time;
+        if (BOOT != 0)
+            return BOOT;
+        ArrayList<Pair<Long, Long>> list = new ArrayList<>();
+        for (int i = 0; i < 6; i++) {
+            long start = System.currentTimeMillis();
+            long el = SystemClock.elapsedRealtime();
+            long end = System.currentTimeMillis();
+            long d = end - start;
+            list.add(new Pair<>(d, end - el));
+        }
+        Collections.sort(list, new Comparator<Pair<Long, Long>>() {
+            @Override
+            public int compare(Pair<Long, Long> o1, Pair<Long, Long> o2) {
+                return Long.compare(o1.first, o2.first);
+            }
+        });
+        int i = 0;
+        long d = list.get(i).first;
+        long total = list.get(i).second;
+        int count = 1;
+        i++;
+        while (i < list.size() && list.get(i).first == d) {
+            total += list.get(i).second;
+            count++;
+            i++;
+        }
+        long time = total / count;
+        BOOT = time;
         return time;
     }
 

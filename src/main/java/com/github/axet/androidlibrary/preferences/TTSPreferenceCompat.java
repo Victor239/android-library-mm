@@ -4,12 +4,17 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.LocaleList;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.preference.ListPreference;
+import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.style.ImageSpan;
 import android.util.AttributeSet;
@@ -112,19 +117,57 @@ public class TTSPreferenceCompat extends ListPreference {
     }
 
     public static CharSequence getImageText(final Context context, int res, final int tint) {
+        Drawable d = ContextCompat.getDrawable(context, res);
+        d.setBounds(0, 0, d.getIntrinsicWidth(), d.getIntrinsicHeight());
+        d = DrawableCompat.wrap(d);
+        DrawableCompat.setTint(d, ThemeUtils.getThemeColor(context, tint));
+        return getImageText(d);
+    }
+
+    public static CharSequence getImageText(Drawable d) {
         SpannableStringBuilder t = new SpannableStringBuilder();
-        t.append(" ");
-        ImageSpan img = new ImageSpan(context, res) {
-            @Override
-            public Drawable getDrawable() {
-                Drawable d = super.getDrawable();
-                d = DrawableCompat.wrap(d);
-                DrawableCompat.setTint(d, ThemeUtils.getThemeColor(context, tint));
-                return d;
-            }
-        };
-        t.setSpan(img, t.length() - 1, t.length(), 0);
+        int start = t.length();
+        t.append("!");
+        int end = t.length();
+        VerticalImageSpan img = new VerticalImageSpan(d);
+        t.setSpan(img, start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         return t;
+    }
+
+    public static class VerticalImageSpan extends ImageSpan {
+        public VerticalImageSpan(Drawable drawable) {
+            super(drawable);
+        }
+
+        @Override
+        public int getSize(Paint paint, CharSequence text, int start, int end, Paint.FontMetricsInt fontMetricsInt) {
+            Drawable drawable = getDrawable();
+            Rect rect = drawable.getBounds();
+            if (fontMetricsInt != null) {
+                Paint.FontMetricsInt fmPaint = paint.getFontMetricsInt();
+                int fontHeight = fmPaint.descent - fmPaint.ascent;
+                int drHeight = rect.bottom - rect.top;
+                int centerY = fmPaint.ascent + fontHeight / 2;
+                fontMetricsInt.ascent = centerY - drHeight / 2;
+                fontMetricsInt.top = fontMetricsInt.ascent;
+                fontMetricsInt.bottom = centerY + drHeight / 2;
+                fontMetricsInt.descent = fontMetricsInt.bottom;
+            }
+            return rect.right;
+        }
+
+        @Override
+        public void draw(Canvas canvas, CharSequence text, int start, int end, float x, int top, int y, int bottom, Paint paint) {
+            Drawable drawable = getDrawable();
+            canvas.save();
+            Paint.FontMetricsInt fmPaint = paint.getFontMetricsInt();
+            int fontHeight = fmPaint.descent - fmPaint.ascent;
+            int centerY = y + fmPaint.descent - fontHeight / 2;
+            int transY = centerY - (drawable.getBounds().bottom - drawable.getBounds().top) / 2;
+            canvas.translate(x, transY);
+            drawable.draw(canvas);
+            canvas.restore();
+        }
     }
 
     public TTSPreferenceCompat(Context context, AttributeSet attrs, int defStyleAttr) {
@@ -194,7 +237,7 @@ public class TTSPreferenceCompat extends ListPreference {
                 dialog.dismiss();
             }
         });
-        builder.setNeutralButton(getImageText(getContext(), R.drawable.ic_open_in_new_black_24dp, android.R.attr.colorAccent), new DialogInterface.OnClickListener() {
+        builder.setNeutralButton(getImageText(getContext(), R.drawable.ic_open_in_new_black_24dp, R.attr.colorAccent), new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 showTTS(getContext());

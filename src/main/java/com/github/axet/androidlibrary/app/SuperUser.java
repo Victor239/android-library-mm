@@ -40,6 +40,7 @@ public class SuperUser {
 
     public static int BUF_SIZE = 4 * 1024; // IOUtils#DEFAULT_BUFFER_SIZE
 
+    public static final SimpleDateFormat LASTDATE = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
     public static final SimpleDateFormat TOUCHDATE = new SimpleDateFormat("yyyyMMddHHmm.ss", Locale.US);
     public static final SimpleDateFormat LSDATE = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US);
 
@@ -94,7 +95,7 @@ public class SuperUser {
     public static final String LNS = BIN_LN + " -s {0} {1}";
     public static final String TOUCHMCT = BIN_TOUCH + " -mct {0} {1}"; // m = modification time, c = do not create file, t = set date/time
     public static final String STATLCS = BIN_STAT + " -Lc%s {0}"; // L = follow symlinks, c = custom format, %s = file size
-    public static final String STATLCY = BIN_STAT + "-Lc%y {0}"; // y = last modifed
+    public static final String STATLCY = BIN_STAT + " -Lc%y {0}"; // y = last modifed
     public static final String LSA = BIN_LS + " -AlH {0}"; // -A = all entries except "." and ".." -l = long format -H = follow symlinks
     public static final String LSa = BIN_LS + " -alH {0}"; // -a = all including starting with "." -l = long format -H = follow symlinks
 
@@ -378,7 +379,7 @@ public class SuperUser {
     public static long lastModified(File f) {
         Result r = su(new Commands(MessageFormat.format(STATLCY, escape(f))).stdout(true).exit(true)).must();
         try {
-            return TOUCHDATE.parse(r.stdout.trim()).getTime();
+            return LASTDATE.parse(r.stdout.trim()).getTime();
         } catch (ParseException e) {
             return 0;
         }

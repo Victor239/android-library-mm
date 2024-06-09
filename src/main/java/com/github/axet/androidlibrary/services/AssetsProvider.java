@@ -93,8 +93,8 @@ public class AssetsProvider extends ContentProvider {
 
     public Uri addFile(String name, AssetFileDescriptor file) {
         Uri u = new Uri.Builder().scheme(ContentResolver.SCHEME_CONTENT).authority(info.authority).path(name).build();
-        String type = MimeTypeMap.getFileExtensionFromUrl(u.toString());
-        type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(type);
+        String ext = MimeTypeMap.getFileExtensionFromUrl(u.toString());
+        String type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext);
         types.put(u, type);
         names.put(u, name);
         files.put(u, file);

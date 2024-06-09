@@ -243,7 +243,10 @@ public class Storage {
     // file functions
 
     public static File getFile(Uri u) {
-        return new File(u.getPath());
+        String s = u.getScheme();
+        if (s.equals(ContentResolver.SCHEME_FILE))
+            return new File(u.getPath());
+        throw new RuntimeException("bad uri: " + u);
     }
 
     public static File relative(File base, File file) { // system/test64/123 - system/test64 == 123, but not 'system/test'

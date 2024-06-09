@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.KeyguardManager;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.v7.preference.ListPreference;
@@ -47,6 +48,11 @@ public class ScreenlockPreference extends ListPreference {
         keepScreenOn(true, a.getWindow(), key);
     }
 
+    public static boolean isLocked(Context context) {
+        KeyguardManager km = (KeyguardManager) context.getSystemService(Context.KEYGUARD_SERVICE);
+        return km.inKeyguardRestrictedInputMode();
+    }
+
     // call it for Activity.onUserInteraction
     public static void onUserInteraction(final Activity activity, final String key) {
         final Context context = activity;
@@ -63,8 +69,7 @@ public class ScreenlockPreference extends ListPreference {
         Runnable inactivity = new Runnable() {
             @Override
             public void run() {
-                KeyguardManager myKM = (KeyguardManager) context.getSystemService(Context.KEYGUARD_SERVICE);
-                if (myKM.inKeyguardRestrictedInputMode()) {
+                if (isLocked(context)) {
                     AppCompatThemeActivity.moveTaskToBack(activity);
                 } else {
                     keepScreenOn(false, window, key);
