@@ -238,9 +238,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
         public boolean isDirectory(File f) {
             if (f.isDirectory())
                 return true;
-            if (CACHE.get(f) != null)
-                return true;
-            return false;
+            return get(f) != null;
         }
     }
 
