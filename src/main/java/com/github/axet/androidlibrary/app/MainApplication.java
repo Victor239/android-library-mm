@@ -11,6 +11,7 @@ import android.content.res.Configuration;
 import android.support.v7.preference.PreferenceManager;
 
 import com.github.axet.androidlibrary.R;
+import com.github.axet.androidlibrary.widgets.ErrorDialog;
 
 import java.text.SimpleDateFormat;
 import java.util.Locale;
@@ -204,6 +205,7 @@ public class MainApplication extends Application {
     @Override
     protected void attachBaseContext(Context base) {
         super.attachBaseContext(base);
+        ErrorDialog.unhandled(base);
         try { // MultiDex.install(this);
             Class.forName("android.support.multidex.MultiDex").getMethod("install", Context.class).invoke(null, this);
         } catch (Exception ignore) {
