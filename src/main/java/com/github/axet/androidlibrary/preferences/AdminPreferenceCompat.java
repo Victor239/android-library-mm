@@ -45,6 +45,8 @@ public class AdminPreferenceCompat extends SwitchPreferenceCompat {
     public static String TITLE = "Enable device admin access";
     public static String ENABLED = "(Device Owner enabled)";
     public static String MISSING = "MISSING";
+    public static String VENDING = "com.android.vending";
+    public static String PACKAGEINSTALLER = "com.android.packageinstaller";
 
     public static final String ERASE_ALL_DATA = "wipe-data";
     public static final String LOCK_SCREEN = "force-lock";
@@ -78,9 +80,9 @@ public class AdminPreferenceCompat extends SwitchPreferenceCompat {
         String installer = pm.getInstallerPackageName(context.getPackageName());
         if (installer == null)
             return Installer.ADB;
-        if (installer.startsWith("com.android.packageinstaller"))
+        if (installer.startsWith(PACKAGEINSTALLER))
             return Installer.APK;
-        if (installer.startsWith("com.android.vending"))
+        if (installer.startsWith(VENDING))
             return Installer.STORE;
         return Installer.UNKNOWN;
     }
