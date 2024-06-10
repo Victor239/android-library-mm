@@ -72,7 +72,9 @@ public class AlarmManager {
     public static PendingIntent setExact(Context context, long time, Intent intent) {
         PendingIntent pe = createPendingIntent(context, intent, PendingIntent.FLAG_ONE_SHOT);
         android.app.AlarmManager alarm = (android.app.AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        if (Build.VERSION.SDK_INT >= 23)
+        if (Build.VERSION.SDK_INT >= 31 && !alarm.canScheduleExactAlarms())
+            alarm.set(android.app.AlarmManager.RTC_WAKEUP, time, pe);
+        else if (Build.VERSION.SDK_INT >= 23)
             alarm.setExactAndAllowWhileIdle(android.app.AlarmManager.RTC_WAKEUP, time, pe); // can be scheduled with 15 mins interval during IDLE, or 1 minute other times
         else if (Build.VERSION.SDK_INT >= 19)
             alarm.setExact(android.app.AlarmManager.RTC_WAKEUP, time, pe);
@@ -88,7 +90,9 @@ public class AlarmManager {
     public static PendingIntent setAlarm(Context context, long time, Intent intent, long showTime, Intent showIntent) {
         PendingIntent pe = createPendingIntent(context, intent, PendingIntent.FLAG_ONE_SHOT);
         android.app.AlarmManager alarm = (android.app.AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        if (Build.VERSION.SDK_INT >= 21)
+        if (Build.VERSION.SDK_INT >= 31 && !alarm.canScheduleExactAlarms())
+            alarm.set(android.app.AlarmManager.RTC_WAKEUP, time, pe);
+        else if (Build.VERSION.SDK_INT >= 21)
             alarm.setAlarmClock(new android.app.AlarmManager.AlarmClockInfo(showTime, createPendingIntent(context, showIntent, 0)), pe); // should be percise on time, no delays
         else if (Build.VERSION.SDK_INT >= 19)
             alarm.setExact(android.app.AlarmManager.RTC_WAKEUP, time, pe);
