@@ -36,6 +36,7 @@ public class ErrorDialog extends AlertDialog.Builder {
     public static String ERROR = "Error"; // title
 
     public static Thread.UncaughtExceptionHandler OLD;
+    public static Thread.UncaughtExceptionHandler UEH;
 
     public static String getInstallerPackage(Context context) {
         PackageManager pm = context.getPackageManager();
@@ -87,13 +88,16 @@ public class ErrorDialog extends AlertDialog.Builder {
     public static void unhandled(final Context context) {
         if (OLD != null)
             return;
-        OLD = Thread.getDefaultUncaughtExceptionHandler();
-        Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-            @Override
-            public void uncaughtException(@NonNull Thread t, @NonNull Throwable e) {
-                unhandled(context, t, e);
-            }
-        });
+        if (UEH == null) {
+            OLD = Thread.getDefaultUncaughtExceptionHandler();
+            UEH = new Thread.UncaughtExceptionHandler() {
+                @Override
+                public void uncaughtException(@NonNull Thread t, @NonNull Throwable e) {
+                    unhandled(context, t, e);
+                }
+            };
+        }
+        Thread.setDefaultUncaughtExceptionHandler(UEH);
     }
 
     public static void unhandled(final Context context, Thread thread) {
