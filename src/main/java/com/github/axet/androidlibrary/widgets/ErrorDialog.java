@@ -87,8 +87,14 @@ public class ErrorDialog extends AlertDialog.Builder {
     }
 
     public static void unhandled(final Context context, final boolean auto) {
-        if (OLD != null)
-            return;
+        if (OLD != null) {
+            if (!auto) {
+                Thread.setDefaultUncaughtExceptionHandler(OLD);
+                UEH = null;
+            } else {
+                return;
+            }
+        }
         if (UEH == null) {
             OLD = Thread.getDefaultUncaughtExceptionHandler();
             UEH = new Thread.UncaughtExceptionHandler() {
