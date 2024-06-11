@@ -18,6 +18,7 @@ import android.util.Log;
 import com.github.axet.androidlibrary.R;
 import com.github.axet.androidlibrary.app.Storage;
 import com.github.axet.androidlibrary.preferences.AboutPreferenceCompat;
+import com.github.axet.androidlibrary.preferences.AdminPreferenceCompat;
 import com.github.axet.androidlibrary.preferences.OptimizationPreferenceCompat;
 import com.github.axet.androidlibrary.preferences.TTSPreferenceCompat;
 import com.github.axet.androidlibrary.services.StorageProvider;
@@ -85,7 +86,7 @@ public class ErrorDialog extends AlertDialog.Builder {
         return d;
     }
 
-    public static void unhandled(final Context context) {
+    public static void unhandled(final Context context, final boolean auto) {
         if (OLD != null)
             return;
         if (UEH == null) {
@@ -93,7 +94,7 @@ public class ErrorDialog extends AlertDialog.Builder {
             UEH = new Thread.UncaughtExceptionHandler() {
                 @Override
                 public void uncaughtException(@NonNull Thread t, @NonNull Throwable e) {
-                    unhandled(context, t, e);
+                    unhandled(context, t, e, auto);
                 }
             };
         }
@@ -104,13 +105,14 @@ public class ErrorDialog extends AlertDialog.Builder {
         thread.setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
             @Override
             public void uncaughtException(@NonNull Thread t, @NonNull Throwable e) {
-                unhandled(context, t, e);
+                unhandled(context, t, e, false);
             }
         });
     }
 
-    public static void unhandled(final Context context, final Thread t, final Throwable e) {
-        if (context instanceof Activity) {
+    public static void unhandled(final Context context, final Thread t, final Throwable e, boolean auto) {
+        boolean a = auto && AdminPreferenceCompat.getInstaller(context).equals(AdminPreferenceCompat.Installer.STORE);
+        if (context instanceof Activity && !a) {
             ErrorDialog builder = new ErrorDialog(context, e);
             builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
                 @Override

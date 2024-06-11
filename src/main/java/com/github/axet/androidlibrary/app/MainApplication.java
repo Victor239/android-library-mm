@@ -205,7 +205,7 @@ public class MainApplication extends Application {
     @Override
     protected void attachBaseContext(Context base) {
         super.attachBaseContext(base);
-        ErrorDialog.unhandled(base);
+        ErrorDialog.unhandled(base, true);
         try { // MultiDex.install(this);
             Class.forName("android.support.multidex.MultiDex").getMethod("install", Context.class).invoke(null, this);
         } catch (Exception ignore) {
