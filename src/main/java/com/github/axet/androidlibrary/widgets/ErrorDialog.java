@@ -1,10 +1,14 @@
 package com.github.axet.androidlibrary.widgets;
 
+import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.InstallSourceInfo;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.NonNull;
@@ -14,6 +18,7 @@ import android.util.Log;
 import com.github.axet.androidlibrary.R;
 import com.github.axet.androidlibrary.app.Storage;
 import com.github.axet.androidlibrary.preferences.AboutPreferenceCompat;
+import com.github.axet.androidlibrary.preferences.AdminPreferenceCompat;
 import com.github.axet.androidlibrary.preferences.OptimizationPreferenceCompat;
 import com.github.axet.androidlibrary.preferences.TTSPreferenceCompat;
 import com.github.axet.androidlibrary.services.StorageProvider;
@@ -32,6 +37,21 @@ public class ErrorDialog extends AlertDialog.Builder {
     public static String ERROR = "Error"; // title
 
     public static Thread.UncaughtExceptionHandler OLD;
+    public static Thread.UncaughtExceptionHandler UEH;
+
+    public static String getInstallerPackage(Context context) {
+        PackageManager pm = context.getPackageManager();
+        if (Build.VERSION.SDK_INT >= 30) {
+            try {
+                InstallSourceInfo info = pm.getInstallSourceInfo(context.getPackageName());
+                return info.getInstallingPackageName();
+            } catch (PackageManager.NameNotFoundException e) {
+                return null;
+            }
+        } else {
+            return pm.getInstallerPackageName(context.getPackageName());
+        }
+    }
 
     public static StringBuilder fullCrash(Context context, Throwable e) {
         StringBuilder sb = new StringBuilder();
@@ -54,7 +74,9 @@ public class ErrorDialog extends AlertDialog.Builder {
     }
 
     public static File saveCrash(Context context, StringBuilder sb) {
-        File d = context.getFilesDir();
+        File d = context.getExternalFilesDir("");
+        if (d == null)
+            d = context.getFilesDir();
         d = new File(d, "crash_" + System.currentTimeMillis() + ".txt");
         try {
             FileUtils.write(d, sb, Charset.defaultCharset());
@@ -64,33 +86,53 @@ public class ErrorDialog extends AlertDialog.Builder {
         return d;
     }
 
-    public static void unhandled(final Context context) {
-        if (OLD != null)
-            return;
-        OLD = Thread.getDefaultUncaughtExceptionHandler();
-        Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-            @Override
-            public void uncaughtException(@NonNull Thread t, @NonNull Throwable e) {
-                unhandled(context, t, e);
+    public static void unhandled(final Context context, final boolean auto) {
+        if (OLD != null) {
+            if (!auto) {
+                Thread.setDefaultUncaughtExceptionHandler(OLD);
+                UEH = null;
+            } else {
+                return;
             }
-        });
+        }
+        if (UEH == null) {
+            OLD = Thread.getDefaultUncaughtExceptionHandler();
+            UEH = new Thread.UncaughtExceptionHandler() {
+                @Override
+                public void uncaughtException(@NonNull Thread t, @NonNull Throwable e) {
+                    unhandled(context, t, e, auto);
+                }
+            };
+        }
+        Thread.setDefaultUncaughtExceptionHandler(UEH);
     }
 
     public static void unhandled(final Context context, Thread thread) {
         thread.setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
             @Override
             public void uncaughtException(@NonNull Thread t, @NonNull Throwable e) {
-                unhandled(context, t, e);
+                unhandled(context, t, e, false);
             }
         });
     }
 
-    public static void unhandled(Context context, Thread t, Throwable e) {
-        if (context instanceof Application) {
+    public static void unhandled(final Context context, final Thread t, final Throwable e, boolean auto) {
+        boolean a = auto && AdminPreferenceCompat.getInstaller(context).equals(AdminPreferenceCompat.Installer.STORE);
+        if (context instanceof Activity && !a) {
+            ErrorDialog builder = new ErrorDialog(context, e);
+            builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                @Override
+                public void onDismiss(DialogInterface dialog) {
+                    if (OLD != null)
+                        OLD.uncaughtException(t, e);
+                }
+            });
+            builder.show();
+        } else {
             File f = saveCrash(context, e);
             Toast.makeText(context, ERROR + " " + toMessage(e) + "\nFile: " + f.getName(), Toast.LENGTH_SHORT).show();
-        } else {
-            Error(context, e);
+            if (OLD != null)
+                OLD.uncaughtException(t, e);
         }
     }
 

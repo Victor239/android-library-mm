@@ -130,16 +130,25 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         return true;
     }
 
-    public static long getBootTime() { // rounded time, to keep it stable
+    public static long getBootTime() { // rounded time, to keep it a bit more stable
         if (BOOT != 0)
             return BOOT;
         ArrayList<Pair<Long, Long>> list = new ArrayList<>();
-        for (int i = 0; i < 6; i++) {
-            long start = System.currentTimeMillis();
-            long el = SystemClock.elapsedRealtime();
-            long end = System.currentTimeMillis();
+        long min = Long.MAX_VALUE, max = Long.MIN_VALUE;
+        for (int i = 0; i < 12; i++) {
+            long start = System.nanoTime();
+            long el;
+            if (Build.VERSION.SDK_INT >= 17)
+                el = SystemClock.elapsedRealtimeNanos();
+            else
+                el = SystemClock.elapsedRealtime() * 1000 * 1000;
+            long last = System.currentTimeMillis() * 1000 * 1000;
+            long end = System.nanoTime();
             long d = end - start;
-            list.add(new Pair<>(d, end - el));
+            long time = last - el;
+            min = Math.min(min, time);
+            max = Math.max(max, time);
+            list.add(new Pair<>(d, time));
         }
         Collections.sort(list, new Comparator<Pair<Long, Long>>() {
             @Override
@@ -150,14 +159,14 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         int i = 0;
         long d = list.get(i).first;
         long total = list.get(i).second;
-        int count = 1;
+        long count = 1;
         i++;
         while (i < list.size() && list.get(i).first == d) {
             total += list.get(i).second;
             count++;
             i++;
         }
-        long time = total / count;
+        long time = total / count / 1000 / 1000 / 1000 * 1000;
         BOOT = time;
         return time;
     }
