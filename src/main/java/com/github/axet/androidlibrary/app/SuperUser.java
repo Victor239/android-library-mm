@@ -692,9 +692,6 @@ public class SuperUser {
         }
 
         public Commands(String cmd) {
-            if(cmd.startsWith("null")) {
-                throw new RuntimeException(cmd);
-            }
             add(cmd);
         }
 
