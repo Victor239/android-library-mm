@@ -25,6 +25,7 @@ import android.view.WindowManager;
 
 import com.github.axet.androidlibrary.R;
 import com.github.axet.androidlibrary.app.MainApplication;
+import com.github.axet.androidlibrary.widgets.ErrorDialog;
 import com.github.axet.androidlibrary.widgets.RemoteViewsCompat;
 
 import java.lang.reflect.Method;
@@ -216,6 +217,7 @@ public abstract class AppCompatThemeActivity extends AppCompatActivity {
     @Override
     protected void attachBaseContext(Context newBase) {
         super.attachBaseContext(newBase);
+        ErrorDialog.unhandled(this, true);
     }
 
     public void checkTranslucent() { // TODO figure it out, how to create transparent initial activity window / themed (black or white) window
