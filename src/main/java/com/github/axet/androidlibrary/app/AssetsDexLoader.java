@@ -172,9 +172,7 @@ public class AssetsDexLoader {
     public static boolean filter(String a, String... deps) {
         for (String dep : deps) {
             String[] dd = dep.split(":");
-            if (dd.length == 3) {
-                throw new RuntimeException("unsupported check call file based");
-            } else if (dd.length == 1) {
+            if (dd.length == 1) {
                 if (filter(a, dep))
                     return true;
             } else {
@@ -368,10 +366,10 @@ public class AssetsDexLoader {
                 Library info = mm.get(dep);
                 if (info != null)
                     return info.deps;
-            }
-            for (String id : mm.keySet()) {
-                String[] ss = id.split(":");
-                if (dd.length == 1) { // artifact id only specified
+            } // no else
+            if (dd.length == 1) { // artifact only specified
+                for (String id : mm.keySet()) {
+                    String[] ss = id.split(":");
                     if (ss[1].equals(dd[0])) {
                         Library info = mm.get(id);
                         for (Library l : getDeps(info)) {
