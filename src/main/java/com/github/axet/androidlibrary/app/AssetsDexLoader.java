@@ -165,14 +165,21 @@ public class AssetsDexLoader {
         return true;
     }
 
-    public static boolean filter(String file, String dep) {
-        return file.startsWith(dep);
+    public static boolean filter(String a, String dep) {
+        return a.startsWith(dep);
     }
 
-    public static boolean filter(String file, String... deps) {
+    public static boolean filter(String a, String... deps) {
         for (String dep : deps) {
-            if (file.startsWith(dep))
-                return true;
+            String[] dd = dep.split(":");
+            if (dd.length == 3) {
+                throw new RuntimeException("unsupported check call file based");
+            } else if (dd.length == 1) {
+                if (filter(a, dep))
+                    return true;
+            } else {
+                throw new RuntimeException("unsupported check call file based");
+            }
         }
         return false;
     }
