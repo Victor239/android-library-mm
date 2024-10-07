@@ -198,16 +198,28 @@ public class AssetsDexLoader {
         }
     }
 
-    public static boolean check(Context context, String... deps) { // check all deps exists. file based
-        try {
-            String[] aa = assets(context);
-            if (aa == null)
+    public static boolean check(String[] aa, String... deps) { // check all deps exists. file based
+        if (aa == null)
+            return false;
+        for (String a : aa) {
+            if (!filter(a, deps))
                 return false;
-            for (String a : aa) {
-                if (!filter(a, deps))
+        }
+        return true;
+    }
+
+    public static boolean check(Context context, String... deps) { // check all deps exists
+        try {
+            Json json = new Json(context);
+            if (json.mm.isEmpty()) {
+                String[] aa = assets(context);
+                return check(aa, deps); // file based search
+            } else {
+                if (!check(json, deps)) // json based search
                     return false;
+                String[] aa = assets(context);
+                return check(aa, deps); // file based search
             }
-            return true;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
