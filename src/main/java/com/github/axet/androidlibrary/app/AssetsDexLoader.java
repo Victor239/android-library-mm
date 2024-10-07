@@ -175,8 +175,6 @@ public class AssetsDexLoader {
             if (dd.length == 1) {
                 if (filter(a, dep))
                     return true;
-            } else {
-                throw new RuntimeException("unsupported check call file based");
             }
         }
         return false;
