@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.regex.Pattern;
 
+// TextEdit android:ellipsize="middle" with andorid:singleline="true"
 public class PathMax extends ViewGroup {
     public static final String ROOT = "/";
     public static final String MID = "…"; // &#8230;

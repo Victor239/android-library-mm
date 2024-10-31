@@ -138,6 +138,20 @@ public class Storage {
         return s.split(OpenFileDialog.ROOT);
     }
 
+    public static String joinPath(String[] ss) {
+        return joinPath(ss, 0, ss.length);
+    }
+
+    public static String joinPath(String[] ss, int start, int end) {
+        StringBuilder j = new StringBuilder();
+        for (int k = start; k < end; k++) {
+            if (j.length() != 0)
+                j.append(File.separator);
+            j.append(ss[k]);
+        }
+        return j.toString();
+    }
+
     public static String formatNextFile(String name, int i, String ext) {
         if (i == 0) {
             if (ext == null || ext.isEmpty())
@@ -1557,6 +1571,14 @@ public class Storage {
         public long last;
 
         public Node() {
+        }
+
+        public Node(Node n) {
+            uri = n.uri;
+            name = n.name;
+            dir = n.dir;
+            size = n.size;
+            last = n.last;
         }
 
         public Node(Uri uri, String n, boolean dir, long size, long last) {

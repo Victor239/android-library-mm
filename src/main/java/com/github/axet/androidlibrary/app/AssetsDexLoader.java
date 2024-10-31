@@ -148,20 +148,81 @@ public class AssetsDexLoader {
         }
     }
 
+    public static boolean check(Json json, String... deps) { // check all deps exists. json based
+        if (deps == null || deps.length == 0) {
+            for (Json.Library dep : json.deps) {
+                ArrayList<Json.Library> a = json.getDeps(dep);
+                if (a.isEmpty())
+                    return false;
+            }
+        } else {
+            for (String dep : deps) {
+                ArrayList<Json.Library> a = json.getDeps(dep);
+                if (a.isEmpty())
+                    return false;
+            }
+        }
+        return true;
+    }
+
+    public static boolean filter(String a, String dep) {
+        return a.startsWith(dep);
+    }
+
+    public static boolean filter(String a, String... deps) {
+        for (String dep : deps) {
+            String[] dd = dep.split(":");
+            if (dd.length == 1) {
+                if (filter(a, dep))
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    public static String[] assets(Context context) throws IOException {
+        AssetManager am = context.getAssets();
+        return am.list("");
+    }
+
     public static ClassLoader deps(Context context, String... deps) {
         ClassLoader parent = null;
         try {
-            for (String dep : deps) {
-                AssetManager am = context.getAssets();
-                String[] aa = am.list("");
-                if (aa == null)
-                    return parent;
-                for (String a : aa) {
-                    if (a.startsWith(dep))
-                        parent = deps(context, parent, a);
-                }
+            String[] aa = assets(context);
+            if (aa == null)
+                return parent;
+            for (String a : aa) {
+                if (filter(a, deps))
+                    parent = deps(context, parent, a);
             }
             return parent; // return null if no jars/dex found
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static boolean check(String[] aa, String... deps) { // check all deps exists. file based
+        if (aa == null)
+            return false;
+        for (String a : aa) {
+            if (!filter(a, deps))
+                return false;
+        }
+        return true;
+    }
+
+    public static boolean check(Context context, String... deps) { // check all deps exists
+        try {
+            Json json = new Json(context);
+            if (json.mm.isEmpty()) {
+                String[] aa = assets(context);
+                return check(aa, deps); // file based search
+            } else {
+                if (!check(json, deps)) // json based search
+                    return false;
+                String[] aa = assets(context);
+                return check(aa, deps); // file based search
+            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -299,14 +360,14 @@ public class AssetsDexLoader {
         public ArrayList<Library> getDeps(String dep) {
             String[] dd = dep.split(":");
             ArrayList<Library> kk = new ArrayList<>();
-            if (dd.length == 3) {
+            if (dd.length == 3) { // group:artifact:version specified
                 Library info = mm.get(dep);
                 if (info != null)
                     return info.deps;
-            }
-            for (String id : mm.keySet()) {
-                String[] ss = id.split(":");
-                if (dd.length == 1) {
+            } // no else
+            if (dd.length == 1) { // artifact only specified
+                for (String id : mm.keySet()) {
+                    String[] ss = id.split(":");
                     if (ss[1].equals(dd[0])) {
                         Library info = mm.get(id);
                         for (Library l : getDeps(info)) {

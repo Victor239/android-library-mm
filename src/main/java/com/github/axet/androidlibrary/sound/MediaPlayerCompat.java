@@ -431,7 +431,7 @@ public class MediaPlayerCompat {
             final Method getAudioContentTypeForStreamType = Util.getMethod("getAudioContentTypeForStreamType", int.class);
             Class C = forName("com.google.android.exoplayer2.C");
             final long TIME_UNSET = C.getField("TIME_UNSET").getLong(null);
-            final Class PlayerView = forName("com.google.android.exoplayer2.ui.PlayerView");
+            final Class PlayerView = forName("com.google.android.exoplayer2.ui.SimpleExoPlayerView");
             final Class AudioAttributes$Builder = forName("com.google.android.exoplayer2.audio.AudioAttributes$Builder");
             final Class MediaSource = forName("com.google.android.exoplayer2.source.MediaSource");
             final MediaPlayerCompat mp = new MediaPlayerCompat() {
@@ -657,7 +657,10 @@ public class MediaPlayerCompat {
                             onPlayerError((Exception) args[0]);
                             break;
                         case "onTimelineChanged":
-                            onTimelineChanged(args[0], args[1], (int) args[2]);
+                            if (args.length == 2) // 2.5.4
+                                onTimelineChanged(args[0], args[1], 0);
+                            else // 2.7.3
+                                onTimelineChanged(args[0], args[1], (int) args[2]);
                             break;
                         case "onTracksChanged":
                             onTracksChanged(args[0], args[1]);
