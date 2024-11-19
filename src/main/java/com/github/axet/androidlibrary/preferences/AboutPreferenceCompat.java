@@ -104,6 +104,7 @@ public class AboutPreferenceCompat extends DialogPreference {
     public static WebViewCustom buildView(Context context, int id) {
         try {
             String html = loadStringResource(context, id);
+            html = replaceVersion(context, html);
             return buildView(context, html);
         } catch (Exception e) {
             return buildView(context, HttpClient.toStackTrace(e));

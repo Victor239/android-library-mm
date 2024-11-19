@@ -891,8 +891,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
             unregister();
         }
 
-        // return true if app need to be started
-        public boolean onStartCommand(Intent intent, int flags, int startId) {
+        public boolean onStartCommand(Intent intent, int flags, int startId) { // return true if app need to be started
             register();
             if (intent == null)
                 return true; // null if service were restarted by system after crash / low memory

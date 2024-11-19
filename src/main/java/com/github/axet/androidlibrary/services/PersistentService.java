@@ -48,10 +48,12 @@ public class PersistentService extends Service {
     public void onCreate() {
         super.onCreate();
         Log.d(TAG, "onCreate");
-        onCreateOptimization();
+        optimization = onCreateOptimization();
+        optimization.create();
     }
 
-    public void onCreateOptimization() {
+    public OptimizationPreferenceCompat.ServiceReceiver onCreateOptimization() {
+        return null;
     }
 
     @Nullable

@@ -9,6 +9,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.util.Log;
 
+import com.github.axet.androidlibrary.app.Network;
 import com.github.axet.androidlibrary.preferences.OptimizationPreferenceCompat;
 
 import java.io.File;
@@ -36,7 +37,7 @@ public class OnExternalReceiver extends BroadcastReceiver {
         File file = context.getExternalCacheDir();
         if (file != null && file.exists() && file.canRead() && !file.canWrite())
             return false;
-        if (OptimizationPreferenceCompat.findPermission(context, Manifest.permission.INTERNET) && !WifiKeepService.pingLocal())
+        if (OptimizationPreferenceCompat.findPermission(context, Manifest.permission.INTERNET) && !Network.pingLocal())
             return false;
         return true;
     }
