@@ -84,4 +84,16 @@
         <item>Theme Dark</item>
         <item>Theme Dark Black</item>
     </string-array>
+
+    <string name="repeat_delete">Delete after Send</string>
+    <string name="repeat_once">Once</string>
+    <string name="repeat_6hours">Every 6 Hours</string>
+    <string name="repeat_day">Every Day</string>
+    <string name="repeat_week">Every Week</string>
+    <string name="repeat_month_1">Every Month</string>
+    <string name="repeat_month_2">Every 2 Month</string>
+    <string name="repeat_month_3">Every 3 Month</string>
+    <string name="repeat_month_4">Every 4 Month</string>
+    <string name="repeat_month_6">Every 6 Month</string>
+    <string name="repeat_month_12">Every 12 Month</string>
 </resources>
