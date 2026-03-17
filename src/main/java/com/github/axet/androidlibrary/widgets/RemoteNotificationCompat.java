@@ -15,7 +15,7 @@ import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
-import androidx.fragment.app.NotificationCompat;
+import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import androidx.appcompat.view.ContextThemeWrapper;
 import android.util.AttributeSet;

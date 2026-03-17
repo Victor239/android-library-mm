@@ -5,8 +5,8 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import androidx.media.session.MediaButtonReceiver;
-import androidx.media.session.MediaSessionCompat;
-import androidx.media.session.PlaybackStateCompat;
+import androidx.media.MediaSessionCompat;
+import androidx.media.MediaSessionCompat.PlaybackStateCompat;
 import android.util.Log;
 
 public class Headset {

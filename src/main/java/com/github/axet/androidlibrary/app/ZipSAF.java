@@ -8,7 +8,7 @@ import android.net.Uri;
 import android.os.ParcelFileDescriptor;
 import android.provider.DocumentsContract;
 import androidx.annotation.NonNull;
-import androidx.core.provider.DocumentFile;
+import androidx.documentfile.provider.DocumentFile;
 
 import net.lingala.zip4j.NativeFile;
 import net.lingala.zip4j.NativeStorage;

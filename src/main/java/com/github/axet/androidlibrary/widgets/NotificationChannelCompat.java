@@ -8,7 +8,7 @@ import android.media.AudioAttributes;
 import android.net.Uri;
 import android.os.Build;
 import androidx.annotation.IntDef;
-import androidx.fragment.app.NotificationCompat;
+import androidx.core.app.NotificationCompat;
 import android.util.Log;
 
 import com.github.axet.androidlibrary.app.AssetsDexLoader;

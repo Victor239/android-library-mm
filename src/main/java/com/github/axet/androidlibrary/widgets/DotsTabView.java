@@ -3,7 +3,7 @@ package com.github.axet.androidlibrary.widgets;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.drawable.Drawable;
-import com.google.android.material.widget.TabLayout;
+import com.google.android.material.tabs.TabLayout;
 import androidx.core.content.ContextCompat;
 import androidx.appcompat.widget.AppCompatImageView;
 import android.view.ViewParent;

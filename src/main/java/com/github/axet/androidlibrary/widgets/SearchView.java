@@ -3,7 +3,7 @@ package com.github.axet.androidlibrary.widgets;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import androidx.annotation.Keep;
-import androidx.appcompat.view.menu.SupportMenuItem;
+import androidx.core.view.MenuItemCompat;
 import androidx.core.view.MenuItemCompat;
 import androidx.appcompat.app.ActionBar;
 import android.util.AttributeSet;
