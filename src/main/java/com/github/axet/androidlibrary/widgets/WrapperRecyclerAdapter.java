@@ -1,6 +1,6 @@
 package com.github.axet.androidlibrary.widgets;
 
-import android.support.v7.widget.RecyclerView;
+import androidx.recyclerview.widget.RecyclerView;
 import android.view.View;
 
 public interface WrapperRecyclerAdapter<T extends RecyclerView.ViewHolder> {

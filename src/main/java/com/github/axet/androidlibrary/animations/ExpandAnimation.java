@@ -2,7 +2,7 @@ package com.github.axet.androidlibrary.animations;
 
 import android.annotation.TargetApi;
 import android.os.Build;
-import android.support.v7.widget.RecyclerView;
+import androidx.recyclerview.widget.RecyclerView;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;

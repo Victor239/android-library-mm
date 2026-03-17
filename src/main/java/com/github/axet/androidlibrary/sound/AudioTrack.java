@@ -6,7 +6,7 @@ import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.os.Build;
 import android.os.Handler;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import android.util.Log;
 
 public class AudioTrack extends android.media.AudioTrack {

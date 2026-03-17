@@ -13,7 +13,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
-import android.support.v7.preference.SwitchPreferenceCompat;
+import androidx.preference.SwitchPreferenceCompat;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.TypedValue;

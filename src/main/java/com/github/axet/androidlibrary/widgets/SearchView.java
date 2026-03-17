@@ -2,10 +2,10 @@ package com.github.axet.androidlibrary.widgets;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.support.annotation.Keep;
-import android.support.v4.internal.view.SupportMenuItem;
-import android.support.v4.view.MenuItemCompat;
-import android.support.v7.app.ActionBar;
+import androidx.annotation.Keep;
+import androidx.appcompat.view.menu.SupportMenuItem;
+import androidx.core.view.MenuItemCompat;
+import androidx.appcompat.app.ActionBar;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MenuItem;
@@ -37,7 +37,7 @@ import java.util.Locale;
 //            android:resource="@xml/searchable" />
 //
 @Keep
-public class SearchView extends android.support.v7.widget.SearchView {
+public class SearchView extends androidx.appcompat.widget.SearchView {
     public static String TAG = SearchView.class.getSimpleName();
 
     ImageView mCloseButton;
@@ -117,8 +117,8 @@ public class SearchView extends android.support.v7.widget.SearchView {
     }
 
     public void create() {
-        mSearchSrcTextView = (SearchAutoComplete) findViewById(android.support.v7.appcompat.R.id.search_src_text);
-        mCloseButton = (ImageView) findViewById(android.support.v7.appcompat.R.id.search_close_btn);
+        mSearchSrcTextView = (SearchAutoComplete) findViewById(androidx.appcompat.R.id.search_src_text);
+        mCloseButton = (ImageView) findViewById(androidx.appcompat.R.id.search_close_btn);
     }
 
     public void setOnCollapsedListener(OnCollapsedListener listener) {

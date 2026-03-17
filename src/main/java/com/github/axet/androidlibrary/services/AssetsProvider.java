@@ -12,7 +12,7 @@ import android.database.MatrixCursor;
 import android.net.Uri;
 import android.os.CancellationSignal;
 import android.provider.OpenableColumns;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 import android.webkit.MimeTypeMap;
 
 import java.io.FileNotFoundException;

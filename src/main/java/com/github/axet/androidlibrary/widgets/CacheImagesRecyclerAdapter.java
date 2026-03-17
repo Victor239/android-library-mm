@@ -3,7 +3,7 @@ package com.github.axet.androidlibrary.widgets;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.net.Uri;
-import android.support.v7.widget.RecyclerView;
+import androidx.recyclerview.widget.RecyclerView;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 

@@ -4,7 +4,7 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
-import android.support.v7.preference.SwitchPreferenceCompat;
+import androidx.preference.SwitchPreferenceCompat;
 import android.util.AttributeSet;
 
 import com.github.axet.androidlibrary.app.NotificationManagerCompat;

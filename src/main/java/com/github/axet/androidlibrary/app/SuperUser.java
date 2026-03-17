@@ -3,7 +3,7 @@ package com.github.axet.androidlibrary.app;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Build;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import android.system.ErrnoException;
 import android.system.Os;
 import android.system.OsConstants;

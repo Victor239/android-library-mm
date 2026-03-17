@@ -15,7 +15,7 @@ import android.net.RouteInfo;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.IBinder;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 import android.util.Log;
 
 import com.github.axet.androidlibrary.R;

@@ -3,7 +3,7 @@ package com.github.axet.androidlibrary.widgets;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
-import android.support.v4.view.ScaleGestureDetectorCompat;
+import androidx.core.view.ScaleGestureDetectorCompat;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 

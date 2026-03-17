@@ -8,7 +8,7 @@ import android.content.ContextWrapper;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.res.Configuration;
-import android.support.v7.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 
 import com.github.axet.androidlibrary.R;
 import com.github.axet.androidlibrary.widgets.ErrorDialog;

@@ -1,6 +1,6 @@
 package com.github.axet.androidlibrary.crypto;
 
-import android.support.annotation.RequiresApi;
+import androidx.annotation.RequiresApi;
 import android.util.Base64;
 
 import java.math.BigInteger;

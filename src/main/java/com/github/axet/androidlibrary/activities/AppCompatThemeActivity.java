@@ -13,9 +13,9 @@ import android.content.res.Resources;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.annotation.Nullable;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import android.util.Log;
 import android.view.ContextThemeWrapper;
 import android.view.ViewGroup;
@@ -206,8 +206,8 @@ public abstract class AppCompatThemeActivity extends AppCompatActivity {
                     Log.d(TAG, "unable to get parent theme", e);
                 }
             }
-            if (t instanceof android.support.v7.view.ContextThemeWrapper) {
-                return ((android.support.v7.view.ContextThemeWrapper) t).getThemeResId();
+            if (t instanceof androidx.appcompat.view.ContextThemeWrapper) {
+                return ((androidx.appcompat.view.ContextThemeWrapper) t).getThemeResId();
             }
         }
         return 0;

@@ -1,7 +1,7 @@
 package com.github.axet.androidlibrary.widgets;
 
 import android.content.Context;
-import android.support.v7.widget.LinearSmoothScroller;
+import androidx.recyclerview.widget.LinearSmoothScroller;
 
 public class TopSnappedSmoothScroller extends LinearSmoothScroller {
     public TopSnappedSmoothScroller(Context context) {

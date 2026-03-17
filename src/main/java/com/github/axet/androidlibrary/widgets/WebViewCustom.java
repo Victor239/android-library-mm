@@ -8,7 +8,7 @@ import android.net.UrlQuerySanitizer;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.webkit.ConsoleMessage;

@@ -13,11 +13,11 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Typeface;
 import android.os.Build;
-import android.support.v4.app.Fragment;
-import android.support.v4.widget.TextViewCompat;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.preference.Preference;
-import android.support.v7.preference.SwitchPreferenceCompat;
+import androidx.fragment.app.Fragment;
+import androidx.core.widget.TextViewCompat;
+import androidx.appcompat.app.AlertDialog;
+import androidx.preference.Preference;
+import androidx.preference.SwitchPreferenceCompat;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.widget.LinearLayout;
@@ -273,7 +273,7 @@ public class AdminPreferenceCompat extends SwitchPreferenceCompat {
                 ll.setPadding(ThemeUtils.dp2px(context, 20), p5, p5, p5);
                 if (m != null) {
                     TextView message = new TextView(context);
-                    TextViewCompat.setTextAppearance(message, android.support.v7.appcompat.R.style.TextAppearance_AppCompat_Body1);
+                    TextViewCompat.setTextAppearance(message, androidx.appcompat.R.style.TextAppearance_AppCompat_Body1);
                     message.setText(m);
                     ll.addView(message);
                 }
@@ -282,12 +282,12 @@ public class AdminPreferenceCompat extends SwitchPreferenceCompat {
                     llp.setOrientation(LinearLayout.VERTICAL);
                     llp.setPadding(ThemeUtils.dp2px(context, 30), p5, p5, p5);
                     TextView title = new TextView(context);
-                    TextViewCompat.setTextAppearance(title, android.support.v7.appcompat.R.style.TextAppearance_AppCompat_Subhead);
+                    TextViewCompat.setTextAppearance(title, androidx.appcompat.R.style.TextAppearance_AppCompat_Subhead);
                     title.setText(mm[i]);
                     title.setTypeface(null, Typeface.BOLD);
                     llp.addView(title);
                     TextView message = new TextView(context);
-                    TextViewCompat.setTextAppearance(message, android.support.v7.appcompat.R.style.TextAppearance_AppCompat_Body1);
+                    TextViewCompat.setTextAppearance(message, androidx.appcompat.R.style.TextAppearance_AppCompat_Body1);
                     message.setText(mm[i + 1]);
                     llp.addView(message);
                     ll.addView(llp);

@@ -7,12 +7,12 @@ import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.v4.app.Fragment;
-import android.support.v4.content.SharedPreferencesCompat;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.preference.DialogPreference;
-import android.support.v7.preference.PreferenceDialogFragmentCompat;
+import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
+import androidx.core.content.SharedPreferencesCompat;
+import androidx.appcompat.app.AlertDialog;
+import androidx.preference.DialogPreference;
+import androidx.preference.PreferenceDialogFragmentCompat;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -27,7 +27,7 @@ public class SeekBarPreference extends DialogPreference {
     public static void show(Fragment f, String key) {
         SeekBarPreferenceDialogFragment d = SeekBarPreferenceDialogFragment.newInstance(key);
         d.setTargetFragment(f, 0);
-        d.show(f.getFragmentManager(), "android.support.v7.preference.PreferenceFragment.DIALOG");
+        d.show(f.getFragmentManager(), "androidx.preference.PreferenceFragment.DIALOG");
     }
 
     public static class SeekBarPreferenceDialogFragment extends PreferenceDialogFragmentCompat {

@@ -6,7 +6,7 @@ import android.content.DialogInterface;
 import android.content.res.TypedArray;
 import android.os.Environment;
 import android.os.Parcelable;
-import android.support.v7.preference.EditTextPreference;
+import androidx.preference.EditTextPreference;
 import android.util.AttributeSet;
 
 import com.github.axet.androidlibrary.widgets.OpenFileDialog;
