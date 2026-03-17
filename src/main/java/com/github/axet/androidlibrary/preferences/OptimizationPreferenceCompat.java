@@ -832,7 +832,11 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         }
 
         public void register() {
-            context.registerReceiver(this, filters);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                context.registerReceiver(this, filters, Context.RECEIVER_NOT_EXPORTED);
+            } else {
+                context.registerReceiver(this, filters);
+            }
         }
 
         public void unregister() {
@@ -882,7 +886,11 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
 
         public void create() {
             disableKill(context, service);
-            context.registerReceiver(this, filters);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                context.registerReceiver(this, filters, Context.RECEIVER_NOT_EXPORTED);
+            } else {
+                context.registerReceiver(this, filters);
+            }
             register();
         }
 
@@ -1041,7 +1049,11 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         }
 
         public void register(Context context) {
-            context.registerReceiver(this, filters);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                context.registerReceiver(this, filters, Context.RECEIVER_NOT_EXPORTED);
+            } else {
+                context.registerReceiver(this, filters);
+            }
         }
 
         public void unregister(Context context) {

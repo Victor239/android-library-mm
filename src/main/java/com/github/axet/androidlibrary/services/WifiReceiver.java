@@ -8,6 +8,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.SupplicantState;
 import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.util.Log;
 
 /**
@@ -42,7 +43,11 @@ public abstract class WifiReceiver extends BroadcastReceiver {
     }
 
     public void create() {
-        context.registerReceiver(this, filter);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            context.registerReceiver(this, filter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            context.registerReceiver(this, filter);
+        }
         if (getWifi()) {
             if (isConnectedWifi(context))
                 resume();

@@ -138,7 +138,11 @@ public abstract class AppCompatThemeActivity extends AppCompatActivity {
 
         public void registerReceiver(Activity a) {
             this.a = a;
-            this.a.registerReceiver(this, filter);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                this.a.registerReceiver(this, filter, Context.RECEIVER_NOT_EXPORTED);
+            } else {
+                this.a.registerReceiver(this, filter);
+            }
         }
 
         public void close() {
