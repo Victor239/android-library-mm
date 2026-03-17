@@ -276,6 +276,10 @@ public class Toast {
                         .handler(c)
                         .build();
                 Toast.getDeclaredMethod("addCallback", Callback).invoke(toast, o);
+            } catch (SecurityException e) {
+                // ProxyBuilder not allowed on Android 16+ with targetSdk 35+
+                // Toast will work without show/hide callbacks
+                Log.d(TAG, "Toast callback not available due to security restrictions", e);
             } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException | IOException e) {
                 throw new RuntimeException(e);
             }
