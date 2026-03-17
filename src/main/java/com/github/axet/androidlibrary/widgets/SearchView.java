@@ -57,7 +57,7 @@ public class SearchView extends androidx.appcompat.widget.SearchView {
 
         @SuppressLint("RestrictedApi")
         public void addItem(MenuItem search) {
-            ((SupportMenuItem) search).setSupportOnActionExpandListener(this);
+            MenuItemCompat.setOnActionExpandListener(search, this);
         }
 
         @SuppressLint("RestrictedApi")

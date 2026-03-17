@@ -895,7 +895,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
         titlebar.addView(free);
         ImageView down = new ImageView(getContext());
         down.setImageResource(R.drawable.ic_expand_more_black_24dp);
-        down.setColorFilter(ThemeUtils.getThemeColor(getContext(), R.attr.colorAccent));
+        down.setColorFilter(ThemeUtils.getThemeColor(getContext(), androidx.appcompat.R.attr.colorAccent));
         lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         lp.gravity = Gravity.CENTER;
         down.setLayoutParams(lp);
@@ -905,7 +905,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
             final LinearLayout titlebarVert = new LinearLayout(getContext());
             titlebarVert.setOrientation(LinearLayout.VERTICAL);
             TextView t = new AppCompatTextView(getContext());
-            TextViewCompat.setTextAppearance(t, R.style.TextAppearance_AppCompat_Title);
+            TextViewCompat.setTextAppearance(t, androidx.appcompat.R.style.TextAppearance_AppCompat_Title);
             t.setText(title);
             t.setPadding(padding, padding, padding, 0);
             titlebarVert.addView(t);

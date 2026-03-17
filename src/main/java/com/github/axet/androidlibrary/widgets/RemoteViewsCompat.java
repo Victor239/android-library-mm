@@ -142,8 +142,8 @@ public class RemoteViewsCompat extends RemoteViews {
         @SuppressLint("RestrictedApi")
         public int getButtonStyle(Resources.Theme theme, Context context) {
             TypedValue style = new TypedValue();
-            if (theme.resolveAttribute(R.attr.buttonStyle, style, true)) {
-                if (style.resourceId == R.style.Widget_AppCompat_Button) {
+            if (theme.resolveAttribute(androidx.appcompat.R.attr.buttonStyle, style, true)) {
+                if (style.resourceId == androidx.appcompat.R.style.Widget_AppCompat_Button) {
                     ContextThemeWrapper w = new ContextThemeWrapper(context, style.resourceId);
                     Resources.Theme t = w.getTheme();
                     TypedValue out = new TypedValue();
@@ -178,8 +178,8 @@ public class RemoteViewsCompat extends RemoteViews {
         @SuppressLint("RestrictedApi")
         public int getImageButtonStyle(Resources.Theme theme, Context context) {
             TypedValue style = new TypedValue();
-            if (theme.resolveAttribute(R.attr.imageButtonStyle, style, true)) {
-                if (style.resourceId == R.style.Widget_AppCompat_ImageButton) {
+            if (theme.resolveAttribute(androidx.appcompat.R.attr.imageButtonStyle, style, true)) {
+                if (style.resourceId == androidx.appcompat.R.style.Widget_AppCompat_ImageButton) {
                     ContextThemeWrapper w = new ContextThemeWrapper(context, style.resourceId);
                     Resources.Theme t = w.getTheme();
                     TypedValue out = new TypedValue();

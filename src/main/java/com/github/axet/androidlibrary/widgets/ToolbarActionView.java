@@ -107,7 +107,7 @@ public class ToolbarActionView extends LinearLayoutCompat implements Collapsible
 
         for (int i = 0; i < menu.size(); i++) {
             final MenuItem item = menu.getItem(i);
-            AppCompatImageButton image = new AppCompatImageButton(getContext(), null, R.attr.toolbarNavigationButtonStyle);
+            AppCompatImageButton image = new AppCompatImageButton(getContext(), null, androidx.appcompat.R.attr.toolbarNavigationButtonStyle);
             image.setId(item.getItemId());
             image.setImageDrawable(item.getIcon());
             image.setColorFilter(Color.WHITE);

@@ -90,7 +90,7 @@ public class PopupShareActionProvider extends ListPopupWindow {
         public View getView(int position, View convertView, ViewGroup parent) {
             if (convertView == null) {
                 LayoutInflater inflater = LayoutInflater.from(parent.getContext());
-                convertView = inflater.inflate(R.layout.abc_popup_menu_item_layout, parent, false);
+                convertView = inflater.inflate(androidx.appcompat.R.layout.abc_popup_menu_item_layout, parent, false);
             }
 
             MenuView.ItemView itemView = (MenuView.ItemView) convertView;
@@ -158,7 +158,7 @@ public class PopupShareActionProvider extends ListPopupWindow {
     public int measureContentWidth(Context mContext) {
         final Resources res = mContext.getResources();
         int mPopupMaxWidth = Math.max(res.getDisplayMetrics().widthPixels / 2,
-                res.getDimensionPixelSize(R.dimen.abc_config_prefDialogWidth));
+                res.getDimensionPixelSize(androidx.appcompat.R.dimen.abc_config_prefDialogWidth));
 
         // Menus don't tend to be long, so this is more sane than it looks.
         int maxWidth = 0;

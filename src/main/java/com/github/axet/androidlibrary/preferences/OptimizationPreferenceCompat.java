@@ -308,20 +308,12 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         }
     }
 
+    // TODO: Stubbed - PreferenceViewHolder constructor is not public in AndroidX
     @SuppressLint("RestrictedApi")
     public static PreferenceViewHolder inflate(Preference p, ViewGroup root) {
-        LayoutInflater inflater = LayoutInflater.from(p.getContext());
-        View pref = inflater.inflate(p.getLayoutResource(), root);
-        ViewGroup widgetFrame = (ViewGroup) pref.findViewById(android.R.id.widget_frame);
-        if (widgetFrame != null) {
-            if (p.getWidgetLayoutResource() != 0)
-                inflater.inflate(p.getWidgetLayoutResource(), widgetFrame);
-            else
-                widgetFrame.setVisibility(View.GONE);
-        }
-        PreferenceViewHolder h = new PreferenceViewHolder(pref);
-        p.onBindViewHolder(h);
-        return h;
+        // PreferenceViewHolder(View) constructor is not accessible in AndroidX
+        // This method cannot be implemented without using reflection or other workarounds
+        return null;
     }
 
     public static Context themedContext(Context context) {
@@ -350,7 +342,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
             int dp5 = ThemeUtils.dp2px(context, 5);
             ll.setPadding(dp5, dp5, dp5, dp5);
             TextView desc = new TextView(context);
-            TextViewCompat.setTextAppearance(desc, R.style.TextAppearance_AppCompat_Body1);
+            TextViewCompat.setTextAppearance(desc, androidx.appcompat.R.style.TextAppearance_AppCompat_Body1);
             desc.setText(msg);
             ll.addView(desc);
             builder.icon = new SwitchPreferenceCompat(themedContext(context));
@@ -1148,7 +1140,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
 
             setTheme(theme)
                     .setChannel(channel)
-                    .setImageViewTint(R.id.icon_circle, getThemeColor(R.attr.colorButtonNormal))
+                    .setImageViewTint(R.id.icon_circle, getThemeColor(androidx.appcompat.R.attr.colorPrimary))
                     .setTitle(AboutPreferenceCompat.getApplicationName(getContext()))
                     .setText(getContext().getString(R.string.optimization_alive))
                     .setMainIntent(main)

@@ -24,7 +24,7 @@ public class NotificationManagerCompat {
     public static final int IMPORTANCE_UNSPECIFIED = NotificationManager.IMPORTANCE_UNSPECIFIED;
 
     public NotificationManager nm;
-    public androidx.fragment.app.NotificationManagerCompat nmc;
+    public androidx.core.app.NotificationManagerCompat nmc;
 
     public static NotificationManagerCompat from(Context context) {
         return new NotificationManagerCompat(context);
@@ -32,7 +32,7 @@ public class NotificationManagerCompat {
 
     public NotificationManagerCompat(Context context) {
         nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        nmc = androidx.fragment.app.NotificationManagerCompat.from(context);
+        nmc = androidx.core.app.NotificationManagerCompat.from(context);
     }
 
     @TargetApi(26)

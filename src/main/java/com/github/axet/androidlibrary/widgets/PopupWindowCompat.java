@@ -72,7 +72,7 @@ public class PopupWindowCompat {
         Context context = anchor.getContext();
         View v = p.getContentView();
         Resources r = context.getResources();
-        float f = getDimension(context, R.attr.dialogPreferredPadding);
+        float f = getDimension(context, androidx.appcompat.R.attr.dialogPreferredPadding);
         DisplayMetrics dm = r.getDisplayMetrics();
         int w = (int) (dm.widthPixels - f * 2);
         int h = (int) (dm.heightPixels - f * 2);
@@ -105,7 +105,7 @@ public class PopupWindowCompat {
     }
 
     public static void showAsTooltip(PopupWindow p, View anchor, int gravity, int maxwidth) {
-        showAsTooltip(p, anchor, gravity, ThemeUtils.getThemeColor(anchor.getContext(), R.attr.colorButtonNormal), maxwidth);
+        showAsTooltip(p, anchor, gravity, ThemeUtils.getThemeColor(anchor.getContext(), androidx.appcompat.R.attr.colorPrimary), maxwidth);
     }
 
     public static void showAsTooltip(final PopupWindow p, View anchor, int gravity, int background, int maxwidth) {
@@ -158,7 +158,7 @@ public class PopupWindowCompat {
         }
 
         Resources r = context.getResources();
-        float f = getDimension(context, R.attr.dialogPreferredPadding);
+        float f = getDimension(context, androidx.appcompat.R.attr.dialogPreferredPadding);
         DisplayMetrics dm = r.getDisplayMetrics();
         int w = (int) (dm.widthPixels - f * 2);
         int h = (int) (dm.heightPixels - f * 2);

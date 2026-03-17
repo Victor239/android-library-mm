@@ -237,7 +237,7 @@ public class TTSPreferenceCompat extends ListPreference {
                 dialog.dismiss();
             }
         });
-        builder.setNeutralButton(getImageText(getContext(), R.drawable.ic_open_in_new_black_24dp, R.attr.colorAccent), new DialogInterface.OnClickListener() {
+        builder.setNeutralButton(getImageText(getContext(), R.drawable.ic_open_in_new_black_24dp, androidx.appcompat.R.attr.colorAccent), new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 showTTS(getContext());
