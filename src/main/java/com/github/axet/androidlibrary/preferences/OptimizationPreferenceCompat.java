@@ -546,7 +546,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         SharedPreferences shared = PreferenceManager.getDefaultSharedPreferences(context);
         SharedPreferences.Editor edit = shared.edit();
         edit.putString(key, System.currentTimeMillis() + ";" + time);
-        edit.commit();
+        edit.apply();
     }
 
     public static boolean needKillWarning(Context context, String key) { // true - need show warning dialog
@@ -620,7 +620,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         } catch (JSONException e) {
             throw new RuntimeException(e);
         }
-        edit.commit();
+        edit.apply();
     }
 
     public static long getInstallTime(Context context) {
@@ -677,7 +677,7 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
 
     public static void setPrefTime(Context context, String pref, long time) {
         SharedPreferences shared = PreferenceManager.getDefaultSharedPreferences(context);
-        shared.edit().putLong(pref, time).commit();
+        shared.edit().putLong(pref, time).apply();
     }
 
     public static <T> Class<T> forceInit(Class<T> klass) {
