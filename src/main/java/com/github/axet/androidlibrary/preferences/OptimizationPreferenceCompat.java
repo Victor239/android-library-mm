@@ -1252,11 +1252,18 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         public void showIcon(Notification n) {
             Log.d(TAG, "startForeground(" + new ComponentName(context, context.getClass()).flattenToShortString() + ")");
             try {
-                context.startForeground(id, n);
+                if (Build.VERSION.SDK_INT >= 29) {
+                    // specialUse foreground service type requires the 3-arg form (API 29+).
+                    // ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE (API 34) is a compile-time
+                    // constant (0x40000000) — safe at any runtime API level.
+                    context.startForeground(id, n, android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
+                } else {
+                    context.startForeground(id, n);
+                }
             } catch (RuntimeException e) {
                 // ForegroundServiceStartNotAllowedException (API 31+): thrown when the app is not
-                // allowed to start a foreground service, e.g. Android 15+ dataSync time limit
-                // exhausted (6h/day quota). Stop cleanly instead of crashing the main thread.
+                // allowed to start a foreground service (e.g. background restriction, policy
+                // violation). Stop cleanly instead of crashing the main thread.
                 Log.e(TAG, "startForeground failed, stopping service: " + e);
                 context.stopSelf();
             }
