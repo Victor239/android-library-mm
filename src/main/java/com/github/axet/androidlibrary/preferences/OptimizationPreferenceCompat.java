@@ -1251,7 +1251,15 @@ public class OptimizationPreferenceCompat extends SwitchPreferenceCompat {
         @Override
         public void showIcon(Notification n) {
             Log.d(TAG, "startForeground(" + new ComponentName(context, context.getClass()).flattenToShortString() + ")");
-            context.startForeground(id, n);
+            try {
+                context.startForeground(id, n);
+            } catch (RuntimeException e) {
+                // ForegroundServiceStartNotAllowedException (API 31+): thrown when the app is not
+                // allowed to start a foreground service, e.g. Android 15+ dataSync time limit
+                // exhausted (6h/day quota). Stop cleanly instead of crashing the main thread.
+                Log.e(TAG, "startForeground failed, stopping service: " + e);
+                context.stopSelf();
+            }
         }
 
         @Override
